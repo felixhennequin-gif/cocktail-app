@@ -1,0 +1,36 @@
+meta {
+  name: Update Recipe
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/recipes/1
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "Mojito Royal",
+    "description": "Une version festive du Mojito classique avec du champagne.",
+    "difficulty": "EASY",
+    "prepTime": 6,
+    "categoryId": 2,
+    "ingredients": [
+      { "ingredientId": 1, "quantity": 4, "unit": "cl" },
+      { "ingredientId": 2, "quantity": 1, "unit": "pièce" },
+      { "ingredientId": 3, "quantity": 1.5, "unit": "cl" },
+      { "ingredientId": 4, "quantity": 8, "unit": "feuilles" }
+    ],
+    "steps": [
+      { "order": 1, "description": "Écraser la menthe avec le sucre et le jus de citron vert dans le verre." },
+      { "order": 2, "description": "Ajouter la glace pilée et le rhum." },
+      { "order": 3, "description": "Compléter avec le champagne bien frais et mélanger délicatement." }
+    ]
+  }
+}

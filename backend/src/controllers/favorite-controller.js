@@ -1,0 +1,55 @@
+const prisma = require('../prisma');
+
+// POST /favorites/:recipeId — toggle (ajoute ou retire)
+const toggleFavorite = async (req, res) => {
+  const userId   = req.user.id;
+  const recipeId = parseInt(req.params.recipeId);
+
+  const existing = await prisma.favorite.findUnique({
+    where: { userId_recipeId: { userId, recipeId } },
+  });
+
+  if (existing) {
+    await prisma.favorite.delete({ where: { userId_recipeId: { userId, recipeId } } });
+    return res.json({ favorited: false });
+  }
+
+  // Vérification que la recette existe
+  const recipe = await prisma.recipe.findUnique({ where: { id: recipeId } });
+  if (!recipe) return res.status(404).json({ error: 'Recette introuvable' });
+
+  await prisma.favorite.create({ data: { userId, recipeId } });
+  res.json({ favorited: true });
+};
+
+// GET /favorites — recettes favorites de l'utilisateur connecté
+const getMyFavorites = async (req, res) => {
+  const userId = req.user.id;
+
+  const favorites = await prisma.favorite.findMany({
+    where: { userId },
+    include: {
+      recipe: {
+        include: {
+          category: true,
+          author: { select: { id: true, pseudo: true } },
+          ratings: { select: { score: true } },
+        },
+      },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  const recipes = favorites.map(({ recipe }) => {
+    const { ratings, ...rest } = recipe;
+    const avgRating =
+      ratings.length > 0
+        ? Math.round((ratings.reduce((sum, r) => sum + r.score, 0) / ratings.length) * 10) / 10
+        : null;
+    return { ...rest, avgRating, ratingsCount: ratings.length };
+  });
+
+  res.json(recipes);
+};
+
+module.exports = { toggleFavorite, getMyFavorites };

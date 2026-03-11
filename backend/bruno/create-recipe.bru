@@ -1,0 +1,35 @@
+meta {
+  name: Create Recipe
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/recipes
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "Gimlet",
+    "description": "Un cocktail classique au gin, vif et citronné.",
+    "difficulty": "EASY",
+    "prepTime": 3,
+    "categoryId": 1,
+    "ingredients": [
+      { "ingredientId": 7, "quantity": 5, "unit": "cl" },
+      { "ingredientId": 3, "quantity": 1.5, "unit": "cl" },
+      { "ingredientId": 5, "quantity": 5, "unit": "cl" }
+    ],
+    "steps": [
+      { "order": 1, "description": "Verser le gin, le jus de citron vert et le sirop de sucre dans un shaker rempli de glace." },
+      { "order": 2, "description": "Shaker énergiquement pendant 15 secondes." },
+      { "order": 3, "description": "Double filtrer dans une coupe à cocktail réfrigérée." }
+    ]
+  }
+}

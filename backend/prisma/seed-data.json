@@ -1,0 +1,208 @@
+{
+  "categories": ["Classiques", "Tropicaux", "Pétillants"],
+  "recipes": [
+    {
+      "name": "Mojito",
+      "imageUrl": "/uploads/cocktail_01.jpg",
+      "description": "Le cocktail cubain par excellence : frais, mentholé et légèrement sucré.",
+      "category": "Tropicaux",
+      "difficulty": "EASY",
+      "prepTime": 5,
+      "ingredients": [
+        { "name": "Rhum blanc", "quantity": 5, "unit": "cl" },
+        { "name": "Citron vert", "quantity": 1, "unit": "pièce" },
+        { "name": "Sucre de canne", "quantity": 2, "unit": "cl" },
+        { "name": "Menthe fraîche", "quantity": 10, "unit": "feuilles" },
+        { "name": "Eau gazeuse", "quantity": 10, "unit": "cl" },
+        { "name": "Glace pilée", "quantity": 1, "unit": "poignée" }
+      ],
+      "steps": [
+        { "order": 1, "description": "Presser le citron vert et verser le jus dans le verre avec le sucre de canne." },
+        { "order": 2, "description": "Ajouter les feuilles de menthe et les écraser doucement avec un pilon sans les déchirer." },
+        { "order": 3, "description": "Remplir le verre de glace pilée et verser le rhum blanc." },
+        { "order": 4, "description": "Compléter avec l'eau gazeuse, mélanger délicatement et garnir d'un brin de menthe." }
+      ]
+    },
+    {
+      "name": "Old Fashioned",
+      "imageUrl": "/uploads/cocktail_02.jpg",
+      "description": "Le grand classique du whisky, minimaliste et élégant.",
+      "category": "Classiques",
+      "difficulty": "MEDIUM",
+      "prepTime": 5,
+      "ingredients": [
+        { "name": "Bourbon", "quantity": 6, "unit": "cl" },
+        { "name": "Sucre en morceaux", "quantity": 1, "unit": "morceau" },
+        { "name": "Angostura bitters", "quantity": 2, "unit": "traits" },
+        { "name": "Eau", "quantity": 1, "unit": "trait" },
+        { "name": "Zeste d'orange", "quantity": 1, "unit": "pièce" }
+      ],
+      "steps": [
+        { "order": 1, "description": "Déposer le morceau de sucre dans un verre à whisky et l'imbiber des bitters et d'un trait d'eau." },
+        { "order": 2, "description": "Écraser le sucre jusqu'à dissolution complète." },
+        { "order": 3, "description": "Ajouter le bourbon et deux gros glaçons, puis remuer délicatement pendant 30 secondes." },
+        { "order": 4, "description": "Exprimer le zeste d'orange au-dessus du verre et frotter le bord avant de le déposer en garniture." }
+      ]
+    },
+    {
+      "name": "Negroni",
+      "imageUrl": "/uploads/cocktail_03.jpg",
+      "description": "Un cocktail italien équilibré entre l'amer du Campari, le doux du vermouth et le sec du gin.",
+      "category": "Classiques",
+      "difficulty": "EASY",
+      "prepTime": 3,
+      "ingredients": [
+        { "name": "Gin", "quantity": 3, "unit": "cl" },
+        { "name": "Campari", "quantity": 3, "unit": "cl" },
+        { "name": "Vermouth rouge", "quantity": 3, "unit": "cl" },
+        { "name": "Zeste d'orange", "quantity": 1, "unit": "pièce" }
+      ],
+      "steps": [
+        { "order": 1, "description": "Remplir un verre bas de glaçons." },
+        { "order": 2, "description": "Verser le gin, le Campari et le vermouth rouge en parts égales." },
+        { "order": 3, "description": "Remuer pendant 30 secondes pour refroidir et diluer légèrement." },
+        { "order": 4, "description": "Exprimer un zeste d'orange au-dessus et le déposer en garniture." }
+      ]
+    },
+    {
+      "name": "Aperol Spritz",
+      "imageUrl": "/uploads/cocktail_04.jpg",
+      "description": "Le cocktail de l'apéro italien, léger et pétillant.",
+      "category": "Pétillants",
+      "difficulty": "EASY",
+      "prepTime": 3,
+      "ingredients": [
+        { "name": "Aperol", "quantity": 6, "unit": "cl" },
+        { "name": "Prosecco", "quantity": 9, "unit": "cl" },
+        { "name": "Eau gazeuse", "quantity": 3, "unit": "cl" },
+        { "name": "Tranche d'orange", "quantity": 1, "unit": "pièce" }
+      ],
+      "steps": [
+        { "order": 1, "description": "Remplir un grand verre à vin de glaçons." },
+        { "order": 2, "description": "Verser d'abord le Prosecco bien frais." },
+        { "order": 3, "description": "Ajouter l'Aperol puis un trait d'eau gazeuse." },
+        { "order": 4, "description": "Mélanger délicatement et garnir d'une tranche d'orange." }
+      ]
+    },
+    {
+      "name": "Piña Colada",
+      "imageUrl": "/uploads/cocktail_05.jpg",
+      "description": "Le cocktail des îles : onctueux, sucré, avec ses notes de coco et d'ananas.",
+      "category": "Tropicaux",
+      "difficulty": "EASY",
+      "prepTime": 5,
+      "ingredients": [
+        { "name": "Rhum blanc", "quantity": 5, "unit": "cl" },
+        { "name": "Lait de coco", "quantity": 3, "unit": "cl" },
+        { "name": "Jus d'ananas", "quantity": 9, "unit": "cl" },
+        { "name": "Glace pilée", "quantity": 1, "unit": "poignée" }
+      ],
+      "steps": [
+        { "order": 1, "description": "Verser le rhum, le lait de coco et le jus d'ananas dans un blender." },
+        { "order": 2, "description": "Ajouter une bonne poignée de glace pilée." },
+        { "order": 3, "description": "Mixer jusqu'à obtenir une texture lisse et crémeuse." },
+        { "order": 4, "description": "Verser dans un grand verre et décorer d'une tranche d'ananas et d'une cerise." }
+      ]
+    },
+    {
+      "name": "Moscow Mule",
+      "imageUrl": "/uploads/cocktail_06.jpg",
+      "description": "Un cocktail vivifiant à base de vodka et de ginger beer, servi dans sa chope en cuivre.",
+      "category": "Pétillants",
+      "difficulty": "EASY",
+      "prepTime": 3,
+      "ingredients": [
+        { "name": "Vodka", "quantity": 5, "unit": "cl" },
+        { "name": "Ginger beer", "quantity": 12, "unit": "cl" },
+        { "name": "Jus de citron vert", "quantity": 1, "unit": "cl" },
+        { "name": "Menthe fraîche", "quantity": 3, "unit": "feuilles" }
+      ],
+      "steps": [
+        { "order": 1, "description": "Remplir une chope en cuivre (ou un grand verre) de glaçons." },
+        { "order": 2, "description": "Verser la vodka et le jus de citron vert." },
+        { "order": 3, "description": "Compléter avec la ginger beer bien froide." },
+        { "order": 4, "description": "Mélanger délicatement et garnir de feuilles de menthe fraîche." }
+      ]
+    },
+    {
+      "name": "Daiquiri",
+      "imageUrl": "/uploads/cocktail_07.jpg",
+      "description": "Un classique cubain en trois ingrédients : simple, acidulé et rafraîchissant.",
+      "category": "Classiques",
+      "difficulty": "EASY",
+      "prepTime": 3,
+      "ingredients": [
+        { "name": "Rhum blanc", "quantity": 5, "unit": "cl" },
+        { "name": "Jus de citron vert", "quantity": 2.5, "unit": "cl" },
+        { "name": "Sirop de sucre", "quantity": 1.5, "unit": "cl" }
+      ],
+      "steps": [
+        { "order": 1, "description": "Verser le rhum, le jus de citron vert et le sirop de sucre dans un shaker rempli de glace." },
+        { "order": 2, "description": "Shaker énergiquement pendant 15 secondes." },
+        { "order": 3, "description": "Double filtrer dans une coupe à cocktail préalablement réfrigérée." },
+        { "order": 4, "description": "Garnir optionnellement d'un zeste de citron vert." }
+      ]
+    },
+    {
+      "name": "Manhattan",
+      "imageUrl": "/uploads/cocktail_08.jpg",
+      "description": "Un cocktail new-yorkais sophistiqué, profond et légèrement amer.",
+      "category": "Classiques",
+      "difficulty": "MEDIUM",
+      "prepTime": 5,
+      "ingredients": [
+        { "name": "Whisky de seigle", "quantity": 5, "unit": "cl" },
+        { "name": "Vermouth rouge", "quantity": 2.5, "unit": "cl" },
+        { "name": "Angostura bitters", "quantity": 2, "unit": "traits" },
+        { "name": "Cerise au marasquin", "quantity": 1, "unit": "pièce" }
+      ],
+      "steps": [
+        { "order": 1, "description": "Remplir un verre mélangeur de glace." },
+        { "order": 2, "description": "Verser le whisky de seigle, le vermouth rouge et les bitters." },
+        { "order": 3, "description": "Remuer pendant 30 à 40 secondes pour refroidir sans trop diluer." },
+        { "order": 4, "description": "Filtrer dans une coupe à cocktail et garnir d'une cerise au marasquin." }
+      ]
+    },
+    {
+      "name": "Mai Tai",
+      "imageUrl": "/uploads/cocktail_09.jpg",
+      "description": "Un cocktail tiki emblématique des années 1940, fruité et complexe.",
+      "category": "Tropicaux",
+      "difficulty": "MEDIUM",
+      "prepTime": 7,
+      "ingredients": [
+        { "name": "Rhum ambré", "quantity": 4, "unit": "cl" },
+        { "name": "Rhum blanc", "quantity": 2, "unit": "cl" },
+        { "name": "Triple sec", "quantity": 1.5, "unit": "cl" },
+        { "name": "Jus de citron vert", "quantity": 2, "unit": "cl" },
+        { "name": "Sirop d'orgeat", "quantity": 1.5, "unit": "cl" }
+      ],
+      "steps": [
+        { "order": 1, "description": "Verser tous les ingrédients dans un shaker rempli de glace." },
+        { "order": 2, "description": "Shaker vigoureusement pendant 15 secondes." },
+        { "order": 3, "description": "Verser sans filtrer dans un verre rempli de glace concassée." },
+        { "order": 4, "description": "Garnir d'un brin de menthe, d'une tranche d'ananas et d'une cerise." }
+      ]
+    },
+    {
+      "name": "Cosmopolitan",
+      "imageUrl": "/uploads/cocktail_10.jpg",
+      "description": "Le cocktail rose iconique rendu célèbre par Sex and the City, fruité et légèrement acidulé.",
+      "category": "Classiques",
+      "difficulty": "MEDIUM",
+      "prepTime": 5,
+      "ingredients": [
+        { "name": "Vodka", "quantity": 4, "unit": "cl" },
+        { "name": "Triple sec", "quantity": 2, "unit": "cl" },
+        { "name": "Jus de canneberge", "quantity": 3, "unit": "cl" },
+        { "name": "Jus de citron vert", "quantity": 1.5, "unit": "cl" }
+      ],
+      "steps": [
+        { "order": 1, "description": "Remplir un shaker de glace." },
+        { "order": 2, "description": "Verser la vodka, le triple sec, le jus de canneberge et le jus de citron vert." },
+        { "order": 3, "description": "Shaker énergiquement pendant 15 secondes." },
+        { "order": 4, "description": "Double filtrer dans une coupe à martini et garnir d'un zeste de citron vert flambé." }
+      ]
+    }
+  ]
+}
