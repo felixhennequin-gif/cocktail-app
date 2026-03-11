@@ -1,0 +1,58 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Recipe {
+  id          Int                @id @default(autoincrement())
+  name        String
+  description String?
+  imageUrl    String?
+  difficulty  Difficulty
+  prepTime    Int                // en minutes
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  categoryId  Int
+  category    Category           @relation(fields: [categoryId], references: [id])
+  ingredients RecipeIngredient[]
+  steps       Step[]
+}
+
+model Category {
+  id      Int      @id @default(autoincrement())
+  name    String   @unique
+  recipes Recipe[]
+}
+
+model Ingredient {
+  id      Int                @id @default(autoincrement())
+  name    String             @unique
+  recipes RecipeIngredient[]
+}
+
+model RecipeIngredient {
+  id           Int        @id @default(autoincrement())
+  quantity     Float
+  unit         String
+  recipeId     Int
+  recipe       Recipe     @relation(fields: [recipeId], references: [id])
+  ingredientId Int
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id])
+}
+
+model Step {
+  id          Int    @id @default(autoincrement())
+  order       Int
+  description String
+  recipeId    Int
+  recipe      Recipe @relation(fields: [recipeId], references: [id])
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
