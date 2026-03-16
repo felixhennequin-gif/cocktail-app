@@ -25,6 +25,15 @@ app.use(cors());
 app.use(express.json());
 app.use(generalLimiter);
 
+// Compatibilité frontend production : /api/... → /...
+// Le proxy Vite retire /api en dev — Express le fait ici en prod
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/')) {
+    req.url = req.url.slice(4);
+  }
+  next();
+});
+
 // Static uploads
 const uploadsDir = path.join(__dirname, '..', 'uploads');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
@@ -84,6 +93,14 @@ app.use('/comments',   commentRoutes);
 app.use('/users',      userRoutes);
 app.use('/feed',           feedRoutes);
 app.use('/notifications',  notificationRoutes);
+
+// Frontend production — sert le build React si le dossier dist existe
+const frontendDist = path.join(__dirname, '..', '..', 'frontend', 'dist');
+if (fs.existsSync(frontendDist)) {
+  app.use(express.static(frontendDist));
+  // Catch-all pour React Router (SPA) — regex compatible Express 5
+  app.get(/.*/, (req, res) => res.sendFile(path.join(frontendDist, 'index.html')));
+}
 
 // Gestion des erreurs globale
 app.use((err, req, res, next) => {
