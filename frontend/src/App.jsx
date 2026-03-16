@@ -1,15 +1,18 @@
 import { Routes, Route, Link, useNavigate } from 'react-router-dom'
 import { useAuth } from './contexts/AuthContext'
-import RecipeList        from './pages/RecipeList'
-import RecipeDetail      from './pages/RecipeDetail'
-import Login             from './pages/Login'
-import Register          from './pages/Register'
-import Favorites         from './pages/Favorites'
-import UserProfile       from './pages/UserProfile'
-import RecipeSubmit      from './pages/RecipeSubmit'
-import AdminRecipeList   from './pages/admin/AdminRecipeList'
-import AdminRecipeForm   from './pages/admin/AdminRecipeForm'
-import AdminPendingList  from './pages/admin/AdminPendingList'
+import SearchBar        from './components/SearchBar'
+import NotificationBell from './components/NotificationBell'
+import RecipeList       from './pages/RecipeList'
+import RecipeDetail     from './pages/RecipeDetail'
+import Login            from './pages/Login'
+import Register         from './pages/Register'
+import Favorites        from './pages/Favorites'
+import Feed             from './pages/Feed'
+import UserProfile      from './pages/UserProfile'
+import RecipeSubmit     from './pages/RecipeSubmit'
+import AdminRecipeList  from './pages/admin/AdminRecipeList'
+import AdminRecipeForm  from './pages/admin/AdminRecipeForm'
+import AdminPendingList from './pages/admin/AdminPendingList'
 
 function Header() {
   const { user, logout } = useAuth()
@@ -21,20 +24,26 @@ function Header() {
   }
 
   return (
-    <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-      <Link to="/" className="text-xl font-bold text-gray-900 hover:text-amber-600 transition-colors">
+    <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center gap-6">
+      <Link to="/" className="text-xl font-bold text-gray-900 hover:text-amber-600 transition-colors shrink-0">
         🍹 Cocktails
       </Link>
 
-      <nav className="flex items-center gap-4 text-sm">
+      <SearchBar />
+
+      <nav className="flex items-center gap-4 text-sm ml-auto">
         {user ? (
           <>
+            <Link to="/feed" className="text-gray-500 hover:text-gray-800 transition-colors">
+              Fil
+            </Link>
             <Link to="/recipes/new" className="text-gray-500 hover:text-gray-800 transition-colors">
               + Proposer
             </Link>
             <Link to="/favorites" className="text-gray-500 hover:text-gray-800 transition-colors">
-              Mes favoris
+              Favoris
             </Link>
+            <NotificationBell />
             <Link to={`/users/${user.id}`} className="font-medium text-amber-600 hover:text-amber-800 transition-colors">
               {user.pseudo}
             </Link>
@@ -75,6 +84,7 @@ export default function App() {
       <main className="max-w-5xl mx-auto px-4 py-8">
         <Routes>
           <Route path="/"                        element={<RecipeList />} />
+          <Route path="/feed"                    element={<Feed />} />
           <Route path="/recipes/new"             element={<RecipeSubmit />} />
           <Route path="/recipes/:id"             element={<RecipeDetail />} />
           <Route path="/login"                   element={<Login />} />

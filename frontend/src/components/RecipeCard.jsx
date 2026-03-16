@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 
 const PLACEHOLDER = 'https://placehold.co/400x300?text=Cocktail'
@@ -31,11 +31,18 @@ function Stars({ value, count }) {
 
 export default function RecipeCard({ recipe, isFavorited, onToggleFavorite }) {
   const { user } = useAuth()
+  const navigate = useNavigate()
 
   const handleFavorite = (e) => {
     e.preventDefault()
     e.stopPropagation()
     if (onToggleFavorite) onToggleFavorite(recipe.id)
+  }
+
+  const handleAuthorClick = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    navigate(`/users/${recipe.author.id}`)
   }
 
   return (
@@ -73,6 +80,14 @@ export default function RecipeCard({ recipe, isFavorited, onToggleFavorite }) {
           {recipe.category && <span>📂 {recipe.category.name}</span>}
           {recipe.avgRating !== null && recipe.avgRating !== undefined && (
             <Stars value={recipe.avgRating} count={recipe.ratingsCount} />
+          )}
+          {recipe.author && (
+            <button
+              onClick={handleAuthorClick}
+              className="text-amber-600 hover:underline ml-auto"
+            >
+              {recipe.author.pseudo}
+            </button>
           )}
         </div>
       </div>

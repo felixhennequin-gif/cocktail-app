@@ -4,6 +4,8 @@ const cors = require('cors');
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
+const { generalLimiter, authLimiter } = require('./rateLimiter');
+const { requireAuth } = require('./middleware/auth');
 
 const recipeRoutes   = require('./routes/recipe-routes');
 const categoryRoutes = require('./routes/category-routes');
@@ -12,6 +14,8 @@ const favoriteRoutes = require('./routes/favorite-routes');
 const ratingRoutes   = require('./routes/rating-routes');
 const commentRoutes  = require('./routes/comment-routes');
 const userRoutes     = require('./routes/user-routes');
+const feedRoutes         = require('./routes/feed-routes');
+const notificationRoutes = require('./routes/notification-routes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -19,13 +23,19 @@ const PORT = process.env.PORT || 3000;
 // Middlewares
 app.use(cors());
 app.use(express.json());
+app.use(generalLimiter);
 
 // Static uploads
 const uploadsDir = path.join(__dirname, '..', 'uploads');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 app.use('/uploads', express.static(uploadsDir));
 
-// Multer config
+const imageFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith('image/')) cb(null, true);
+  else cb(new Error('Fichier non autorisé : images uniquement'));
+};
+
+// Multer config — upload recette principale
 const storage = multer.diskStorage({
   destination: uploadsDir,
   filename: (req, file, cb) => {
@@ -33,14 +43,22 @@ const storage = multer.diskStorage({
     cb(null, `${Date.now()}-${Math.round(Math.random() * 1e6)}${ext}`);
   },
 });
-const upload = multer({
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 },
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) cb(null, true);
-    else cb(new Error('Fichier non autorisé : images uniquement'));
+const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 }, fileFilter: imageFilter });
+
+// Multer config — upload image d'étape (sous-dossier recipes/{recipeId}/steps/)
+const stepStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const recipeId = req.params.recipeId;
+    const dir = path.join(uploadsDir, 'recipes', recipeId, 'steps');
+    fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, `${Date.now()}-${Math.round(Math.random() * 1e6)}${ext}`);
   },
 });
+const uploadStep = multer({ storage: stepStorage, limits: { fileSize: 5 * 1024 * 1024 }, fileFilter: imageFilter });
 
 // Routes
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
@@ -48,13 +66,24 @@ app.post('/upload', upload.single('image'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Aucun fichier reçu' });
   res.json({ url: `/uploads/${req.file.filename}` });
 });
-app.use('/auth',       authRoutes);
+// Upload image d'étape — stockée dans uploads/recipes/{recipeId}/steps/
+app.post('/upload/step/:recipeId', requireAuth, uploadStep.single('image'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'Aucun fichier reçu' });
+  const recipeId = req.params.recipeId;
+  const rel = `/uploads/recipes/${recipeId}/steps/${req.file.filename}`;
+  res.json({ url: rel });
+});
+app.use('/auth/login',    authLimiter);
+app.use('/auth/register', authLimiter);
+app.use('/auth',          authRoutes);
 app.use('/recipes',    recipeRoutes);
 app.use('/categories', categoryRoutes);
 app.use('/favorites',  favoriteRoutes);
 app.use('/ratings',    ratingRoutes);
 app.use('/comments',   commentRoutes);
 app.use('/users',      userRoutes);
+app.use('/feed',           feedRoutes);
+app.use('/notifications',  notificationRoutes);
 
 // Gestion des erreurs globale
 app.use((err, req, res, next) => {
@@ -65,7 +94,11 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Erreur interne du serveur' });
 });
 
-// Démarrage du serveur
-app.listen(PORT, () => {
-  console.log(`Serveur démarré sur le port ${PORT}`);
-});
+// Démarrage du serveur (uniquement si exécuté directement, pas via require)
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Serveur démarré sur le port ${PORT}`);
+  });
+}
+
+module.exports = app;
