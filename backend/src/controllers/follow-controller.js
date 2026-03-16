@@ -1,4 +1,5 @@
 const prisma = require('../prisma');
+const { createNotification } = require('../services/notification-service');
 
 // POST /users/:id/follow — JWT requis
 const followUser = async (req, res) => {
@@ -12,6 +13,11 @@ const followUser = async (req, res) => {
   const target = await prisma.user.findUnique({ where: { id: targetId } });
   if (!target) return res.status(404).json({ error: 'Utilisateur introuvable' });
 
+  // Vérifier si la relation existait déjà (pour éviter une notif en double)
+  const alreadyFollowing = await prisma.follow.findUnique({
+    where: { followerId_followingId: { followerId: userId, followingId: targetId } },
+  });
+
   // Idempotent : pas d'erreur si déjà suivi
   await prisma.follow.upsert({
     where: { followerId_followingId: { followerId: userId, followingId: targetId } },
@@ -20,6 +26,18 @@ const followUser = async (req, res) => {
   });
 
   res.json({ following: true });
+
+  // Notifier l'utilisateur suivi — fire and forget, seulement si nouveau follow
+  if (!alreadyFollowing) {
+    createNotification({
+      userId: targetId,
+      type:   'NEW_FOLLOWER',
+      data: {
+        followerId:     userId,
+        followerPseudo: req.user.pseudo,
+      },
+    }).catch(console.error);
+  }
 };
 
 // DELETE /users/:id/follow — JWT requis

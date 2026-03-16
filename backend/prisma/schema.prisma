@@ -146,6 +146,7 @@ enum NotificationType {
   NEW_RECIPE
   COMMENT_ON_RECIPE
   RECIPE_APPROVED
+  NEW_FOLLOWER
 }
 
 enum Difficulty {

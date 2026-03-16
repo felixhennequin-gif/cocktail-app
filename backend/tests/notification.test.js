@@ -169,12 +169,30 @@ describe('Création automatique de notifications', () => {
     expect(notif.data.recipeId).toBe(recipe.id);
   });
 
-  // Note : le follow-controller ne crée pas de notification (non implémenté)
-  // Ce test documente le comportement actuel
-  it('ne crée PAS de notification lors d\'un follow (non implémenté)', async () => {
+  it('crée une notification NEW_FOLLOWER lors d\'un follow', async () => {
+    // Bob suit Alice → Alice doit recevoir une notification
     await request(app)
       .post(`/users/${alice.id}/follow`)
       .set(getAuthHeader(bobToken));
+
+    // Petite attente pour le fire-and-forget
+    await new Promise((r) => setTimeout(r, 100));
+
+    const res = await request(app)
+      .get('/notifications')
+      .set(getAuthHeader(aliceToken));
+
+    expect(res.status).toBe(200);
+    const notif = res.body.data.find((n) => n.type === 'NEW_FOLLOWER');
+    expect(notif).toBeDefined();
+    expect(notif.data.followerId).toBe(bob.id);
+    expect(notif.data.followerPseudo).toBe('bob');
+  });
+
+  it('ne crée PAS de notification en double si déjà suivi (idempotent)', async () => {
+    // Bob suit Alice deux fois
+    await request(app).post(`/users/${alice.id}/follow`).set(getAuthHeader(bobToken));
+    await request(app).post(`/users/${alice.id}/follow`).set(getAuthHeader(bobToken));
 
     await new Promise((r) => setTimeout(r, 100));
 
@@ -182,8 +200,7 @@ describe('Création automatique de notifications', () => {
       .get('/notifications')
       .set(getAuthHeader(aliceToken));
 
-    // Aucune notification de type FOLLOW attendue
-    const followNotif = res.body.data?.find((n) => n.type === 'FOLLOW');
-    expect(followNotif).toBeUndefined();
+    const followNotifs = res.body.data.filter((n) => n.type === 'NEW_FOLLOWER');
+    expect(followNotifs).toHaveLength(1);
   });
 });
