@@ -4,16 +4,32 @@ import { useAuth } from '../../contexts/AuthContext'
 
 const difficultyLabel = { EASY: 'Facile', MEDIUM: 'Moyen', HARD: 'Difficile' }
 
+const STATUS_FILTERS = [
+  { key: null,        label: 'Tous' },
+  { key: 'PUBLISHED', label: 'Publiés' },
+  { key: 'DRAFT',     label: 'Brouillons' },
+  { key: 'PENDING',   label: 'En attente' },
+]
+
+const statusBadge = {
+  PUBLISHED: 'bg-green-100 text-green-700',
+  DRAFT:     'bg-gray-100 text-gray-500',
+  PENDING:   'bg-amber-100 text-amber-700',
+}
+const statusLabel = { PUBLISHED: 'Publié', DRAFT: 'Brouillon', PENDING: 'En attente' }
+
 export default function AdminRecipeList() {
   const { user, authFetch } = useAuth()
-  const [recipes, setRecipes] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError]     = useState(null)
+  const [recipes, setRecipes]           = useState([])
+  const [loading, setLoading]           = useState(true)
+  const [error, setError]               = useState(null)
+  const [statusFilter, setStatusFilter] = useState(null)
   const navigate = useNavigate()
 
-  const fetchRecipes = () => {
+  const fetchRecipes = (filter) => {
     setLoading(true)
-    authFetch('/api/recipes?limit=100')
+    const qs = filter ? `?limit=100&status=${filter}` : '?limit=100'
+    authFetch(`/api/recipes${qs}`)
       .then((res) => {
         if (!res.ok) throw new Error('Erreur de chargement')
         return res.json()
@@ -25,14 +41,14 @@ export default function AdminRecipeList() {
 
   useEffect(() => {
     if (!user || user.role !== 'ADMIN') { navigate('/'); return }
-    fetchRecipes()
-  }, [user]) // eslint-disable-line react-hooks/exhaustive-deps
+    fetchRecipes(statusFilter)
+  }, [user, statusFilter]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleDelete = async (id, name) => {
     if (!window.confirm(`Supprimer la recette "${name}" ? Cette action est irréversible.`)) return
     const res = await authFetch(`/api/recipes/${id}`, { method: 'DELETE' })
     if (res.ok || res.status === 204) {
-      fetchRecipes()
+      fetchRecipes(statusFilter)
     } else {
       alert('Erreur lors de la suppression.')
     }
@@ -55,6 +71,23 @@ export default function AdminRecipeList() {
         </Link>
       </div>
 
+      {/* Filtres rapides */}
+      <div className="flex gap-1 mb-4">
+        {STATUS_FILTERS.map(({ key, label }) => (
+          <button
+            key={String(key)}
+            onClick={() => setStatusFilter(key)}
+            className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+              statusFilter === key
+                ? 'bg-amber-500 text-white'
+                : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-300'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
       {loading && <p className="text-gray-400 py-8 text-center">Chargement...</p>}
       {error   && <p className="text-red-500 py-8 text-center">{error}</p>}
 
@@ -64,6 +97,7 @@ export default function AdminRecipeList() {
             <thead className="bg-gray-100 border-b-2 border-gray-200">
               <tr>
                 <th className="text-left px-4 py-3 font-semibold text-gray-600 w-2/5">Nom</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600">Statut</th>
                 <th className="text-left px-4 py-3 font-semibold text-gray-600">Catégorie</th>
                 <th className="text-left px-4 py-3 font-semibold text-gray-600">Difficulté</th>
                 <th className="text-left px-4 py-3 font-semibold text-gray-600">Créée le</th>
@@ -74,7 +108,7 @@ export default function AdminRecipeList() {
             <tbody>
               {recipes.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="text-center text-gray-400 py-8">Aucune recette.</td>
+                  <td colSpan={7} className="text-center text-gray-400 py-8">Aucune recette.</td>
                 </tr>
               )}
               {recipes.map((recipe, i) => (
@@ -83,6 +117,11 @@ export default function AdminRecipeList() {
                   className={`border-b border-gray-100 ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50 transition-colors`}
                 >
                   <td className="px-4 py-3 font-medium text-gray-900">{recipe.name}</td>
+                  <td className="px-4 py-3">
+                    <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${statusBadge[recipe.status]}`}>
+                      {statusLabel[recipe.status]}
+                    </span>
+                  </td>
                   <td className="px-4 py-3 text-gray-500">{recipe.category?.name}</td>
                   <td className="px-4 py-3 text-gray-500">{difficultyLabel[recipe.difficulty]}</td>
                   <td className="px-4 py-3 text-gray-400">

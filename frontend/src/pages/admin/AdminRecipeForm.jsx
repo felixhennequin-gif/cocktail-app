@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 
+const API_BASE = 'http://192.168.1.85:3000'
+
 const EMPTY_INGREDIENT = { name: '', quantity: '', unit: '' }
-const EMPTY_STEP       = { description: '' }
+const EMPTY_STEP       = { description: '', imageUrl: '', preview: '' }
 
 const defaultForm = {
   name: '',
@@ -11,7 +13,15 @@ const defaultForm = {
   categoryId: '',
   difficulty: 'EASY',
   prepTime: '',
+  servings: '',
   imageUrl: '',
+  status: 'PUBLISHED',
+}
+
+const resolvePreview = (url) => {
+  if (!url) return ''
+  if (url.startsWith('/uploads/')) return `${API_BASE}${url}`
+  return url
 }
 
 export default function AdminRecipeForm() {
@@ -29,6 +39,8 @@ export default function AdminRecipeForm() {
   const [error, setError]             = useState(null)
   const [uploading, setUploading]     = useState(false)
   const [preview, setPreview]         = useState(null)
+  // Ensemble des indices d'étapes en cours d'upload
+  const [uploadingSteps, setUploadingSteps] = useState(new Set())
 
   useEffect(() => {
     if (!user || user.role !== 'ADMIN') { navigate('/'); return }
@@ -56,14 +68,12 @@ export default function AdminRecipeForm() {
           categoryId:  String(recipe.categoryId),
           difficulty:  recipe.difficulty,
           prepTime:    String(recipe.prepTime),
+          servings:    recipe.servings ? String(recipe.servings) : '',
           imageUrl:    recipe.imageUrl || '',
+          status:      recipe.status ?? 'PUBLISHED',
         })
         if (recipe.imageUrl) {
-          setPreview(
-            recipe.imageUrl.startsWith('/uploads/')
-              ? `http://192.168.1.85:3000${recipe.imageUrl}`
-              : recipe.imageUrl
-          )
+          setPreview(resolvePreview(recipe.imageUrl))
         }
         setIngredients(
           recipe.ingredients.length > 0
@@ -76,7 +86,11 @@ export default function AdminRecipeForm() {
         )
         setSteps(
           recipe.steps.length > 0
-            ? recipe.steps.map((s) => ({ description: s.description }))
+            ? recipe.steps.map((s) => ({
+                description: s.description,
+                imageUrl:    s.imageUrl || '',
+                preview:     resolvePreview(s.imageUrl),
+              }))
             : [{ ...EMPTY_STEP }]
         )
       })
@@ -99,11 +113,34 @@ export default function AdminRecipeForm() {
       if (!res.ok) throw new Error('Erreur upload')
       const data = await res.json()
       setForm((f) => ({ ...f, imageUrl: data.url }))
-      setPreview(`http://192.168.1.85:3000${data.url}`)
+      setPreview(`${API_BASE}${data.url}`)
     } catch (err) {
       setError(err.message)
     } finally {
       setUploading(false)
+    }
+  }
+
+  // Upload image d'une étape spécifique
+  const handleStepImageFile = async (index, e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    // recipeId connu en édition, "tmp" pour les nouvelles recettes
+    const recipeIdParam = isEdit ? id : 'tmp'
+    setUploadingSteps((prev) => new Set(prev).add(index))
+    const formData = new FormData()
+    formData.append('image', file)
+    try {
+      const res = await authFetch(`/api/upload/step/${recipeIdParam}`, { method: 'POST', body: formData })
+      if (!res.ok) throw new Error('Erreur upload image étape')
+      const data = await res.json()
+      setSteps((list) => list.map((s, i) =>
+        i === index ? { ...s, imageUrl: data.url, preview: `${API_BASE}${data.url}` } : s
+      ))
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setUploadingSteps((prev) => { const next = new Set(prev); next.delete(index); return next })
     }
   }
 
@@ -113,8 +150,8 @@ export default function AdminRecipeForm() {
   const addIngredient    = () => setIngredients((l) => [...l, { ...EMPTY_INGREDIENT }])
   const removeIngredient = (index) => setIngredients((l) => l.filter((_, i) => i !== index))
 
-  const updateStep = (index, value) => {
-    setSteps((list) => list.map((s, i) => i === index ? { description: value } : s))
+  const updateStep = (index, field, value) => {
+    setSteps((list) => list.map((s, i) => i === index ? { ...s, [field]: value } : s))
   }
   const addStep    = () => setSteps((l) => [...l, { ...EMPTY_STEP }])
   const removeStep = (index) => setSteps((l) => l.filter((_, i) => i !== index))
@@ -128,12 +165,17 @@ export default function AdminRecipeForm() {
       ...form,
       categoryId: parseInt(form.categoryId),
       prepTime:   parseInt(form.prepTime),
+      servings:   form.servings ? parseInt(form.servings) : null,
       ingredients: ingredients
         .filter((i) => i.name.trim())
         .map((i) => ({ name: i.name.trim(), quantity: parseFloat(i.quantity), unit: i.unit })),
       steps: steps
         .filter((s) => s.description.trim())
-        .map((s, idx) => ({ order: idx + 1, description: s.description.trim() })),
+        .map((s, idx) => ({
+          order:       idx + 1,
+          description: s.description.trim(),
+          ...(s.imageUrl ? { imageUrl: s.imageUrl } : {}),
+        })),
     }
 
     const url    = isEdit ? `/api/recipes/${id}` : '/api/recipes'
@@ -198,7 +240,7 @@ export default function AdminRecipeForm() {
             />
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Catégorie *</label>
               <select
@@ -228,6 +270,15 @@ export default function AdminRecipeForm() {
               <label className="block text-sm font-medium text-gray-700 mb-1">Temps (min) *</label>
               <input
                 name="prepTime" type="number" min="1" value={form.prepTime} onChange={handleField} required
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Verres / portions</label>
+              <input
+                name="servings" type="number" min="1" value={form.servings} onChange={handleField}
+                placeholder="ex : 2"
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
               />
             </div>
@@ -300,17 +351,46 @@ export default function AdminRecipeForm() {
         <section className="bg-white rounded-xl border border-gray-200 p-5">
           <h2 className="font-semibold text-gray-800 mb-4">Étapes</h2>
 
-          <div className="space-y-2">
+          <div className="space-y-4">
             {steps.map((step, i) => (
               <div key={i} className="flex gap-3 items-start">
                 <span className="shrink-0 w-6 h-6 mt-2 rounded-full bg-amber-100 text-amber-700 text-xs font-bold flex items-center justify-center">
                   {i + 1}
                 </span>
-                <textarea
-                  placeholder={`Étape ${i + 1}`} value={step.description} rows={2}
-                  onChange={(e) => updateStep(i, e.target.value)}
-                  className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none"
-                />
+                <div className="flex-1 space-y-2">
+                  <textarea
+                    placeholder={`Étape ${i + 1}`} value={step.description} rows={2}
+                    onChange={(e) => updateStep(i, 'description', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none"
+                  />
+                  {/* Image de l'étape */}
+                  <div className="flex items-center gap-3">
+                    <label className="inline-flex items-center gap-1.5 cursor-pointer text-xs text-gray-400 hover:text-amber-600 font-medium transition-colors">
+                      <input
+                        type="file" accept="image/*"
+                        onChange={(e) => handleStepImageFile(i, e)}
+                        className="hidden"
+                      />
+                      {uploadingSteps.has(i) ? 'Upload...' : '📷 Image'}
+                    </label>
+                    {step.imageUrl && (
+                      <>
+                        <img
+                          src={step.preview || resolvePreview(step.imageUrl)}
+                          alt={`Étape ${i + 1}`}
+                          className="w-16 h-12 object-cover rounded border border-gray-200"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => updateStep(i, 'imageUrl', '') || updateStep(i, 'preview', '')}
+                          className="text-xs text-gray-300 hover:text-red-500"
+                        >
+                          ✕
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
                 <button
                   type="button" onClick={() => removeStep(i)}
                   disabled={steps.length === 1}
@@ -330,10 +410,47 @@ export default function AdminRecipeForm() {
           </button>
         </section>
 
+        {/* Statut de publication */}
+        <section className="bg-white rounded-xl border border-gray-200 p-5">
+          <h2 className="font-semibold text-gray-800 mb-3">Publication</h2>
+          <label className="flex items-center gap-3 cursor-pointer select-none w-fit">
+            <div className="relative">
+              <input
+                type="checkbox"
+                className="sr-only"
+                checked={form.status === 'PUBLISHED'}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, status: e.target.checked ? 'PUBLISHED' : 'DRAFT' }))
+                }
+              />
+              <div
+                className={`w-10 h-6 rounded-full transition-colors ${
+                  form.status === 'PUBLISHED' ? 'bg-green-500' : 'bg-gray-300'
+                }`}
+              />
+              <div
+                className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+                  form.status === 'PUBLISHED' ? 'translate-x-5' : 'translate-x-1'
+                }`}
+              />
+            </div>
+            <div>
+              <span className="text-sm font-medium text-gray-700">
+                {form.status === 'PUBLISHED' ? 'Publier immédiatement' : 'Sauvegarder en brouillon'}
+              </span>
+              <p className="text-xs text-gray-400 mt-0.5">
+                {form.status === 'PUBLISHED'
+                  ? 'La recette sera visible par tous les visiteurs.'
+                  : 'La recette ne sera visible que par les admins.'}
+              </p>
+            </div>
+          </label>
+        </section>
+
         {/* Actions */}
         <div className="flex gap-3">
           <button
-            type="submit" disabled={saving || uploading}
+            type="submit" disabled={saving || uploading || uploadingSteps.size > 0}
             className="px-6 py-2.5 bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-600 disabled:opacity-60 transition-colors"
           >
             {saving ? 'Enregistrement...' : 'Enregistrer'}

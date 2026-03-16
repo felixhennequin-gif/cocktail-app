@@ -1,26 +1,34 @@
 const prisma = require('../prisma');
 
-// GET /users/:id — profil public
+// GET /users/:id — profil public (optionalAuth pour isFollowing)
 const getUserProfile = async (req, res) => {
-  const id = parseInt(req.params.id);
+  const id            = parseInt(req.params.id);
+  const currentUserId = req.user?.id ?? null;
 
-  const user = await prisma.user.findUnique({
-    where: { id },
-    select: {
-      id: true,
-      pseudo: true,
-      avatar: true,
-      createdAt: true,
-      recipes: {
-        where: { status: 'PUBLISHED' },
-        include: {
-          category: true,
-          ratings: { select: { score: true } },
+  const [user, followersCount, followingCount, followRow] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        pseudo: true,
+        avatar: true,
+        createdAt: true,
+        recipes: {
+          where: { status: 'PUBLISHED' },
+          include: {
+            category: true,
+            ratings: { select: { score: true } },
+          },
+          orderBy: { createdAt: 'desc' },
         },
-        orderBy: { createdAt: 'desc' },
       },
-    },
-  });
+    }),
+    prisma.follow.count({ where: { followingId: id } }),
+    prisma.follow.count({ where: { followerId:  id } }),
+    currentUserId
+      ? prisma.follow.findFirst({ where: { followerId: currentUserId, followingId: id } })
+      : null,
+  ]);
 
   if (!user) return res.status(404).json({ error: 'Utilisateur introuvable' });
 
@@ -32,7 +40,45 @@ const getUserProfile = async (req, res) => {
     return { ...rest, avgRating, ratingsCount: ratings.length };
   });
 
-  res.json({ ...user, recipes });
+  res.json({ ...user, recipes, followersCount, followingCount, isFollowing: !!followRow });
 };
 
-module.exports = { getUserProfile };
+// GET /users/:id/recipes?page=1&limit=20
+const getUserRecipes = async (req, res) => {
+  const id    = parseInt(req.params.id);
+  const page  = Math.max(1, parseInt(req.query.page)  || 1);
+  const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 20));
+
+  const user = await prisma.user.findUnique({
+    where: { id },
+    select: { id: true, pseudo: true, avatar: true },
+  });
+  if (!user) return res.status(404).json({ error: 'Utilisateur introuvable' });
+
+  const where = { authorId: id, status: 'PUBLISHED' };
+  const [recipes, total] = await Promise.all([
+    prisma.recipe.findMany({
+      where,
+      include: {
+        category: true,
+        ratings: { select: { score: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+      skip: (page - 1) * limit,
+      take: limit,
+    }),
+    prisma.recipe.count({ where }),
+  ]);
+
+  const data = recipes.map(({ ratings, ...rest }) => {
+    const avgRating =
+      ratings.length > 0
+        ? Math.round((ratings.reduce((s, r) => s + r.score, 0) / ratings.length) * 10) / 10
+        : null;
+    return { ...rest, avgRating, ratingsCount: ratings.length };
+  });
+
+  res.json({ user, recipes: { data, total, page, limit } });
+};
+
+module.exports = { getUserProfile, getUserRecipes };

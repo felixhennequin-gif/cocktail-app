@@ -1,51 +1,164 @@
 const prisma = require('../prisma');
+const { createNotification } = require('../services/notification-service');
 
-// GET /comments/:recipeId
+// GET /comments/:recipeId — optionalAuth pour exposer myComment + avgRating
 const getComments = async (req, res) => {
   const recipeId = parseInt(req.params.recipeId);
 
-  const comments = await prisma.comment.findMany({
-    where: { recipeId },
-    include: {
-      user: { select: { id: true, pseudo: true, avatar: true } },
-    },
-    orderBy: { createdAt: 'desc' },
-  });
+  const [comments, ratingAgg] = await Promise.all([
+    prisma.comment.findMany({
+      where: { recipeId },
+      include: {
+        user: { select: { id: true, pseudo: true, avatar: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    }),
+    prisma.rating.aggregate({
+      where: { recipeId },
+      _avg:   { score: true },
+      _count: { score: true },
+    }),
+  ]);
 
-  res.json(comments);
+  const avgRating    = ratingAgg._avg.score !== null
+    ? Math.round(ratingAgg._avg.score * 10) / 10
+    : null;
+  const ratingsCount = ratingAgg._count.score;
+
+  const myComment = req.user
+    ? comments.find((c) => c.userId === req.user.id) ?? null
+    : null;
+
+  res.json({ comments, myComment, avgRating, ratingsCount });
 };
 
 // POST /comments/:recipeId — auth requise
+// body: { content, score (1-5, obligatoire) }
 const createComment = async (req, res) => {
   const userId   = req.user.id;
   const recipeId = parseInt(req.params.recipeId);
-  const { content } = req.body;
+  const { content, score } = req.body;
 
   if (!content || !content.trim()) {
     return res.status(400).json({ error: 'Le commentaire ne peut pas être vide' });
   }
 
+  const scoreInt = parseInt(score);
+  if (!score || isNaN(scoreInt) || scoreInt < 1 || scoreInt > 5) {
+    return res.status(400).json({ error: 'Une note entre 1 et 5 est obligatoire' });
+  }
+
   const recipe = await prisma.recipe.findUnique({ where: { id: recipeId } });
   if (!recipe) return res.status(404).json({ error: 'Recette introuvable' });
 
-  const comment = await prisma.comment.create({
-    data: { content: content.trim(), userId, recipeId },
-    include: {
-      user: { select: { id: true, pseudo: true, avatar: true } },
-    },
+  if (recipe.authorId === userId) {
+    return res.status(403).json({ error: 'Vous ne pouvez pas commenter votre propre recette' });
+  }
+
+  const existing = await prisma.comment.findUnique({
+    where: { userId_recipeId: { userId, recipeId } },
+  });
+  if (existing) {
+    return res.status(409).json({ error: 'Vous avez déjà commenté cette recette', commentId: existing.id });
+  }
+
+  // Créer le commentaire et upsert la note dans une transaction
+  const comment = await prisma.$transaction(async (tx) => {
+    const created = await tx.comment.create({
+      data: { content: content.trim(), userId, recipeId },
+      include: {
+        user: { select: { id: true, pseudo: true, avatar: true } },
+      },
+    });
+
+    await tx.rating.upsert({
+      where:  { userId_recipeId: { userId, recipeId } },
+      create: { userId, recipeId, score: scoreInt },
+      update: { score: scoreInt },
+    });
+
+    return created;
   });
 
   res.status(201).json(comment);
+
+  // Notifier l'auteur de la recette — fire and forget
+  if (recipe.authorId && recipe.authorId !== userId) {
+    createNotification({
+      userId: recipe.authorId,
+      type:   'COMMENT_ON_RECIPE',
+      data: {
+        recipeId,
+        recipeName:      recipe.name,
+        commenterId:     userId,
+        commenterPseudo: comment.user.pseudo,
+        commentPreview:  content.trim().slice(0, 50),
+      },
+    }).catch(console.error);
+  }
 };
 
-// DELETE /comments/:id — auteur ou admin
-const deleteComment = async (req, res) => {
+// PUT /comments/:id — auteur uniquement
+// body: { content, score? (1-5, optionnel) }
+const updateComment = async (req, res) => {
   const id = parseInt(req.params.id);
+  const { content, score } = req.body;
+
+  if (!content || !content.trim()) {
+    return res.status(400).json({ error: 'Le commentaire ne peut pas être vide' });
+  }
 
   const comment = await prisma.comment.findUnique({ where: { id } });
   if (!comment) return res.status(404).json({ error: 'Commentaire introuvable' });
 
-  if (req.user.role !== 'ADMIN' && comment.userId !== req.user.id) {
+  if (comment.userId !== req.user.id) {
+    return res.status(403).json({ error: 'Non autorisé' });
+  }
+
+  let scoreInt = null;
+  if (score !== undefined && score !== null && score !== '') {
+    scoreInt = parseInt(score);
+    if (isNaN(scoreInt) || scoreInt < 1 || scoreInt > 5) {
+      return res.status(400).json({ error: 'Le score doit être compris entre 1 et 5' });
+    }
+  }
+
+  const updated = await prisma.$transaction(async (tx) => {
+    const result = await tx.comment.update({
+      where: { id },
+      data:  { content: content.trim() },
+      include: { user: { select: { id: true, pseudo: true, avatar: true } } },
+    });
+
+    if (scoreInt !== null) {
+      await tx.rating.upsert({
+        where:  { userId_recipeId: { userId: comment.userId, recipeId: comment.recipeId } },
+        create: { userId: comment.userId, recipeId: comment.recipeId, score: scoreInt },
+        update: { score: scoreInt },
+      });
+    }
+
+    return result;
+  });
+
+  res.json(updated);
+};
+
+// DELETE /comments/:id — auteur du commentaire, auteur de la recette ou admin
+const deleteComment = async (req, res) => {
+  const id = parseInt(req.params.id);
+
+  const comment = await prisma.comment.findUnique({
+    where: { id },
+    include: { recipe: { select: { authorId: true } } },
+  });
+  if (!comment) return res.status(404).json({ error: 'Commentaire introuvable' });
+
+  const isAdmin        = req.user.role === 'ADMIN';
+  const isCommentAuthor = comment.userId === req.user.id;
+  const isRecipeAuthor  = comment.recipe.authorId === req.user.id;
+
+  if (!isAdmin && !isCommentAuthor && !isRecipeAuthor) {
     return res.status(403).json({ error: 'Non autorisé' });
   }
 
@@ -53,4 +166,4 @@ const deleteComment = async (req, res) => {
   res.status(204).send();
 };
 
-module.exports = { getComments, createComment, deleteComment };
+module.exports = { getComments, createComment, updateComment, deleteComment };

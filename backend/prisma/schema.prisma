@@ -13,11 +13,16 @@ model User {
   passwordHash String
   role         Role      @default(USER)
   avatar       String?
+  bio          String?
   createdAt    DateTime  @default(now())
   recipes      Recipe[]
   favorites    Favorite[]
   ratings      Rating[]
   comments     Comment[]
+  // follow : gens que cet user suit / gens qui suivent cet user
+  following      Follow[]       @relation("Followers")
+  followers      Follow[]       @relation("Following")
+  notifications  Notification[]
 }
 
 model Recipe {
@@ -27,6 +32,7 @@ model Recipe {
   imageUrl    String?
   difficulty  Difficulty
   prepTime    Int                // en minutes
+  servings    Int?               // nombre de verres/portions
   status      RecipeStatus       @default(PUBLISHED)
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
@@ -36,9 +42,10 @@ model Recipe {
   author      User?              @relation(fields: [authorId], references: [id])
   ingredients RecipeIngredient[]
   steps       Step[]
-  favorites   Favorite[]
-  ratings     Rating[]
-  comments    Comment[]
+  favorites     Favorite[]
+  ratings       Rating[]
+  comments      Comment[]
+  searchVector  Unsupported("tsvector")?
 }
 
 model Category {
@@ -64,11 +71,12 @@ model RecipeIngredient {
 }
 
 model Step {
-  id          Int    @id @default(autoincrement())
+  id          Int     @id @default(autoincrement())
   order       Int
   description String
+  imageUrl    String?
   recipeId    Int
-  recipe      Recipe @relation(fields: [recipeId], references: [id])
+  recipe      Recipe  @relation(fields: [recipeId], references: [id])
 }
 
 model Favorite {
@@ -97,10 +105,48 @@ model Comment {
   id        Int      @id @default(autoincrement())
   content   String
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   userId    Int
   recipeId  Int
   user      User     @relation(fields: [userId], references: [id])
   recipe    Recipe   @relation(fields: [recipeId], references: [id])
+
+  @@unique([userId, recipeId])
+}
+
+model Follow {
+  id          Int      @id @default(autoincrement())
+  followerId  Int
+  followingId Int
+  createdAt   DateTime @default(now())
+  // followerId est le "follower" (user qui suit)
+  follower    User     @relation("Followers", fields: [followerId], references: [id])
+  // followingId est le "following" (user suivi)
+  following   User     @relation("Following", fields: [followingId], references: [id])
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+}
+
+model Notification {
+  id        Int              @id @default(autoincrement())
+  userId    Int
+  type      NotificationType
+  data      Json
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+  @@index([userId, createdAt])
+}
+
+enum NotificationType {
+  NEW_RECIPE
+  COMMENT_ON_RECIPE
+  RECIPE_APPROVED
+  NEW_FOLLOWER
 }
 
 enum Difficulty {
@@ -117,4 +163,5 @@ enum Role {
 enum RecipeStatus {
   PUBLISHED
   PENDING
+  DRAFT
 }

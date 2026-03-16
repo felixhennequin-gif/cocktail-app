@@ -1,34 +1,125 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import RecipeCard from '../components/RecipeCard'
+import FollowButton from '../components/FollowButton'
 import { useAuth } from '../contexts/AuthContext'
 
+const LIMIT = 20
+
+// Mini-carte d'un utilisateur dans les listes abonnés/abonnements
+function UserCard({ person }) {
+  return (
+    <div className="flex items-center gap-3 px-4 py-3 bg-white rounded-xl border border-gray-200">
+      <Link to={`/users/${person.id}`} className="shrink-0">
+        {person.avatar ? (
+          <img
+            src={person.avatar}
+            alt={person.pseudo}
+            className="w-10 h-10 rounded-full object-cover bg-gray-100"
+          />
+        ) : (
+          <div className="w-10 h-10 rounded-full bg-amber-100 text-amber-600 text-base font-bold flex items-center justify-center">
+            {person.pseudo[0].toUpperCase()}
+          </div>
+        )}
+      </Link>
+      <Link
+        to={`/users/${person.id}`}
+        className="flex-1 text-sm font-medium text-gray-800 hover:text-amber-600 transition-colors"
+      >
+        {person.pseudo}
+      </Link>
+      <FollowButton
+        targetUserId={person.id}
+        initialIsFollowing={person.isFollowing}
+      />
+    </div>
+  )
+}
+
 export default function UserProfile() {
-  const { id }          = useParams()
+  const { id }              = useParams()
   const { user, authFetch } = useAuth()
 
-  const [profile, setProfile]         = useState(null)
-  const [favoriteIds, setFavoriteIds] = useState(new Set())
-  const [loading, setLoading]         = useState(true)
-  const [error, setError]             = useState(null)
+  const [profile, setProfile]     = useState(null)
+  const [activeTab, setActiveTab] = useState('recipes')
 
+  // Recettes
+  const [recipes, setRecipes]         = useState([])
+  const [total, setTotal]             = useState(0)
+  const [page, setPage]               = useState(1)
+  const [recipesLoading, setRecipesLoading] = useState(false)
+  const [favoriteIds, setFavoriteIds] = useState(new Set())
+
+  // Abonnés
+  const [followers, setFollowers]           = useState([])
+  const [followersTotal, setFollowersTotal] = useState(0)
+  const [followersLoaded, setFollowersLoaded] = useState(false)
+  const [followersLoading, setFollowersLoading] = useState(false)
+
+  // Abonnements
+  const [following, setFollowing]           = useState([])
+  const [followingTotal, setFollowingTotal] = useState(0)
+  const [followingLoaded, setFollowingLoaded] = useState(false)
+  const [followingLoading, setFollowingLoading] = useState(false)
+
+  const [loading, setLoading] = useState(true)
+  const [error, setError]     = useState(null)
+
+  // Chargement du profil — reset des listes au changement d'id
   useEffect(() => {
-    fetch(`/api/users/${id}`)
+    setLoading(true)
+    setFollowersLoaded(false)
+    setFollowingLoaded(false)
+    authFetch(`/api/users/${id}`)
       .then((r) => {
         if (!r.ok) throw new Error('Utilisateur introuvable')
         return r.json()
       })
-      .then(setProfile)
+      .then((data) => setProfile(data))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false))
-  }, [id])
+  }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Chargement des recettes paginées
+  useEffect(() => {
+    setRecipesLoading(true)
+    fetch(`/api/users/${id}/recipes?page=${page}&limit=${LIMIT}`)
+      .then((r) => r.ok ? r.json() : { recipes: { data: [], total: 0 } })
+      .then((data) => {
+        setRecipes(data.recipes.data)
+        setTotal(data.recipes.total)
+      })
+      .finally(() => setRecipesLoading(false))
+  }, [id, page])
+
+  // Chargement des favoris si connecté
   useEffect(() => {
     if (!user) return
     authFetch('/api/favorites')
       .then((r) => r.ok ? r.json() : [])
       .then((data) => setFavoriteIds(new Set(data.map((r) => r.id))))
   }, [user]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Chargement lazy des abonnés quand l'onglet est activé
+  useEffect(() => {
+    if (activeTab !== 'followers' || followersLoaded) return
+    setFollowersLoading(true)
+    authFetch(`/api/users/${id}/followers?limit=50`)
+      .then((r) => r.ok ? r.json() : { data: [], total: 0 })
+      .then(({ data, total: t }) => { setFollowers(data); setFollowersTotal(t); setFollowersLoaded(true) })
+      .finally(() => setFollowersLoading(false))
+  }, [activeTab, id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Chargement lazy des abonnements quand l'onglet est activé
+  useEffect(() => {
+    if (activeTab !== 'following' || followingLoaded) return
+    setFollowingLoading(true)
+    authFetch(`/api/users/${id}/following?limit=50`)
+      .then((r) => r.ok ? r.json() : { data: [], total: 0 })
+      .then(({ data, total: t }) => { setFollowing(data); setFollowingTotal(t); setFollowingLoaded(true) })
+      .finally(() => setFollowingLoading(false))
+  }, [activeTab, id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleToggleFavorite = async (recipeId) => {
     if (!user) return
@@ -42,15 +133,23 @@ export default function UserProfile() {
     })
   }
 
+  const totalPages = Math.ceil(total / LIMIT)
+
   if (loading) return <p className="text-center text-gray-400 py-16">Chargement...</p>
   if (error)   return <p className="text-center text-red-500 py-16">{error}</p>
 
   const joinedYear = new Date(profile.createdAt).getFullYear()
 
+  const tabs = [
+    { key: 'recipes',   label: `Recettes (${total})` },
+    { key: 'followers', label: `Abonnés (${profile.followersCount})` },
+    { key: 'following', label: `Abonnements (${profile.followingCount})` },
+  ]
+
   return (
     <div className="max-w-2xl mx-auto">
       {/* En-tête profil */}
-      <div className="flex items-center gap-5 mb-8 bg-white rounded-xl border border-gray-200 p-6">
+      <div className="flex items-center gap-5 mb-6 bg-white rounded-xl border border-gray-200 p-6">
         {profile.avatar ? (
           <img
             src={profile.avatar}
@@ -62,31 +161,117 @@ export default function UserProfile() {
             {profile.pseudo[0].toUpperCase()}
           </div>
         )}
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">{profile.pseudo}</h1>
-          <p className="text-sm text-gray-400">Membre depuis {joinedYear}</p>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-3 flex-wrap">
+            <h1 className="text-2xl font-bold text-gray-900">{profile.pseudo}</h1>
+            <FollowButton
+              targetUserId={parseInt(id)}
+              initialIsFollowing={profile.isFollowing}
+            />
+          </div>
+          <p className="text-sm text-gray-400 mt-0.5">Membre depuis {joinedYear}</p>
         </div>
       </div>
 
-      {/* Recettes de l'utilisateur */}
-      <h2 className="text-lg font-semibold text-gray-900 mb-4">
-        Recettes{' '}
-        <span className="text-gray-400 font-normal text-sm">({profile.recipes.length})</span>
-      </h2>
+      {/* Onglets */}
+      <div className="flex gap-1 mb-6 border-b border-gray-200">
+        {tabs.map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
+              activeTab === tab.key
+                ? 'border-amber-500 text-amber-600'
+                : 'border-transparent text-gray-500 hover:text-gray-800'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
 
-      {profile.recipes.length === 0 ? (
-        <p className="text-gray-400 text-sm">Aucune recette publiée.</p>
-      ) : (
-        <div className="flex flex-col gap-3">
-          {profile.recipes.map((recipe) => (
-            <RecipeCard
-              key={recipe.id}
-              recipe={recipe}
-              isFavorited={favoriteIds.has(recipe.id)}
-              onToggleFavorite={handleToggleFavorite}
-            />
-          ))}
-        </div>
+      {/* Onglet Recettes */}
+      {activeTab === 'recipes' && (
+        recipesLoading ? (
+          <p className="text-center text-gray-400 py-8">Chargement...</p>
+        ) : recipes.length === 0 ? (
+          <p className="text-gray-400 text-sm">Aucune recette publiée.</p>
+        ) : (
+          <>
+            <div className="flex flex-col gap-3">
+              {recipes.map((recipe) => (
+                <RecipeCard
+                  key={recipe.id}
+                  recipe={recipe}
+                  isFavorited={favoriteIds.has(recipe.id)}
+                  onToggleFavorite={handleToggleFavorite}
+                />
+              ))}
+            </div>
+
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-4 mt-6">
+                <button
+                  onClick={() => setPage((p) => p - 1)}
+                  disabled={page <= 1}
+                  className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:border-amber-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  ← Précédent
+                </button>
+                <span className="text-sm text-gray-500">
+                  Page {page} / {totalPages}
+                </span>
+                <button
+                  onClick={() => setPage((p) => p + 1)}
+                  disabled={page >= totalPages}
+                  className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:border-amber-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  Suivant →
+                </button>
+              </div>
+            )}
+          </>
+        )
+      )}
+
+      {/* Onglet Abonnés */}
+      {activeTab === 'followers' && (
+        followersLoading ? (
+          <p className="text-center text-gray-400 py-8">Chargement...</p>
+        ) : followers.length === 0 ? (
+          <p className="text-gray-400 text-sm">Aucun abonné pour le moment.</p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {followers.map((person) => (
+              <UserCard key={person.id} person={person} />
+            ))}
+            {followersTotal > followers.length && (
+              <p className="text-xs text-gray-400 text-center mt-2">
+                {followers.length} premiers sur {followersTotal}
+              </p>
+            )}
+          </div>
+        )
+      )}
+
+      {/* Onglet Abonnements */}
+      {activeTab === 'following' && (
+        followingLoading ? (
+          <p className="text-center text-gray-400 py-8">Chargement...</p>
+        ) : following.length === 0 ? (
+          <p className="text-gray-400 text-sm">Aucun abonnement pour le moment.</p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {following.map((person) => (
+              <UserCard key={person.id} person={person} />
+            ))}
+            {followingTotal > following.length && (
+              <p className="text-xs text-gray-400 text-center mt-2">
+                {following.length} premiers sur {followingTotal}
+              </p>
+            )}
+          </div>
+        )
       )}
     </div>
   )
