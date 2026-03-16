@@ -11,8 +11,10 @@ echo "=== Déploiement $(date) ===" >> "$LOG_FILE"
 
 cd "$APP_DIR"
 
-# Pull les dernières modifications
-git pull origin main >> "$LOG_FILE" 2>&1
+# Basculer sur main et récupérer les dernières modifications
+git fetch origin main >> "$LOG_FILE" 2>&1
+git checkout main >> "$LOG_FILE" 2>&1
+git reset --hard origin/main >> "$LOG_FILE" 2>&1
 
 # Install des dépendances backend (production uniquement)
 cd backend
