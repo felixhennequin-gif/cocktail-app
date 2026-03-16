@@ -96,4 +96,4 @@ const cacheMiddleware = (ttlSeconds) => async (req, res, next) => {
   next();
 };
 
-module.exports = { getCache, setCache, invalidateCache, invalidateCacheByPattern, cacheMiddleware };
+module.exports = { getCache, setCache, invalidateCache, invalidateCacheByPattern, cacheMiddleware, redis: client };
