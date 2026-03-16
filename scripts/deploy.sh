@@ -24,9 +24,14 @@ npm ci --omit=dev >> "$LOG_FILE" 2>&1
 npx prisma migrate deploy >> "$LOG_FILE" 2>&1
 npx prisma generate >> "$LOG_FILE" 2>&1
 
+# Build du frontend React
+cd "$APP_DIR/frontend"
+npm ci >> "$LOG_FILE" 2>&1
+npm run build >> "$LOG_FILE" 2>&1
+
 cd "$APP_DIR"
 
-# Redémarrer uniquement l'API
+# Redémarrer uniquement l'API (inclut désormais le frontend statique dans dist/)
 # NE PAS redémarrer webhook ni cloudflared (boucle infinie)
 pm2 restart cocktail-api >> "$LOG_FILE" 2>&1
 
