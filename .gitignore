@@ -14,6 +14,14 @@ backend/node_modules/.prisma/
 *.log
 npm-debug.log*
 yarn-debug.log*
+logs/
+deploy.log
+
+# Cloudflared — credentials tunnel (secrets)
+.cloudflared/*.json
+
+# ecosystem.config.js contient le WEBHOOK_SECRET — ne pas commiter
+ecosystem.config.js
 
 # Uploads utilisateurs
 backend/uploads/
