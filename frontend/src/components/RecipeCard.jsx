@@ -1,8 +1,8 @@
 import { Link, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../contexts/AuthContext'
 import { getImageUrl } from '../utils/image'
 
-const difficultyLabel = { EASY: 'Facile', MEDIUM: 'Moyen', HARD: 'Difficile' }
 const difficultyColor = {
   EASY:   'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
   MEDIUM: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
@@ -11,11 +11,15 @@ const difficultyColor = {
 
 // Affichage étoiles — ex: 3.7 → ★★★★☆
 function Stars({ value, count }) {
+  const { t } = useTranslation()
   if (value === null || value === undefined) return null
   const full  = Math.round(value)
   const stars = '★'.repeat(full) + '☆'.repeat(5 - full)
   return (
-    <span className="text-amber-400 text-xs" title={`${value}/5 (${count} note${count > 1 ? 's' : ''})`}>
+    <span
+      className="text-amber-400 text-xs"
+      title={`${t('recipes.avgRating', { value })} ${t('recipes.ratingsCount', { count })}`}
+    >
       {stars} <span className="text-gray-400 dark:text-gray-500">{value}</span>
     </span>
   )
@@ -23,6 +27,7 @@ function Stars({ value, count }) {
 
 export default function RecipeCard({ recipe, isFavorited, onToggleFavorite }) {
   const { user } = useAuth()
+  const { t } = useTranslation()
   const navigate = useNavigate()
 
   const handleFavorite = (e) => {
@@ -53,13 +58,13 @@ export default function RecipeCard({ recipe, isFavorited, onToggleFavorite }) {
           <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 truncate">{recipe.name}</h2>
           <div className="flex items-center gap-2 shrink-0">
             <span className={`text-xs font-medium px-2 py-1 rounded-full ${difficultyColor[recipe.difficulty]}`}>
-              {difficultyLabel[recipe.difficulty]}
+              {t(`recipes.difficulty.${recipe.difficulty}`)}
             </span>
             {user && (
               <button
                 onClick={handleFavorite}
                 className={`text-lg leading-none transition-colors ${isFavorited ? 'text-red-500' : 'text-gray-300 dark:text-gray-600 hover:text-red-400'}`}
-                title={isFavorited ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                title={isFavorited ? t('recipes.removeFavorite') : t('recipes.addFavorite')}
               >
                 ♥
               </button>

@@ -21,7 +21,7 @@ export default function AdminPendingList() {
     authFetch('/api/recipes?status=PENDING&limit=100')
       .then((r) => r.ok ? r.json() : { data: [] })
       .then((data) => setRecipes(data.data))
-      .catch(() => setError('Erreur lors du chargement'))
+      .catch(() => setError(t('admin.loadError')))
       .finally(() => setLoading(false))
   }, [user]) // eslint-disable-line react-hooks/exhaustive-deps
 

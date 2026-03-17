@@ -103,6 +103,10 @@
     "sendingComment": "Sending...",
     "deleteComment": "Delete",
     "modifyComment": "Edit",
+    "addFavorite": "Add to favorites",
+    "removeFavorite": "Remove from favorites",
+    "deleteCommentMessage": "Delete? This action is irreversible.",
+    "stepAlt": "Step {{order}}",
     "difficulty": {
       "EASY": "Easy",
       "MEDIUM": "Medium",
@@ -207,6 +211,7 @@
     }
   },
   "admin": {
+    "loadError": "Error loading recipes",
     "recipesTitle": "Admin — Recipes",
     "pendingLink": "View pending recipes",
     "newRecipe": "+ New recipe",
@@ -259,6 +264,8 @@
     "deleteRecipeButton": "🗑 Delete"
   },
   "common": {
+    "switchToFrench": "Switch to French",
+    "switchToEnglish": "Switch to English",
     "loading": "Loading...",
     "error": "Error",
     "confirm": "Confirm",

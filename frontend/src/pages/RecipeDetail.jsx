@@ -103,7 +103,7 @@ export default function RecipeDetail() {
   const { id }              = useParams()
   const { user, authFetch } = useAuth()
   const { showToast }       = useToast()
-  const { t }               = useTranslation()
+  const { t, i18n }         = useTranslation()
 
   const [recipe, setRecipe]           = useState(null)
   const [loading, setLoading]         = useState(true)
@@ -251,7 +251,7 @@ export default function RecipeDetail() {
   const isOwnRecipe = recipe.author?.id === user?.id
 
   const metaDescription = recipe.description
-    || `Recette du cocktail ${recipe.name} — difficulté ${difficultyLabel[recipe.difficulty] ?? recipe.difficulty}, ${recipe.prepTime} min.`
+    || `${recipe.name} — ${t(`recipes.difficulty.${recipe.difficulty}`)}, ${recipe.prepTime} min.`
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -266,7 +266,7 @@ export default function RecipeDetail() {
       <ConfirmModal
         isOpen={!!deleteCommentId}
         title={t('recipes.deleteComment')}
-        message={t('recipes.deleteComment') + ' ? Cette action est irréversible.'}
+        message={t('recipes.deleteCommentMessage')}
         confirmLabel={t('common.delete')}
         variant="danger"
         onConfirm={confirmDeleteComment}
@@ -293,7 +293,7 @@ export default function RecipeDetail() {
               <button
                 onClick={handleToggleFavorite}
                 className={`text-2xl leading-none transition-colors ${isFavorited ? 'text-red-500' : 'text-gray-300 dark:text-gray-600 hover:text-red-400'}`}
-                title={isFavorited ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                title={isFavorited ? t('recipes.removeFavorite') : t('recipes.addFavorite')}
               >
                 ♥
               </button>
@@ -382,7 +382,7 @@ export default function RecipeDetail() {
                   {step.imageUrl && (
                     <img
                       src={getImageUrl(step.imageUrl)}
-                      alt={`Étape ${step.order}`}
+                      alt={t('recipes.stepAlt', { order: step.order })}
                       className="w-full max-w-sm rounded-lg mb-2 border border-gray-100 dark:border-gray-700"
                     />
                   )}
@@ -458,7 +458,7 @@ export default function RecipeDetail() {
                   </Link>
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-gray-400 dark:text-gray-500">
-                      {new Date(c.createdAt).toLocaleDateString('fr-FR')}
+                      {new Date(c.createdAt).toLocaleDateString(i18n.language)}
                     </span>
                     {user?.id === c.userId && (
                       <button

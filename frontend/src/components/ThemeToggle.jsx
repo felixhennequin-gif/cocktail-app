@@ -1,6 +1,8 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 export default function ThemeToggle() {
+  const { t } = useTranslation()
   const [isDark, setIsDark] = useState(() =>
     document.documentElement.classList.contains('dark')
   )
@@ -16,8 +18,8 @@ export default function ThemeToggle() {
     <button
       onClick={toggle}
       className="text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-100 transition-colors"
-      title={isDark ? 'Mode clair' : 'Mode sombre'}
-      aria-label={isDark ? 'Activer le mode clair' : 'Activer le mode sombre'}
+      title={isDark ? t('nav.lightMode') : t('nav.darkMode')}
+      aria-label={t('nav.toggleTheme')}
     >
       {isDark ? (
         // Soleil
