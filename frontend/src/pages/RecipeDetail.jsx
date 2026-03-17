@@ -112,6 +112,7 @@ export default function RecipeDetail() {
   const [myComment, setMyComment]       = useState(null)
   const [commentText, setCommentText]   = useState('')
   const [commentScore, setCommentScore] = useState(null)
+  const [commentTouched, setCommentTouched] = useState(false)
   const [submittingComment, setSubmittingComment] = useState(false)
   const [portionCount, setPortionCount] = useState(1)
   const commentInputRef = useRef(null)
@@ -396,10 +397,16 @@ export default function RecipeDetail() {
               ref={commentInputRef}
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
+              onBlur={() => setCommentTouched(true)}
               placeholder="Votre commentaire..."
               rows={3}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none mb-2 bg-white"
+              className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none mb-1 bg-white ${
+                commentTouched && !commentText.trim() ? 'border-red-400' : 'border-gray-200'
+              }`}
             />
+            {commentTouched && !commentText.trim() && (
+              <p className="text-xs text-red-500 mb-1">Le commentaire ne peut pas être vide</p>
+            )}
             <button
               type="submit"
               disabled={submittingComment || !commentText.trim() || (!myComment && !commentScore)}

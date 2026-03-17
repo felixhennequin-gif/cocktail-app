@@ -29,6 +29,7 @@ export default function RecipeSubmit() {
   const [uploading, setUploading]   = useState(false)
   const [error, setError]           = useState(null)
   const [preview, setPreview]       = useState(null)
+  const [fieldErrors, setFieldErrors] = useState({})
 
   useEffect(() => {
     if (!user) { navigate('/login', { state: { from: '/recipes/new' } }); return }
@@ -68,6 +69,17 @@ export default function RecipeSubmit() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    // Validation frontend
+    const fe = {}
+    if (!form.name.trim())          fe.name = 'Le titre est requis'
+    if (!form.categoryId)           fe.categoryId = 'La catégorie est requise'
+    if (!form.prepTime)             fe.prepTime = 'Le temps de préparation est requis'
+    const validIngredients = ingredients.filter((i) => i.name.trim())
+    if (validIngredients.length === 0) fe.ingredients = 'Au moins un ingrédient est requis'
+    const validSteps = steps.filter((s) => s.description.trim())
+    if (validSteps.length === 0)    fe.steps = 'Au moins une étape est requise'
+    setFieldErrors(fe)
+    if (Object.keys(fe).length > 0) return
     setSaving(true)
     setError(null)
 
@@ -130,9 +142,10 @@ export default function RecipeSubmit() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Nom *</label>
             <input
-              name="name" value={form.name} onChange={handleField} required
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+              name="name" value={form.name} onChange={handleField}
+              className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 ${fieldErrors.name ? 'border-red-400' : 'border-gray-200'}`}
             />
+            {fieldErrors.name && <p className="mt-1 text-xs text-red-500">{fieldErrors.name}</p>}
           </div>
 
           <div>
@@ -195,6 +208,7 @@ export default function RecipeSubmit() {
 
         <section className="bg-white rounded-xl border border-gray-200 p-5">
           <h2 className="font-semibold text-gray-800 mb-4">Ingrédients</h2>
+          {fieldErrors.ingredients && <p className="mb-2 text-xs text-red-500">{fieldErrors.ingredients}</p>}
           <div className="space-y-2">
             {ingredients.map((ing, i) => (
               <div key={i} className="flex gap-2 items-center">
@@ -228,6 +242,7 @@ export default function RecipeSubmit() {
 
         <section className="bg-white rounded-xl border border-gray-200 p-5">
           <h2 className="font-semibold text-gray-800 mb-4">Étapes</h2>
+          {fieldErrors.steps && <p className="mb-2 text-xs text-red-500">{fieldErrors.steps}</p>}
           <div className="space-y-2">
             {steps.map((step, i) => (
               <div key={i} className="flex gap-3 items-start">
