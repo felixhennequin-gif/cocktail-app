@@ -12,6 +12,10 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
+      '/uploads': {
+        target: 'http://192.168.1.85:3000',
+        changeOrigin: true,
+      },
     },
   },
 })

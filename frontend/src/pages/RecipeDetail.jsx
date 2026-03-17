@@ -1,15 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
+import { Helmet } from 'react-helmet-async'
 import { useAuth } from '../contexts/AuthContext'
-
-const PLACEHOLDER = 'https://placehold.co/400x300?text=Cocktail'
-const API_BASE    = 'http://192.168.1.85:3000'
-
-const resolveImageUrl = (url) => {
-  if (!url) return PLACEHOLDER
-  if (url.startsWith('/uploads/')) return `${API_BASE}${url}`
-  return url
-}
+import { useToast } from '../contexts/ToastContext'
+import { getImageUrl } from '../utils/image'
+import ConfirmModal from '../components/ConfirmModal'
 
 const difficultyLabel = { EASY: 'Facile', MEDIUM: 'Moyen', HARD: 'Difficile' }
 const difficultyColor = {
@@ -107,6 +102,7 @@ function RatingStars({ value, onChange }) {
 export default function RecipeDetail() {
   const { id }              = useParams()
   const { user, authFetch } = useAuth()
+  const { showToast }       = useToast()
 
   const [recipe, setRecipe]           = useState(null)
   const [loading, setLoading]         = useState(true)
@@ -118,7 +114,9 @@ export default function RecipeDetail() {
   const [myComment, setMyComment]       = useState(null)
   const [commentText, setCommentText]   = useState('')
   const [commentScore, setCommentScore] = useState(null)
+  const [commentTouched, setCommentTouched] = useState(false)
   const [submittingComment, setSubmittingComment] = useState(false)
+  const [deleteCommentId, setDeleteCommentId] = useState(null)
   const [portionCount, setPortionCount] = useState(1)
   const commentInputRef = useRef(null)
 
@@ -168,9 +166,10 @@ export default function RecipeDetail() {
   const handleToggleFavorite = async () => {
     if (!user) return
     const res = await authFetch(`/api/favorites/${id}`, { method: 'POST' })
-    if (!res.ok) return
+    if (!res.ok) { showToast('Erreur lors de la mise à jour des favoris', 'error'); return }
     const data = await res.json()
     setIsFavorited(data.favorited)
+    showToast(data.favorited ? 'Ajouté aux favoris !' : 'Retiré des favoris', 'success')
   }
 
   const handleSubmitComment = async (e) => {
@@ -199,6 +198,7 @@ export default function RecipeDetail() {
         setComments((prev) => [saved, ...prev])
       }
       setMyComment(saved)
+      showToast(isEdit ? 'Commentaire modifié !' : 'Commentaire publié !', 'success')
       // Rafraîchir la moyenne depuis le endpoint commentaires
       fetch(`/api/comments/${id}`, {
         headers: user ? { Authorization: `Bearer ${localStorage.getItem('token')}` } : {},
@@ -219,30 +219,61 @@ export default function RecipeDetail() {
     commentInputRef.current?.focus()
   }
 
-  const handleDeleteComment = async (commentId) => {
+  const handleDeleteComment = (commentId) => setDeleteCommentId(commentId)
+
+  const confirmDeleteComment = async () => {
+    const commentId = deleteCommentId
+    setDeleteCommentId(null)
     const res = await authFetch(`/api/comments/${commentId}`, { method: 'DELETE' })
     if (res.ok) {
       setComments((prev) => prev.filter((c) => c.id !== commentId))
+      showToast('Commentaire supprimé', 'info')
       // Si l'utilisateur supprime son propre commentaire, réinitialiser le formulaire
       if (myComment?.id === commentId) {
         setMyComment(null)
         setCommentText('')
       }
+    } else {
+      showToast('Erreur lors de la suppression', 'error')
     }
   }
 
   if (loading) return <p className="text-center text-gray-400 py-16">Chargement...</p>
   if (error) return (
-    <div className="text-center py-16">
-      <p className="text-red-500 mb-4">{error}</p>
-      <Link to="/" className="text-amber-600 hover:underline">← Retour à la liste</Link>
+    <div className="flex flex-col items-center justify-center min-h-[50vh] text-center px-4">
+      <div className="text-5xl mb-4">🍹</div>
+      <h2 className="text-2xl font-bold text-gray-800 mb-2">Recette introuvable</h2>
+      <p className="text-gray-400 text-sm mb-6">{error}</p>
+      <Link to="/" className="px-5 py-2.5 bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition-colors text-sm font-medium">
+        ← Retour à la liste
+      </Link>
     </div>
   )
 
   const isOwnRecipe = recipe.author?.id === user?.id
 
+  const metaDescription = recipe.description
+    || `Recette du cocktail ${recipe.name} — difficulté ${difficultyLabel[recipe.difficulty] ?? recipe.difficulty}, ${recipe.prepTime} min.`
+
   return (
     <div className="max-w-2xl mx-auto">
+      <Helmet>
+        <title>{recipe.name} — Cocktails</title>
+        <meta name="description" content={metaDescription} />
+        <meta property="og:title" content={recipe.name} />
+        <meta property="og:description" content={metaDescription} />
+        <meta property="og:type" content="article" />
+        {recipe.imageUrl && <meta property="og:image" content={getImageUrl(recipe.imageUrl)} />}
+      </Helmet>
+      <ConfirmModal
+        isOpen={!!deleteCommentId}
+        title="Supprimer le commentaire"
+        message="Supprimer ce commentaire ? Cette action est irréversible."
+        confirmLabel="Supprimer"
+        variant="danger"
+        onConfirm={confirmDeleteComment}
+        onCancel={() => setDeleteCommentId(null)}
+      />
       <Link to="/" className="text-sm text-amber-600 hover:underline mb-6 inline-block">
         ← Toutes les recettes
       </Link>
@@ -250,12 +281,12 @@ export default function RecipeDetail() {
       {/* En-tête */}
       <div className="mb-8">
         <img
-          src={resolveImageUrl(recipe.imageUrl)}
+          src={getImageUrl(recipe.imageUrl)}
           alt={recipe.name}
           className="w-full h-56 object-cover rounded-xl mb-6 bg-gray-100"
         />
-        <div className="flex items-start justify-between gap-4 mb-3">
-          <h1 className="text-3xl font-bold text-gray-900">{recipe.name}</h1>
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-3">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{recipe.name}</h1>
           <div className="flex items-center gap-2 shrink-0">
             <span className={`text-sm font-medium px-3 py-1 rounded-full ${difficultyColor[recipe.difficulty]}`}>
               {difficultyLabel[recipe.difficulty]}
@@ -352,7 +383,7 @@ export default function RecipeDetail() {
                 <div className="flex-1 pt-0.5">
                   {step.imageUrl && (
                     <img
-                      src={resolveImageUrl(step.imageUrl)}
+                      src={getImageUrl(step.imageUrl)}
                       alt={`Étape ${step.order}`}
                       className="w-full max-w-sm rounded-lg mb-2 border border-gray-100"
                     />
@@ -393,10 +424,16 @@ export default function RecipeDetail() {
               ref={commentInputRef}
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
+              onBlur={() => setCommentTouched(true)}
               placeholder="Votre commentaire..."
               rows={3}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none mb-2 bg-white"
+              className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none mb-1 bg-white ${
+                commentTouched && !commentText.trim() ? 'border-red-400' : 'border-gray-200'
+              }`}
             />
+            {commentTouched && !commentText.trim() && (
+              <p className="text-xs text-red-500 mb-1">Le commentaire ne peut pas être vide</p>
+            )}
             <button
               type="submit"
               disabled={submittingComment || !commentText.trim() || (!myComment && !commentScore)}

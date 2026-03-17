@@ -1,5 +1,36 @@
 const prisma = require('../prisma');
 
+// PUT /users/me — met à jour le profil de l'utilisateur connecté
+const updateMyProfile = async (req, res) => {
+  const userId = req.user.id;
+  const { pseudo, bio, avatar } = req.body;
+
+  // Validation basique
+  if (pseudo !== undefined && (!pseudo || pseudo.trim().length < 2)) {
+    return res.status(400).json({ error: 'Le pseudo doit faire au moins 2 caractères' });
+  }
+
+  try {
+    const data = {};
+    if (pseudo  !== undefined) data.pseudo  = pseudo.trim();
+    if (bio     !== undefined) data.bio     = bio?.trim() || null;
+    if (avatar  !== undefined) data.avatar  = avatar || null;
+
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data,
+      select: { id: true, pseudo: true, email: true, avatar: true, bio: true, role: true, createdAt: true },
+    });
+
+    res.json(user);
+  } catch (err) {
+    if (err.code === 'P2002') {
+      return res.status(409).json({ error: 'Ce pseudo est déjà utilisé' });
+    }
+    throw err;
+  }
+};
+
 // GET /users/:id — profil public (optionalAuth pour isFollowing)
 const getUserProfile = async (req, res) => {
   const id            = parseInt(req.params.id);
@@ -81,4 +112,4 @@ const getUserRecipes = async (req, res) => {
   res.json({ user, recipes: { data, total, page, limit } });
 };
 
-module.exports = { getUserProfile, getUserRecipes };
+module.exports = { updateMyProfile, getUserProfile, getUserRecipes };

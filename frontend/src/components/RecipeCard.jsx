@@ -1,14 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-
-const PLACEHOLDER = 'https://placehold.co/400x300?text=Cocktail'
-const API_BASE    = 'http://192.168.1.85:3000'
-
-const resolveImageUrl = (url) => {
-  if (!url) return PLACEHOLDER
-  if (url.startsWith('/uploads/')) return `${API_BASE}${url}`
-  return url
-}
+import { getImageUrl } from '../utils/image'
 
 const difficultyLabel = { EASY: 'Facile', MEDIUM: 'Moyen', HARD: 'Difficile' }
 const difficultyColor = {
@@ -51,9 +43,9 @@ export default function RecipeCard({ recipe, isFavorited, onToggleFavorite }) {
       className="flex gap-4 bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md hover:border-amber-300 transition-all"
     >
       <img
-        src={resolveImageUrl(recipe.imageUrl)}
+        src={getImageUrl(recipe.imageUrl)}
         alt={recipe.name}
-        className="w-24 h-20 object-cover rounded-lg shrink-0 bg-gray-100"
+        className="w-20 h-16 sm:w-24 sm:h-20 object-cover rounded-lg shrink-0 bg-gray-100"
       />
 
       <div className="flex flex-col justify-between min-w-0 flex-1">

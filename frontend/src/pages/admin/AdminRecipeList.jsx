@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
+import { useToast } from '../../contexts/ToastContext'
+import ConfirmModal from '../../components/ConfirmModal'
 
 const difficultyLabel = { EASY: 'Facile', MEDIUM: 'Moyen', HARD: 'Difficile' }
 
@@ -20,10 +22,12 @@ const statusLabel = { PUBLISHED: 'Publié', DRAFT: 'Brouillon', PENDING: 'En att
 
 export default function AdminRecipeList() {
   const { user, authFetch } = useAuth()
+  const { showToast }       = useToast()
   const [recipes, setRecipes]           = useState([])
   const [loading, setLoading]           = useState(true)
   const [error, setError]               = useState(null)
   const [statusFilter, setStatusFilter] = useState(null)
+  const [confirm, setConfirm]           = useState(null) // { id, name }
   const navigate = useNavigate()
 
   const fetchRecipes = (filter) => {
@@ -44,18 +48,31 @@ export default function AdminRecipeList() {
     fetchRecipes(statusFilter)
   }, [user, statusFilter]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleDelete = async (id, name) => {
-    if (!window.confirm(`Supprimer la recette "${name}" ? Cette action est irréversible.`)) return
+  const handleDelete = (id, name) => setConfirm({ id, name })
+
+  const confirmDelete = async () => {
+    const { id } = confirm
+    setConfirm(null)
     const res = await authFetch(`/api/recipes/${id}`, { method: 'DELETE' })
     if (res.ok || res.status === 204) {
       fetchRecipes(statusFilter)
+      showToast('Recette supprimée', 'success')
     } else {
-      alert('Erreur lors de la suppression.')
+      showToast('Erreur lors de la suppression', 'error')
     }
   }
 
   return (
     <div>
+      <ConfirmModal
+        isOpen={!!confirm}
+        title="Supprimer la recette"
+        message={confirm ? `Supprimer "${confirm.name}" ? Cette action est irréversible.` : ''}
+        confirmLabel="Supprimer"
+        variant="danger"
+        onConfirm={confirmDelete}
+        onCancel={() => setConfirm(null)}
+      />
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
           <h1 className="text-2xl font-bold text-gray-900">Admin — Recettes</h1>
