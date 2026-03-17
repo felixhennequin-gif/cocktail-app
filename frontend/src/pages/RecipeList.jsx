@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { Helmet } from 'react-helmet-async'
 import RecipeCard from '../components/RecipeCard'
 import { SkeletonCard } from '../components/Skeleton'
 import { useAuth } from '../contexts/AuthContext'
@@ -167,8 +168,19 @@ export default function RecipeList() {
 
   const hasMore = recipes.length < total
 
+  const pageTitle = q
+    ? `Recherche "${q}" — Cocktails`
+    : 'Toutes les recettes de cocktails'
+
   return (
     <div>
+      <Helmet>
+        <title>{pageTitle}</title>
+        <meta name="description" content="Découvrez et explorez notre catalogue de recettes de cocktails. Filtrez par catégorie, note, temps de préparation et plus encore." />
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content="Explorez des centaines de recettes de cocktails." />
+        <meta property="og:type" content="website" />
+      </Helmet>
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Toutes les recettes</h1>
 
       {/* Barre de recherche */}

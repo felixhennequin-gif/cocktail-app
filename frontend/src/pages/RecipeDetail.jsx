@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
+import { Helmet } from 'react-helmet-async'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
 import { getImageUrl } from '../utils/image'
@@ -251,8 +252,19 @@ export default function RecipeDetail() {
 
   const isOwnRecipe = recipe.author?.id === user?.id
 
+  const metaDescription = recipe.description
+    || `Recette du cocktail ${recipe.name} — difficulté ${difficultyLabel[recipe.difficulty] ?? recipe.difficulty}, ${recipe.prepTime} min.`
+
   return (
     <div className="max-w-2xl mx-auto">
+      <Helmet>
+        <title>{recipe.name} — Cocktails</title>
+        <meta name="description" content={metaDescription} />
+        <meta property="og:title" content={recipe.name} />
+        <meta property="og:description" content={metaDescription} />
+        <meta property="og:type" content="article" />
+        {recipe.imageUrl && <meta property="og:image" content={getImageUrl(recipe.imageUrl)} />}
+      </Helmet>
       <ConfirmModal
         isOpen={!!deleteCommentId}
         title="Supprimer le commentaire"

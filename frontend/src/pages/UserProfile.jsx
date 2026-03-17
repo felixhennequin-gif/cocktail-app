@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
+import { Helmet } from 'react-helmet-async'
 import RecipeCard from '../components/RecipeCard'
 import FollowButton from '../components/FollowButton'
 import { SkeletonProfile, SkeletonCard, SkeletonList } from '../components/Skeleton'
@@ -269,6 +270,13 @@ export default function UserProfile() {
 
   return (
     <div className="max-w-2xl mx-auto">
+      <Helmet>
+        <title>{profile.pseudo} — Profil — Cocktails</title>
+        <meta name="description" content={profile.bio || `Profil de ${profile.pseudo} — ${profile.followersCount} abonné(s), ${profile.recipes?.length ?? 0} recette(s) publiée(s).`} />
+        <meta property="og:title" content={`${profile.pseudo} sur Cocktails`} />
+        <meta property="og:type" content="profile" />
+        {profile.avatar && <meta property="og:image" content={getImageUrl(profile.avatar)} />}
+      </Helmet>
       {/* Modale d'édition de profil */}
       {editOpen && (
         <EditProfileModal
