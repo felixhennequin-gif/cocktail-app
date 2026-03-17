@@ -4,6 +4,7 @@ import RecipeCard from '../components/RecipeCard'
 import FollowButton from '../components/FollowButton'
 import { SkeletonProfile, SkeletonCard, SkeletonList } from '../components/Skeleton'
 import { useAuth } from '../contexts/AuthContext'
+import { useToast } from '../contexts/ToastContext'
 import { getImageUrl } from '../utils/image'
 
 const LIMIT = 20
@@ -39,12 +40,116 @@ function UserCard({ person }) {
   )
 }
 
+// Modale d'édition de profil
+function EditProfileModal({ profile, onClose, onSaved, authFetch }) {
+  const { showToast } = useToast()
+  const [form, setForm]       = useState({ pseudo: profile.pseudo, bio: profile.bio || '' })
+  const [avatarFile, setAvatarFile] = useState(null)
+  const [preview, setPreview] = useState(profile.avatar ? getImageUrl(profile.avatar) : null)
+  const [saving, setSaving]   = useState(false)
+  const [error, setError]     = useState(null)
+
+  const handleField = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }))
+
+  const handleAvatar = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    setAvatarFile(file)
+    setPreview(URL.createObjectURL(file))
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setSaving(true)
+    setError(null)
+    try {
+      let avatarUrl = profile.avatar
+      // Upload de l'avatar si changé
+      if (avatarFile) {
+        const fd = new FormData()
+        fd.append('image', avatarFile)
+        const upRes = await authFetch('/api/upload', { method: 'POST', body: fd })
+        if (!upRes.ok) throw new Error('Erreur lors de l\'upload de l\'avatar')
+        const upData = await upRes.json()
+        avatarUrl = upData.url
+      }
+      const res = await authFetch('/api/users/me', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pseudo: form.pseudo, bio: form.bio, avatar: avatarUrl }),
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || 'Erreur lors de la sauvegarde')
+      }
+      const updated = await res.json()
+      showToast('Profil mis à jour !', 'success')
+      onSaved(updated)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-[9000] flex items-center justify-center p-4 bg-black/40" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6" onClick={(e) => e.stopPropagation()}>
+        <h2 className="text-lg font-bold text-gray-900 mb-4">Modifier mon profil</h2>
+        {error && <p className="mb-3 text-sm text-red-500">{error}</p>}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Avatar */}
+          <div className="flex items-center gap-4">
+            {preview ? (
+              <img src={preview} alt="avatar" className="w-14 h-14 rounded-full object-cover bg-gray-100" />
+            ) : (
+              <div className="w-14 h-14 rounded-full bg-amber-100 text-amber-600 text-xl font-bold flex items-center justify-center">
+                {form.pseudo[0]?.toUpperCase()}
+              </div>
+            )}
+            <label className="text-sm text-amber-600 hover:text-amber-800 cursor-pointer font-medium">
+              <input type="file" accept="image/*" onChange={handleAvatar} className="hidden" />
+              Changer l'avatar
+            </label>
+          </div>
+          {/* Pseudo */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Pseudo</label>
+            <input
+              name="pseudo" value={form.pseudo} onChange={handleField} required minLength={2}
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+            />
+          </div>
+          {/* Bio */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
+            <textarea
+              name="bio" value={form.bio} onChange={handleField} rows={3}
+              placeholder="Parlez un peu de vous..."
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none"
+            />
+          </div>
+          <div className="flex gap-3 pt-1">
+            <button type="button" onClick={onClose} className="flex-1 py-2 text-sm border border-gray-200 rounded-xl text-gray-600 hover:border-gray-300 transition-colors">
+              Annuler
+            </button>
+            <button type="submit" disabled={saving} className="flex-1 py-2 text-sm bg-amber-500 text-white rounded-xl hover:bg-amber-600 disabled:opacity-60 transition-colors font-medium">
+              {saving ? 'Sauvegarde...' : 'Enregistrer'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
 export default function UserProfile() {
   const { id }              = useParams()
   const { user, authFetch } = useAuth()
 
   const [profile, setProfile]     = useState(null)
   const [activeTab, setActiveTab] = useState('recipes')
+  const [editOpen, setEditOpen]   = useState(false)
 
   // Recettes
   const [recipes, setRecipes]         = useState([])
@@ -160,8 +265,23 @@ export default function UserProfile() {
     { key: 'following', label: `Abonnements (${profile.followingCount})` },
   ]
 
+  const isOwnProfile = user?.id === parseInt(id)
+
   return (
     <div className="max-w-2xl mx-auto">
+      {/* Modale d'édition de profil */}
+      {editOpen && (
+        <EditProfileModal
+          profile={profile}
+          authFetch={authFetch}
+          onClose={() => setEditOpen(false)}
+          onSaved={(updated) => {
+            setProfile((p) => ({ ...p, ...updated }))
+            setEditOpen(false)
+          }}
+        />
+      )}
+
       {/* En-tête profil */}
       <div className="flex items-center gap-5 mb-6 bg-white rounded-xl border border-gray-200 p-6">
         {profile.avatar ? (
@@ -178,12 +298,24 @@ export default function UserProfile() {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-2xl font-bold text-gray-900">{profile.pseudo}</h1>
-            <FollowButton
-              targetUserId={parseInt(id)}
-              initialIsFollowing={profile.isFollowing}
-            />
+            {isOwnProfile ? (
+              <button
+                onClick={() => setEditOpen(true)}
+                className="px-3 py-1 text-xs border border-gray-200 rounded-full text-gray-500 hover:border-amber-300 hover:text-amber-600 transition-colors"
+              >
+                Modifier
+              </button>
+            ) : (
+              <FollowButton
+                targetUserId={parseInt(id)}
+                initialIsFollowing={profile.isFollowing}
+              />
+            )}
           </div>
           <p className="text-sm text-gray-400 mt-0.5">Membre depuis {joinedYear}</p>
+          {profile.bio && (
+            <p className="text-sm text-gray-600 mt-1">{profile.bio}</p>
+          )}
         </div>
       </div>
 

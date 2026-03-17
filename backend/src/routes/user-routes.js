@@ -1,8 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { getUserProfile, getUserRecipes } = require('../controllers/user-controller');
+const { updateMyProfile, getUserProfile, getUserRecipes } = require('../controllers/user-controller');
 const { followUser, unfollowUser, getFollowers, getFollowing } = require('../controllers/follow-controller');
 const { requireAuth, optionalAuth } = require('../middleware/auth');
+
+// Route statique avant les routes dynamiques /:id
+router.put('/me', requireAuth, updateMyProfile);
 
 router.get('/:id',              optionalAuth, getUserProfile);
 router.get('/:id/recipes',      getUserRecipes);
