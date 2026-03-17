@@ -6,7 +6,7 @@ import RecipeCard from '../components/RecipeCard'
 import { SkeletonCard } from '../components/Skeleton'
 import { useAuth } from '../contexts/AuthContext'
 
-const LIMIT = 20
+const LIMIT = 12
 
 export default function RecipeList() {
   const { user, authFetch }               = useAuth()
@@ -36,6 +36,7 @@ export default function RecipeList() {
 
   const debounceRef = useRef(null)
   const maxTimeDebounceRef = useRef(null)
+  const sentinelRef = useRef(null)
   // Clé de filtres : quand elle change, on repart de la page 1
   const filterKey = `${q}|${categoryId}|${minRating}|${maxTime}|${sortBy}|${sortOrder}`
 
@@ -110,7 +111,22 @@ export default function RecipeList() {
     return () => controller.abort()
   }, [filterKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleLoadMore = () => fetchPage(currentPage + 1, true)
+  const hasMore = recipes.length < total
+
+  // IntersectionObserver — déclenche le chargement quand la sentinelle est visible
+  useEffect(() => {
+    if (!sentinelRef.current) return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loadingMore && !loading) {
+          fetchPage(currentPage + 1, true)
+        }
+      },
+      { rootMargin: '200px' }
+    )
+    observer.observe(sentinelRef.current)
+    return () => observer.disconnect()
+  }, [hasMore, loadingMore, loading, currentPage, filterKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSearchChange = (e) => {
     const val = e.target.value
@@ -171,8 +187,6 @@ export default function RecipeList() {
       return next
     }, { replace: true })
   }
-
-  const hasMore = recipes.length < total
 
   const pageTitle = q
     ? t('recipes.searchPageTitle', { q })
@@ -309,24 +323,28 @@ export default function RecipeList() {
             ))}
           </div>
 
-          {/* Charger plus */}
-          {hasMore && (
-            <div className="flex justify-center mt-8">
-              <button
-                onClick={handleLoadMore}
-                disabled={loadingMore}
-                className="px-6 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 text-sm font-medium text-gray-600 dark:text-gray-400 hover:border-amber-300 dark:hover:border-amber-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              >
-                {loadingMore ? t('recipes.loadMoreLoading') : t('recipes.loadMore', { loaded: recipes.length, total })}
-              </button>
+          {/* Skeletons pendant le chargement supplémentaire */}
+          {loadingMore && (
+            <div className="flex flex-col gap-3 mt-3">
+              {[1, 2, 3].map((i) => <SkeletonCard key={i} />)}
             </div>
+          )}
+
+          {/* Sentinelle IntersectionObserver */}
+          <div ref={sentinelRef} className="h-4" />
+
+          {/* Message fin de liste */}
+          {!hasMore && total > 0 && (
+            <p className="text-center text-xs text-gray-400 dark:text-gray-500 mt-4">
+              {t('recipes.allLoaded')}
+            </p>
           )}
         </>
       )}
 
       {/* Compteur total */}
       {!loading && total > 0 && (
-        <p className="text-center text-xs text-gray-400 dark:text-gray-500 mt-4">
+        <p className="text-center text-xs text-gray-400 dark:text-gray-500 mt-2">
           {t('recipes.totalCount', { count: total })}
         </p>
       )}
