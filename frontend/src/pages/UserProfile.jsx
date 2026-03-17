@@ -66,9 +66,12 @@ export default function UserProfile() {
   const [loading, setLoading] = useState(true)
   const [error, setError]     = useState(null)
 
-  // Chargement du profil — reset des listes au changement d'id
+  // Chargement du profil — reset des listes et de l'onglet actif au changement d'id
   useEffect(() => {
     setLoading(true)
+    setActiveTab('recipes')
+    setFollowers([])
+    setFollowing([])
     setFollowersLoaded(false)
     setFollowingLoaded(false)
     authFetch(`/api/users/${id}`)
