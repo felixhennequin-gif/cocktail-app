@@ -260,7 +260,21 @@ const getRecipeById = async (req, res) => {
     : null;
   const ratingsCount = ratingAgg._count.score;
 
-  res.json({ ...recipe, avgRating, ratingsCount });
+  // Données spécifiques à l'utilisateur connecté (isFavorited, note personnelle)
+  let userFields = {};
+  if (req.user) {
+    const [fav, userRating] = await Promise.all([
+      prisma.favorite.findUnique({
+        where: { userId_recipeId: { userId: req.user.id, recipeId: id } },
+      }),
+      prisma.rating.findUnique({
+        where: { userId_recipeId: { userId: req.user.id, recipeId: id } },
+      }),
+    ]);
+    userFields = { isFavorited: !!fav, userScore: userRating?.score ?? null };
+  }
+
+  res.json({ ...recipe, avgRating, ratingsCount, ...userFields });
 };
 
 // POST /recipes — auth requise

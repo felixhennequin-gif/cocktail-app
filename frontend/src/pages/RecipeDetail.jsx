@@ -120,8 +120,12 @@ export default function RecipeDetail() {
   const [portionCount, setPortionCount] = useState(1)
   const commentInputRef = useRef(null)
 
+  // Chargement de la recette (isFavorited + userScore inclus si connecté) et des commentaires
   useEffect(() => {
-    fetch(`/api/recipes/${id}`)
+    const controller = new AbortController()
+    const signal = controller.signal
+
+    authFetch(`/api/recipes/${id}`, { signal })
       .then(async (res) => {
         if (!res.ok) {
           const body = await res.json().catch(() => ({}))
@@ -134,34 +138,27 @@ export default function RecipeDetail() {
         setAvgRating(data.avgRating)
         setRatingsCount(data.ratingsCount)
         setPortionCount(data.servings ?? 1)
+        setIsFavorited(data.isFavorited ?? false)
+        setCommentScore(data.userScore ?? null)
       })
-      .catch((err) => setError(err.message))
+      .catch((err) => {
+        if (err.name !== 'AbortError') setError(err.message)
+      })
       .finally(() => setLoading(false))
 
     // Commentaires (avec avgRating mis à jour)
-    fetch(`/api/comments/${id}`, {
-      headers: user ? { Authorization: `Bearer ${localStorage.getItem('token')}` } : {},
-    })
+    authFetch(`/api/comments/${id}`, { signal })
       .then((r) => r.ok ? r.json() : { comments: [], myComment: null })
       .then(({ comments: list, myComment: mine, avgRating: avg, ratingsCount: cnt }) => {
         setComments(list)
         setMyComment(mine)
         if (mine) setCommentText(mine.content)
-        // Mise à jour de la moyenne depuis le endpoint commentaires (plus frais)
         if (avg !== undefined) { setAvgRating(avg); setRatingsCount(cnt ?? 0) }
       })
-  }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
+      .catch(() => {})
 
-  // Données spécifiques à l'utilisateur connecté
-  useEffect(() => {
-    if (!user) { setIsFavorited(false); setCommentScore(null); return }
-    authFetch('/api/favorites')
-      .then((r) => r.ok ? r.json() : [])
-      .then((favs) => setIsFavorited(favs.some((r) => r.id === parseInt(id))))
-    authFetch(`/api/ratings/${id}/me`)
-      .then((r) => r.ok ? r.json() : { score: null })
-      .then((data) => setCommentScore(data.score))
-  }, [user, id]) // eslint-disable-line react-hooks/exhaustive-deps
+    return () => controller.abort()
+  }, [id, user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleToggleFavorite = async () => {
     if (!user) return

@@ -176,40 +176,50 @@ export default function UserProfile() {
 
   // Chargement du profil — reset des listes et de l'onglet actif au changement d'id
   useEffect(() => {
+    const controller = new AbortController()
     setLoading(true)
     setActiveTab('recipes')
     setFollowers([])
     setFollowing([])
     setFollowersLoaded(false)
     setFollowingLoaded(false)
-    authFetch(`/api/users/${id}`)
+    authFetch(`/api/users/${id}`, { signal: controller.signal })
       .then((r) => {
         if (!r.ok) throw new Error('Utilisateur introuvable')
         return r.json()
       })
       .then((data) => setProfile(data))
-      .catch((err) => setError(err.message))
+      .catch((err) => {
+        if (err.name !== 'AbortError') setError(err.message)
+      })
       .finally(() => setLoading(false))
+    return () => controller.abort()
   }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Chargement des recettes paginées
   useEffect(() => {
+    const controller = new AbortController()
     setRecipesLoading(true)
-    fetch(`/api/users/${id}/recipes?page=${page}&limit=${LIMIT}`)
+    fetch(`/api/users/${id}/recipes?page=${page}&limit=${LIMIT}`, { signal: controller.signal })
       .then((r) => r.ok ? r.json() : { recipes: { data: [], total: 0 } })
       .then((data) => {
         setRecipes(data.recipes.data)
         setTotal(data.recipes.total)
       })
+      .catch((err) => { if (err.name !== 'AbortError') console.error(err) })
       .finally(() => setRecipesLoading(false))
+    return () => controller.abort()
   }, [id, page])
 
   // Chargement des favoris si connecté
   useEffect(() => {
     if (!user) return
-    authFetch('/api/favorites')
+    const controller = new AbortController()
+    authFetch('/api/favorites', { signal: controller.signal })
       .then((r) => r.ok ? r.json() : [])
       .then((data) => setFavoriteIds(new Set(data.map((r) => r.id))))
+      .catch(() => {})
+    return () => controller.abort()
   }, [user]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Chargement lazy des abonnés quand l'onglet est activé

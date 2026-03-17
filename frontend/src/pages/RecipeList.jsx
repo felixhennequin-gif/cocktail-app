@@ -66,7 +66,7 @@ export default function RecipeList() {
   }, [user]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Fonction de fetch d'une page de recettes
-  const fetchPage = useCallback((page, append = false) => {
+  const fetchPage = useCallback((page, append = false, signal = undefined) => {
     if (page === 1) setLoading(true)
     else            setLoadingMore(true)
     setError(null)
@@ -81,7 +81,7 @@ export default function RecipeList() {
       params.set('sortOrder', sortOrder)
     }
 
-    fetch(`/api/recipes?${params}`)
+    fetch(`/api/recipes?${params}`, { signal })
       .then(async (res) => {
         if (!res.ok) {
           const body = await res.json().catch(() => ({}))
@@ -95,13 +95,17 @@ export default function RecipeList() {
         setTotal(data.total ?? 0)
         setCurrentPage(page)
       })
-      .catch((err) => setError(err.message))
+      .catch((err) => {
+        if (err.name !== 'AbortError') setError(err.message)
+      })
       .finally(() => { setLoading(false); setLoadingMore(false) })
   }, [q, categoryId, minRating, maxTime, sortBy, sortOrder]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Rechargement initial quand les filtres changent
   useEffect(() => {
-    fetchPage(1, false)
+    const controller = new AbortController()
+    fetchPage(1, false, controller.signal)
+    return () => controller.abort()
   }, [filterKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleLoadMore = () => fetchPage(currentPage + 1, true)

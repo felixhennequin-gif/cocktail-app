@@ -25,11 +25,12 @@ export default function NotificationBell() {
   const containerRef                  = useRef(null)
   const navigate                      = useNavigate()
 
-  // Polling toutes les 30s
+  // Polling toutes les 60s, uniquement si l'onglet est actif
   useEffect(() => {
     if (!user) return
 
     const load = () => {
+      if (document.visibilityState !== 'visible') return
       authFetch('/api/notifications')
         .then((r) => r.ok ? r.json() : null)
         .then((data) => {
@@ -41,8 +42,18 @@ export default function NotificationBell() {
     }
 
     load()
-    const interval = setInterval(load, 30_000)
-    return () => clearInterval(interval)
+    const interval = setInterval(load, 60_000)
+
+    // Reprendre le polling dès que l'onglet redevient visible
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') load()
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+
+    return () => {
+      clearInterval(interval)
+      document.removeEventListener('visibilitychange', handleVisibility)
+    }
   }, [user]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Fermer au clic extérieur
