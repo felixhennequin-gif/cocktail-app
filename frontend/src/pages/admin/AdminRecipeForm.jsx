@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
+import { useToast } from '../../contexts/ToastContext'
 import { getImageUrl } from '../../utils/image'
 
 const EMPTY_INGREDIENT = { name: '', quantity: '', unit: '' }
@@ -21,6 +22,7 @@ export default function AdminRecipeForm() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { user, authFetch } = useAuth()
+  const { showToast }       = useToast()
   const isEdit = Boolean(id)
 
   const [form, setForm]               = useState(defaultForm)
@@ -184,6 +186,7 @@ export default function AdminRecipeForm() {
         const data = await res.json()
         throw new Error(data.error || 'Erreur lors de la sauvegarde')
       }
+      showToast(isEdit ? 'Recette modifiée !' : 'Recette créée !', 'success')
       navigate('/admin')
     } catch (err) {
       setError(err.message)

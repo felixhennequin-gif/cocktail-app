@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { useToast } from '../contexts/ToastContext'
 import { getImageUrl } from '../utils/image'
 
 const EMPTY_INGREDIENT = { name: '', quantity: '', unit: '' }
@@ -17,6 +18,7 @@ const defaultForm = {
 
 export default function RecipeSubmit() {
   const { user, authFetch } = useAuth()
+  const { showToast }       = useToast()
   const navigate = useNavigate()
 
   const [form, setForm]             = useState(defaultForm)
@@ -91,7 +93,8 @@ export default function RecipeSubmit() {
         const data = await res.json()
         throw new Error(data.error || 'Erreur lors de la soumission')
       }
-      navigate('/', { state: { successMessage: 'Votre recette a été soumise et sera publiée après validation.' } })
+      showToast(isAdmin ? 'Recette publiée !' : 'Recette soumise ! Elle sera publiée après validation.', 'success')
+      navigate('/')
     } catch (err) {
       setError(err.message)
     } finally {

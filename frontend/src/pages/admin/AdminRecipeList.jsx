@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
+import { useToast } from '../../contexts/ToastContext'
 
 const difficultyLabel = { EASY: 'Facile', MEDIUM: 'Moyen', HARD: 'Difficile' }
 
@@ -20,6 +21,7 @@ const statusLabel = { PUBLISHED: 'Publié', DRAFT: 'Brouillon', PENDING: 'En att
 
 export default function AdminRecipeList() {
   const { user, authFetch } = useAuth()
+  const { showToast }       = useToast()
   const [recipes, setRecipes]           = useState([])
   const [loading, setLoading]           = useState(true)
   const [error, setError]               = useState(null)
@@ -49,8 +51,9 @@ export default function AdminRecipeList() {
     const res = await authFetch(`/api/recipes/${id}`, { method: 'DELETE' })
     if (res.ok || res.status === 204) {
       fetchRecipes(statusFilter)
+      showToast('Recette supprimée', 'success')
     } else {
-      alert('Erreur lors de la suppression.')
+      showToast('Erreur lors de la suppression', 'error')
     }
   }
 

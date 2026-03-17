@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { useToast } from '../contexts/ToastContext'
 import { getImageUrl } from '../utils/image'
 
 const difficultyLabel = { EASY: 'Facile', MEDIUM: 'Moyen', HARD: 'Difficile' }
@@ -99,6 +100,7 @@ function RatingStars({ value, onChange }) {
 export default function RecipeDetail() {
   const { id }              = useParams()
   const { user, authFetch } = useAuth()
+  const { showToast }       = useToast()
 
   const [recipe, setRecipe]           = useState(null)
   const [loading, setLoading]         = useState(true)
@@ -160,9 +162,10 @@ export default function RecipeDetail() {
   const handleToggleFavorite = async () => {
     if (!user) return
     const res = await authFetch(`/api/favorites/${id}`, { method: 'POST' })
-    if (!res.ok) return
+    if (!res.ok) { showToast('Erreur lors de la mise à jour des favoris', 'error'); return }
     const data = await res.json()
     setIsFavorited(data.favorited)
+    showToast(data.favorited ? 'Ajouté aux favoris !' : 'Retiré des favoris', 'success')
   }
 
   const handleSubmitComment = async (e) => {
@@ -191,6 +194,7 @@ export default function RecipeDetail() {
         setComments((prev) => [saved, ...prev])
       }
       setMyComment(saved)
+      showToast(isEdit ? 'Commentaire modifié !' : 'Commentaire publié !', 'success')
       // Rafraîchir la moyenne depuis le endpoint commentaires
       fetch(`/api/comments/${id}`, {
         headers: user ? { Authorization: `Bearer ${localStorage.getItem('token')}` } : {},
@@ -215,11 +219,14 @@ export default function RecipeDetail() {
     const res = await authFetch(`/api/comments/${commentId}`, { method: 'DELETE' })
     if (res.ok) {
       setComments((prev) => prev.filter((c) => c.id !== commentId))
+      showToast('Commentaire supprimé', 'info')
       // Si l'utilisateur supprime son propre commentaire, réinitialiser le formulaire
       if (myComment?.id === commentId) {
         setMyComment(null)
         setCommentText('')
       }
+    } else {
+      showToast('Erreur lors de la suppression', 'error')
     }
   }
 

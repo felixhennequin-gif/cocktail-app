@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
+import { useToast } from '../../contexts/ToastContext'
 
 export default function AdminPendingList() {
   const { user, authFetch } = useAuth()
+  const { showToast }       = useToast()
   const navigate = useNavigate()
 
   const [recipes, setRecipes] = useState([])
@@ -21,13 +23,21 @@ export default function AdminPendingList() {
 
   const handlePublish = async (id) => {
     const res = await authFetch(`/api/recipes/${id}/publish`, { method: 'PATCH' })
-    if (res.ok) setRecipes((prev) => prev.filter((r) => r.id !== id))
+    if (res.ok) {
+      setRecipes((prev) => prev.filter((r) => r.id !== id))
+      showToast('Recette publiée avec succès !', 'success')
+    } else {
+      showToast('Erreur lors de la publication', 'error')
+    }
   }
 
   const handleReject = async (id) => {
     if (!window.confirm('Supprimer définitivement cette recette ?')) return
     const res = await authFetch(`/api/recipes/${id}`, { method: 'DELETE' })
-    if (res.ok || res.status === 204) setRecipes((prev) => prev.filter((r) => r.id !== id))
+    if (res.ok || res.status === 204) {
+      setRecipes((prev) => prev.filter((r) => r.id !== id))
+      showToast('Recette refusée et supprimée', 'info')
+    }
   }
 
   if (loading) return <p className="text-center text-gray-400 py-16">Chargement...</p>
