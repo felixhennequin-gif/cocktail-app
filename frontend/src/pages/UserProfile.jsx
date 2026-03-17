@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
+import { useTranslation } from 'react-i18next'
 import RecipeCard from '../components/RecipeCard'
 import FollowButton from '../components/FollowButton'
 import { SkeletonProfile, SkeletonCard, SkeletonList } from '../components/Skeleton'
@@ -44,6 +45,7 @@ function UserCard({ person }) {
 // Modale d'édition de profil
 function EditProfileModal({ profile, onClose, onSaved, authFetch }) {
   const { showToast } = useToast()
+  const { t }         = useTranslation()
   const [form, setForm]       = useState({ pseudo: profile.pseudo, bio: profile.bio || '' })
   const [avatarFile, setAvatarFile] = useState(null)
   const [preview, setPreview] = useState(profile.avatar ? getImageUrl(profile.avatar) : null)
@@ -84,7 +86,7 @@ function EditProfileModal({ profile, onClose, onSaved, authFetch }) {
         throw new Error(data.error || 'Erreur lors de la sauvegarde')
       }
       const updated = await res.json()
-      showToast('Profil mis à jour !', 'success')
+      showToast(t('profile.savedToast'), 'success')
       onSaved(updated)
     } catch (err) {
       setError(err.message)
@@ -96,7 +98,7 @@ function EditProfileModal({ profile, onClose, onSaved, authFetch }) {
   return (
     <div className="fixed inset-0 z-[9000] flex items-center justify-center p-4 bg-black/40" onClick={onClose}>
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-sm w-full p-6" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Modifier mon profil</h2>
+        <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">{t('profile.editTitle')}</h2>
         {error && <p className="mb-3 text-sm text-red-500">{error}</p>}
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Avatar */}
@@ -110,12 +112,12 @@ function EditProfileModal({ profile, onClose, onSaved, authFetch }) {
             )}
             <label className="text-sm text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 cursor-pointer font-medium">
               <input type="file" accept="image/*" onChange={handleAvatar} className="hidden" />
-              Changer l'avatar
+              {t('profile.changeAvatar')}
             </label>
           </div>
           {/* Pseudo */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Pseudo</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('profile.pseudoLabel')}</label>
             <input
               name="pseudo" value={form.pseudo} onChange={handleField} required minLength={2}
               className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
@@ -123,19 +125,19 @@ function EditProfileModal({ profile, onClose, onSaved, authFetch }) {
           </div>
           {/* Bio */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Bio</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('profile.bioLabel')}</label>
             <textarea
               name="bio" value={form.bio} onChange={handleField} rows={3}
-              placeholder="Parlez un peu de vous..."
+              placeholder={t('profile.bioPlaceholder')}
               className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none"
             />
           </div>
           <div className="flex gap-3 pt-1">
             <button type="button" onClick={onClose} className="flex-1 py-2 text-sm border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 rounded-xl hover:border-gray-300 dark:hover:border-gray-500 transition-colors">
-              Annuler
+              {t('profile.cancel')}
             </button>
             <button type="submit" disabled={saving} className="flex-1 py-2 text-sm bg-amber-500 text-white rounded-xl hover:bg-amber-600 disabled:opacity-60 transition-colors font-medium">
-              {saving ? 'Sauvegarde...' : 'Enregistrer'}
+              {saving ? t('profile.saving') : t('profile.save')}
             </button>
           </div>
         </form>
@@ -147,6 +149,7 @@ function EditProfileModal({ profile, onClose, onSaved, authFetch }) {
 export default function UserProfile() {
   const { id }              = useParams()
   const { user, authFetch } = useAuth()
+  const { t }               = useTranslation()
 
   const [profile, setProfile]     = useState(null)
   const [activeTab, setActiveTab] = useState('recipes')
@@ -260,10 +263,10 @@ export default function UserProfile() {
   if (error)   return (
     <div className="flex flex-col items-center justify-center min-h-[50vh] text-center px-4">
       <div className="text-5xl mb-4">👤</div>
-      <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-2">Profil introuvable</h2>
+      <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-2">{t('profile.notFound')}</h2>
       <p className="text-gray-400 dark:text-gray-500 text-sm mb-6">{error}</p>
       <Link to="/" className="px-5 py-2.5 bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition-colors text-sm font-medium">
-        ← Retour à l'accueil
+        {t('profile.backHome')}
       </Link>
     </div>
   )
@@ -271,9 +274,9 @@ export default function UserProfile() {
   const joinedYear = new Date(profile.createdAt).getFullYear()
 
   const tabs = [
-    { key: 'recipes',   label: `Recettes (${total})` },
-    { key: 'followers', label: `Abonnés (${profile.followersCount})` },
-    { key: 'following', label: `Abonnements (${profile.followingCount})` },
+    { key: 'recipes',   label: t('profile.tabs.recipes', { count: total }) },
+    { key: 'followers', label: t('profile.tabs.followers', { count: profile.followersCount }) },
+    { key: 'following', label: t('profile.tabs.following', { count: profile.followingCount }) },
   ]
 
   const isOwnProfile = user?.id === parseInt(id)
@@ -281,7 +284,7 @@ export default function UserProfile() {
   return (
     <div className="max-w-2xl mx-auto">
       <Helmet>
-        <title>{profile.pseudo} — Profil — Cocktails</title>
+        <title>{t('profile.title', { pseudo: profile.pseudo })}</title>
         <meta name="description" content={profile.bio || `Profil de ${profile.pseudo} — ${profile.followersCount} abonné(s), ${profile.recipes?.length ?? 0} recette(s) publiée(s).`} />
         <meta property="og:title" content={`${profile.pseudo} sur Cocktails`} />
         <meta property="og:type" content="profile" />
@@ -321,7 +324,7 @@ export default function UserProfile() {
                 onClick={() => setEditOpen(true)}
                 className="px-3 py-1 text-xs border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 rounded-full hover:border-amber-300 dark:hover:border-amber-500 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
               >
-                Modifier
+                {t('profile.editButton')}
               </button>
             ) : (
               <FollowButton
@@ -330,7 +333,7 @@ export default function UserProfile() {
               />
             )}
           </div>
-          <p className="text-sm text-gray-400 dark:text-gray-500 mt-0.5">Membre depuis {joinedYear}</p>
+          <p className="text-sm text-gray-400 dark:text-gray-500 mt-0.5">{t('profile.memberSince', { year: joinedYear })}</p>
           {profile.bio && (
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{profile.bio}</p>
           )}
@@ -361,7 +364,7 @@ export default function UserProfile() {
             {[1, 2, 3].map((i) => <SkeletonCard key={i} />)}
           </div>
         ) : recipes.length === 0 ? (
-          <p className="text-gray-400 dark:text-gray-500 text-sm">Aucune recette publiée.</p>
+          <p className="text-gray-400 dark:text-gray-500 text-sm">{t('profile.noRecipes')}</p>
         ) : (
           <>
             <div className="flex flex-col gap-3">
@@ -382,17 +385,17 @@ export default function UserProfile() {
                   disabled={page <= 1}
                   className="px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 text-sm font-medium text-gray-600 dark:text-gray-400 hover:border-amber-300 dark:hover:border-amber-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
-                  ← Précédent
+                  {t('common.prev')}
                 </button>
                 <span className="text-sm text-gray-500 dark:text-gray-400">
-                  Page {page} / {totalPages}
+                  {t('common.page', { current: page, total: totalPages })}
                 </span>
                 <button
                   onClick={() => setPage((p) => p + 1)}
                   disabled={page >= totalPages}
                   className="px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 text-sm font-medium text-gray-600 dark:text-gray-400 hover:border-amber-300 dark:hover:border-amber-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
-                  Suivant →
+                  {t('common.next')}
                 </button>
               </div>
             )}
@@ -405,7 +408,7 @@ export default function UserProfile() {
         followersLoading ? (
           <SkeletonList count={4} />
         ) : followers.length === 0 ? (
-          <p className="text-gray-400 dark:text-gray-500 text-sm">Aucun abonné pour le moment.</p>
+          <p className="text-gray-400 dark:text-gray-500 text-sm">{t('profile.noFollowers')}</p>
         ) : (
           <div className="flex flex-col gap-2">
             {followers.map((person) => (
@@ -413,7 +416,7 @@ export default function UserProfile() {
             ))}
             {followersTotal > followers.length && (
               <p className="text-xs text-gray-400 dark:text-gray-500 text-center mt-2">
-                {followers.length} premiers sur {followersTotal}
+                {t('profile.firstOf', { shown: followers.length, total: followersTotal })}
               </p>
             )}
           </div>
@@ -425,7 +428,7 @@ export default function UserProfile() {
         followingLoading ? (
           <SkeletonList count={4} />
         ) : following.length === 0 ? (
-          <p className="text-gray-400 dark:text-gray-500 text-sm">Aucun abonnement pour le moment.</p>
+          <p className="text-gray-400 dark:text-gray-500 text-sm">{t('profile.noFollowing')}</p>
         ) : (
           <div className="flex flex-col gap-2">
             {following.map((person) => (
@@ -433,7 +436,7 @@ export default function UserProfile() {
             ))}
             {followingTotal > following.length && (
               <p className="text-xs text-gray-400 dark:text-gray-500 text-center mt-2">
-                {following.length} premiers sur {followingTotal}
+                {t('profile.firstOf', { shown: following.length, total: followingTotal })}
               </p>
             )}
           </div>

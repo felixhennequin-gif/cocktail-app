@@ -1,28 +1,27 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 import ConfirmModal from '../../components/ConfirmModal'
-
-const difficultyLabel = { EASY: 'Facile', MEDIUM: 'Moyen', HARD: 'Difficile' }
-
-const STATUS_FILTERS = [
-  { key: null,        label: 'Tous' },
-  { key: 'PUBLISHED', label: 'Publiés' },
-  { key: 'DRAFT',     label: 'Brouillons' },
-  { key: 'PENDING',   label: 'En attente' },
-]
 
 const statusBadge = {
   PUBLISHED: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
   DRAFT:     'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400',
   PENDING:   'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
 }
-const statusLabel = { PUBLISHED: 'Publié', DRAFT: 'Brouillon', PENDING: 'En attente' }
 
 export default function AdminRecipeList() {
   const { user, authFetch } = useAuth()
   const { showToast }       = useToast()
+  const { t }               = useTranslation()
+
+  const STATUS_FILTERS = [
+    { key: null,        label: t('admin.filters.all') },
+    { key: 'PUBLISHED', label: t('admin.filters.published') },
+    { key: 'DRAFT',     label: t('admin.filters.drafts') },
+    { key: 'PENDING',   label: t('admin.filters.pending') },
+  ]
   const [recipes, setRecipes]           = useState([])
   const [loading, setLoading]           = useState(true)
   const [error, setError]               = useState(null)
@@ -56,9 +55,9 @@ export default function AdminRecipeList() {
     const res = await authFetch(`/api/recipes/${id}`, { method: 'DELETE' })
     if (res.ok || res.status === 204) {
       fetchRecipes(statusFilter)
-      showToast('Recette supprimée', 'success')
+      showToast(t('admin.deletedToast'), 'success')
     } else {
-      showToast('Erreur lors de la suppression', 'error')
+      showToast(t('admin.deleteErrorToast'), 'error')
     }
   }
 
@@ -66,25 +65,25 @@ export default function AdminRecipeList() {
     <div>
       <ConfirmModal
         isOpen={!!confirm}
-        title="Supprimer la recette"
-        message={confirm ? `Supprimer "${confirm.name}" ? Cette action est irréversible.` : ''}
-        confirmLabel="Supprimer"
+        title={t('admin.deleteTitle')}
+        message={confirm ? t('admin.deleteMessage', { name: confirm.name }) : ''}
+        confirmLabel={t('common.delete')}
         variant="danger"
         onConfirm={confirmDelete}
         onCancel={() => setConfirm(null)}
       />
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Admin — Recettes</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('admin.recipesTitle')}</h1>
           <Link to="/admin/pending" className="text-sm text-amber-600 dark:text-amber-400 hover:underline font-medium">
-            Voir les recettes en attente
+            {t('admin.pendingLink')}
           </Link>
         </div>
         <Link
           to="/admin/recipes/new"
           className="px-4 py-2 bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-600 transition-colors"
         >
-          + Nouvelle recette
+          {t('admin.newRecipe')}
         </Link>
       </div>
 
@@ -105,7 +104,7 @@ export default function AdminRecipeList() {
         ))}
       </div>
 
-      {loading && <p className="text-gray-400 dark:text-gray-500 py-8 text-center">Chargement...</p>}
+      {loading && <p className="text-gray-400 dark:text-gray-500 py-8 text-center">{t('admin.loading')}</p>}
       {error   && <p className="text-red-500 py-8 text-center">{error}</p>}
 
       {!loading && !error && (
@@ -113,19 +112,19 @@ export default function AdminRecipeList() {
           <table className="w-full text-sm">
             <thead className="bg-gray-100 dark:bg-gray-700 border-b-2 border-gray-200 dark:border-gray-600">
               <tr>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-300 w-2/5">Nom</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-300">Statut</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-300">Catégorie</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-300">Difficulté</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-300">Créée le</th>
-                <th className="border-l-2 border-gray-300 dark:border-gray-600 px-4 py-3 font-semibold text-gray-600 dark:text-gray-300 text-center">Modifier</th>
-                <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-300 text-center">Supprimer</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-300 w-2/5">{t('admin.table.name')}</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-300">{t('admin.table.status')}</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-300">{t('admin.table.category')}</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-300">{t('admin.table.difficulty')}</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-300">{t('admin.table.createdAt')}</th>
+                <th className="border-l-2 border-gray-300 dark:border-gray-600 px-4 py-3 font-semibold text-gray-600 dark:text-gray-300 text-center">{t('admin.table.edit')}</th>
+                <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-300 text-center">{t('admin.table.delete')}</th>
               </tr>
             </thead>
             <tbody>
               {recipes.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="text-center text-gray-400 dark:text-gray-500 py-8">Aucune recette.</td>
+                  <td colSpan={7} className="text-center text-gray-400 dark:text-gray-500 py-8">{t('admin.table.noRecipes')}</td>
                 </tr>
               )}
               {recipes.map((recipe, i) => (
@@ -140,11 +139,11 @@ export default function AdminRecipeList() {
                   <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{recipe.name}</td>
                   <td className="px-4 py-3">
                     <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${statusBadge[recipe.status]}`}>
-                      {statusLabel[recipe.status]}
+                      {t(`recipes.status.${recipe.status}`)}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{recipe.category?.name}</td>
-                  <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{difficultyLabel[recipe.difficulty]}</td>
+                  <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{t(`recipes.difficulty.${recipe.difficulty}`)}</td>
                   <td className="px-4 py-3 text-gray-400 dark:text-gray-500">
                     {new Date(recipe.createdAt).toLocaleDateString('fr-FR')}
                   </td>
@@ -153,7 +152,7 @@ export default function AdminRecipeList() {
                       onClick={() => navigate(`/admin/recipes/${recipe.id}/edit`)}
                       className="inline-flex items-center gap-1.5 bg-blue-500 text-white text-xs font-semibold rounded hover:bg-blue-700 hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer transition-all duration-150 px-3 py-1"
                     >
-                      ✏️ Modifier
+                      {t('admin.editRecipeButton')}
                     </button>
                   </td>
                   <td className="px-4 py-3 text-center">
@@ -161,7 +160,7 @@ export default function AdminRecipeList() {
                       onClick={() => handleDelete(recipe.id, recipe.name)}
                       className="inline-flex items-center gap-1.5 bg-red-500 text-white text-xs font-semibold rounded hover:bg-red-700 hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer transition-all duration-150 px-3 py-1"
                     >
-                      🗑 Supprimer
+                      {t('admin.deleteRecipeButton')}
                     </button>
                   </td>
                 </tr>

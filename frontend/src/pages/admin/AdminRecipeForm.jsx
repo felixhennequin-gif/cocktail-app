@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 import { getImageUrl } from '../../utils/image'
@@ -23,6 +24,7 @@ export default function AdminRecipeForm() {
   const navigate = useNavigate()
   const { user, authFetch } = useAuth()
   const { showToast }       = useToast()
+  const { t }               = useTranslation()
   const isEdit = Boolean(id)
 
   const [form, setForm]               = useState(defaultForm)
@@ -186,7 +188,7 @@ export default function AdminRecipeForm() {
         const data = await res.json()
         throw new Error(data.error || 'Erreur lors de la sauvegarde')
       }
-      showToast(isEdit ? 'Recette modifiée !' : 'Recette créée !', 'success')
+      showToast(isEdit ? t('admin.editTitle') + ' !' : t('admin.newTitle') + ' !', 'success')
       navigate('/admin')
     } catch (err) {
       setError(err.message)
@@ -195,7 +197,7 @@ export default function AdminRecipeForm() {
     }
   }
 
-  if (loading) return <p className="text-center text-gray-400 dark:text-gray-500 py-16">Chargement...</p>
+  if (loading) return <p className="text-center text-gray-400 dark:text-gray-500 py-16">{t('admin.loading')}</p>
 
   const inputClass = 'w-full px-3 py-2 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400'
 
@@ -203,10 +205,10 @@ export default function AdminRecipeForm() {
     <div className="max-w-2xl mx-auto p-8 bg-white dark:bg-gray-800 rounded-xl shadow-sm">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-          {isEdit ? 'Modifier la recette' : 'Nouvelle recette'}
+          {isEdit ? t('admin.editTitle') : t('admin.newTitle')}
         </h1>
         <Link to="/admin" className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200">
-          ← Retour
+          {t('submit.back')}
         </Link>
       </div>
 
@@ -220,10 +222,10 @@ export default function AdminRecipeForm() {
 
         {/* Infos principales */}
         <section className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 space-y-4">
-          <h2 className="font-semibold text-gray-800 dark:text-gray-200">Informations</h2>
+          <h2 className="font-semibold text-gray-800 dark:text-gray-200">{t('submit.sections.info')}</h2>
 
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nom *</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('submit.fields.name')}</label>
             <input
               name="name" value={form.name} onChange={handleField} required
               className={inputClass}
@@ -231,7 +233,7 @@ export default function AdminRecipeForm() {
           </div>
 
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('submit.fields.description')}</label>
             <textarea
               name="description" value={form.description} onChange={handleField} rows={3}
               className={`${inputClass} resize-none`}
@@ -240,12 +242,12 @@ export default function AdminRecipeForm() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Catégorie *</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('submit.fields.category')}</label>
               <select
                 name="categoryId" value={form.categoryId} onChange={handleField} required
                 className={inputClass}
               >
-                <option value="">--</option>
+                <option value="">{t('submit.fields.categoryPlaceholder')}</option>
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
@@ -253,19 +255,19 @@ export default function AdminRecipeForm() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Difficulté *</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('submit.fields.difficulty')}</label>
               <select
                 name="difficulty" value={form.difficulty} onChange={handleField} required
                 className={inputClass}
               >
-                <option value="EASY">Facile</option>
-                <option value="MEDIUM">Moyen</option>
-                <option value="HARD">Difficile</option>
+                <option value="EASY">{t('recipes.difficulty.EASY')}</option>
+                <option value="MEDIUM">{t('recipes.difficulty.MEDIUM')}</option>
+                <option value="HARD">{t('recipes.difficulty.HARD')}</option>
               </select>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Temps (min) *</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('submit.fields.prepTime')}</label>
               <input
                 name="prepTime" type="number" min="1" value={form.prepTime} onChange={handleField} required
                 className={inputClass}
@@ -284,15 +286,15 @@ export default function AdminRecipeForm() {
 
           {/* Image */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Image</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('submit.fields.image')}</label>
             <input
               name="imageUrl" value={form.imageUrl} onChange={handleField}
-              placeholder="https://... ou laisser vide pour uploader"
+              placeholder={t('submit.fields.imageUrlPlaceholder')}
               className={`${inputClass} mb-2`}
             />
             <label className="inline-flex items-center gap-2 cursor-pointer text-sm text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 font-medium">
               <input type="file" accept="image/*" onChange={handleImageFile} className="hidden" />
-              {uploading ? 'Upload en cours...' : '📁 Choisir un fichier image'}
+              {uploading ? t('submit.fields.uploading') : t('submit.fields.chooseImage')}
             </label>
             {preview && (
               <img
@@ -306,23 +308,23 @@ export default function AdminRecipeForm() {
 
         {/* Ingrédients */}
         <section className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
-          <h2 className="font-semibold text-gray-800 dark:text-gray-200 mb-4">Ingrédients</h2>
+          <h2 className="font-semibold text-gray-800 dark:text-gray-200 mb-4">{t('submit.sections.ingredients')}</h2>
 
           <div className="space-y-2">
             {ingredients.map((ing, i) => (
               <div key={i} className="flex gap-2 items-center">
                 <input
-                  placeholder="Nom" value={ing.name}
+                  placeholder={t('submit.fields.ingredientName')} value={ing.name}
                   onChange={(e) => updateIngredient(i, 'name', e.target.value)}
                   className={`flex-1 ${inputClass}`}
                 />
                 <input
-                  placeholder="Qté" type="number" step="0.1" min="0" value={ing.quantity}
+                  placeholder={t('submit.fields.ingredientQty')} type="number" step="0.1" min="0" value={ing.quantity}
                   onChange={(e) => updateIngredient(i, 'quantity', e.target.value)}
                   className={`w-20 ${inputClass}`}
                 />
                 <input
-                  placeholder="Unité" value={ing.unit}
+                  placeholder={t('submit.fields.ingredientUnit')} value={ing.unit}
                   onChange={(e) => updateIngredient(i, 'unit', e.target.value)}
                   className={`w-20 ${inputClass}`}
                 />
@@ -341,13 +343,13 @@ export default function AdminRecipeForm() {
             type="button" onClick={addIngredient}
             className="mt-3 text-sm text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 font-medium"
           >
-            + Ajouter un ingrédient
+            {t('submit.fields.addIngredient')}
           </button>
         </section>
 
         {/* Étapes */}
         <section className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
-          <h2 className="font-semibold text-gray-800 dark:text-gray-200 mb-4">Étapes</h2>
+          <h2 className="font-semibold text-gray-800 dark:text-gray-200 mb-4">{t('submit.sections.steps')}</h2>
 
           <div className="space-y-4">
             {steps.map((step, i) => (
@@ -369,7 +371,7 @@ export default function AdminRecipeForm() {
                         onChange={(e) => handleStepImageFile(i, e)}
                         className="hidden"
                       />
-                      {uploadingSteps.has(i) ? 'Upload...' : '📷 Image'}
+                      {uploadingSteps.has(i) ? t('admin.stepUploading') : t('admin.stepImage')}
                     </label>
                     {step.imageUrl && (
                       <>
@@ -404,13 +406,13 @@ export default function AdminRecipeForm() {
             type="button" onClick={addStep}
             className="mt-3 text-sm text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 font-medium"
           >
-            + Ajouter une étape
+            {t('submit.fields.addStep')}
           </button>
         </section>
 
         {/* Statut de publication */}
         <section className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
-          <h2 className="font-semibold text-gray-800 dark:text-gray-200 mb-3">Publication</h2>
+          <h2 className="font-semibold text-gray-800 dark:text-gray-200 mb-3">{t('admin.publication')}</h2>
           <label className="flex items-center gap-3 cursor-pointer select-none w-fit">
             <div className="relative">
               <input
@@ -434,12 +436,12 @@ export default function AdminRecipeForm() {
             </div>
             <div>
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                {form.status === 'PUBLISHED' ? 'Publier immédiatement' : 'Sauvegarder en brouillon'}
+                {form.status === 'PUBLISHED' ? t('admin.publishNow') : t('admin.saveDraft')}
               </span>
               <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
                 {form.status === 'PUBLISHED'
-                  ? 'La recette sera visible par tous les visiteurs.'
-                  : 'La recette ne sera visible que par les admins.'}
+                  ? t('admin.publishNowHint')
+                  : t('admin.saveDraftHint')}
               </p>
             </div>
           </label>
@@ -451,13 +453,13 @@ export default function AdminRecipeForm() {
             type="submit" disabled={saving || uploading || uploadingSteps.size > 0}
             className="px-6 py-2.5 bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-600 disabled:opacity-60 transition-colors"
           >
-            {saving ? 'Enregistrement...' : 'Enregistrer'}
+            {saving ? t('admin.saving') : t('admin.saveButton')}
           </button>
           <Link
             to="/admin"
             className="px-6 py-2.5 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 text-sm font-medium rounded-lg hover:border-gray-300 dark:hover:border-gray-500 transition-colors"
           >
-            Annuler
+            {t('submit.cancel')}
           </Link>
         </div>
 

@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../contexts/AuthContext'
 import RecipeCard from '../components/RecipeCard'
 
 export default function Favorites() {
   const { user, authFetch } = useAuth()
+  const { t }    = useTranslation()
   const navigate = useNavigate()
 
   const [recipes, setRecipes]         = useState([])
@@ -32,20 +34,22 @@ export default function Favorites() {
     }
   }
 
-  if (loading) return <p className="text-center text-gray-400 dark:text-gray-500 py-16">Chargement...</p>
+  if (loading) return <p className="text-center text-gray-400 dark:text-gray-500 py-16">{t('common.loading')}</p>
 
   return (
     <div>
       <div className="flex items-center gap-4 mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Mes favoris</h1>
-        <span className="text-sm text-gray-400 dark:text-gray-500">{recipes.length} recette{recipes.length !== 1 ? 's' : ''}</span>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('favorites.title')}</h1>
+        <span className="text-sm text-gray-400 dark:text-gray-500">
+          {t('favorites.count', { count: recipes.length })}
+        </span>
       </div>
 
       {recipes.length === 0 ? (
         <div className="text-center py-16">
-          <p className="text-gray-400 dark:text-gray-500 mb-4">Aucune recette en favori pour l'instant.</p>
+          <p className="text-gray-400 dark:text-gray-500 mb-4">{t('favorites.empty')}</p>
           <Link to="/" className="text-amber-600 dark:text-amber-400 hover:underline text-sm">
-            Parcourir les recettes
+            {t('favorites.browseLink')}
           </Link>
         </div>
       ) : (

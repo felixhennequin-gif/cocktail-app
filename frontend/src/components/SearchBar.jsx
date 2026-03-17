@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { getImageUrl } from '../utils/image'
 
 export default function SearchBar() {
+  const { t }                 = useTranslation()
   const [value, setValue]     = useState('')
   const [results, setResults] = useState([])
   const [open, setOpen]       = useState(false)
@@ -72,7 +74,7 @@ export default function SearchBar() {
         value={value}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
-        placeholder="Rechercher..."
+        placeholder={t('recipes.searchNavPlaceholder')}
         className="w-full px-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent"
       />
 
@@ -108,7 +110,7 @@ export default function SearchBar() {
             onClick={handleViewAll}
             className="w-full px-3 py-2 text-xs text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 text-center border-t border-gray-100 dark:border-gray-700 font-medium transition-colors"
           >
-            Voir tous les résultats →
+            {t('recipes.viewAll')}
           </button>
         </div>
       )}

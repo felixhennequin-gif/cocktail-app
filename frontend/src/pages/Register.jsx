@@ -1,24 +1,13 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../contexts/AuthContext'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-function validate(form) {
-  const errors = {}
-  if (!form.email.trim())              errors.email = 'Email requis'
-  else if (!EMAIL_RE.test(form.email)) errors.email = 'Format email invalide'
-  if (!form.pseudo.trim())             errors.pseudo = 'Pseudo requis'
-  else if (form.pseudo.length < 2)     errors.pseudo = 'Pseudo trop court (min. 2 caractères)'
-  if (!form.password)                  errors.password = 'Mot de passe requis'
-  else if (form.password.length < 6)   errors.password = 'Mot de passe trop court (min. 6 caractères)'
-  if (!form.confirm)                   errors.confirm = 'Confirmation requise'
-  else if (form.confirm !== form.password) errors.confirm = 'Les mots de passe ne correspondent pas'
-  return errors
-}
-
 export default function Register() {
   const { register } = useAuth()
+  const { t }        = useTranslation()
   const navigate     = useNavigate()
 
   const [form, setForm]       = useState({ email: '', pseudo: '', password: '', confirm: '' })
@@ -26,11 +15,24 @@ export default function Register() {
   const [error, setError]     = useState(null)
   const [loading, setLoading] = useState(false)
 
+  const validate = (f) => {
+    const errors = {}
+    if (!f.email.trim())              errors.email = t('auth.errors.emailRequired')
+    else if (!EMAIL_RE.test(f.email)) errors.email = t('auth.errors.emailInvalid')
+    if (!f.pseudo.trim())             errors.pseudo = t('auth.errors.pseudoRequired')
+    else if (f.pseudo.length < 2)     errors.pseudo = t('auth.errors.pseudoTooShort')
+    if (!f.password)                  errors.password = t('auth.errors.passwordRequired')
+    else if (f.password.length < 6)   errors.password = t('auth.errors.passwordTooShort')
+    if (!f.confirm)                   errors.confirm = t('auth.errors.confirmRequired')
+    else if (f.confirm !== f.password) errors.confirm = t('auth.errors.confirmMismatch')
+    return errors
+  }
+
   const errors  = validate(form)
   const isValid = Object.keys(errors).length === 0
 
   const handleField = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }))
-  const handleBlur  = (e) => setTouched((t) => ({ ...t, [e.target.name]: true }))
+  const handleBlur  = (e) => setTouched((tv) => ({ ...tv, [e.target.name]: true }))
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -57,7 +59,7 @@ export default function Register() {
 
   return (
     <div className="max-w-sm mx-auto mt-12">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6 text-center">Créer un compte</h1>
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6 text-center">{t('auth.registerTitle')}</h1>
 
       {error && (
         <div className="mb-4 px-4 py-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400">
@@ -67,7 +69,7 @@ export default function Register() {
 
       <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 space-y-4" noValidate>
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('auth.emailLabel')}</label>
           <input
             name="email" type="email" value={form.email}
             onChange={handleField} onBlur={handleBlur}
@@ -78,7 +80,7 @@ export default function Register() {
           )}
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Pseudo</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('auth.pseudoLabel')}</label>
           <input
             name="pseudo" value={form.pseudo}
             onChange={handleField} onBlur={handleBlur}
@@ -90,7 +92,7 @@ export default function Register() {
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Mot de passe <span className="text-gray-400 dark:text-gray-500 font-normal">(6 caractères min.)</span>
+            {t('auth.passwordLabel')} <span className="text-gray-400 dark:text-gray-500 font-normal">{t('auth.passwordHint')}</span>
           </label>
           <input
             name="password" type="password" value={form.password}
@@ -102,7 +104,7 @@ export default function Register() {
           )}
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirmer le mot de passe</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('auth.confirmLabel')}</label>
           <input
             name="confirm" type="password" value={form.confirm}
             onChange={handleField} onBlur={handleBlur}
@@ -116,14 +118,14 @@ export default function Register() {
           type="submit" disabled={loading}
           className="w-full py-2.5 bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-600 disabled:opacity-60 transition-colors"
         >
-          {loading ? 'Inscription...' : 'Créer mon compte'}
+          {loading ? t('auth.registerLoading') : t('auth.registerButton')}
         </button>
       </form>
 
       <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-4">
-        Déjà un compte ?{' '}
+        {t('auth.alreadyAccount')}{' '}
         <Link to="/login" className="text-amber-600 dark:text-amber-400 hover:underline font-medium">
-          Se connecter
+          {t('auth.signInLink')}
         </Link>
       </p>
     </div>

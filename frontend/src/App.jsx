@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { Routes, Route, Link, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from './contexts/AuthContext'
 import SearchBar        from './components/SearchBar'
 import NotificationBell from './components/NotificationBell'
 import ThemeToggle      from './components/ThemeToggle'
+import LanguageToggle   from './components/LanguageToggle'
 import RecipeList       from './pages/RecipeList'
 import RecipeDetail     from './pages/RecipeDetail'
 import Login            from './pages/Login'
@@ -19,6 +21,7 @@ import NotFound         from './pages/NotFound'
 
 function Header() {
   const { user, logout } = useAuth()
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
 
@@ -39,7 +42,7 @@ function Header() {
           onClick={closeMenu}
           className="text-xl font-bold text-gray-900 dark:text-gray-100 hover:text-amber-600 dark:hover:text-amber-400 transition-colors shrink-0"
         >
-          🍹 Cocktails
+          {t('nav.brand')}
         </Link>
 
         {/* SearchBar — cachée sur très petit mobile */}
@@ -51,28 +54,29 @@ function Header() {
         <nav className="hidden md:flex items-center gap-4 text-sm ml-auto">
           {user ? (
             <>
-              <Link to="/feed"        className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 transition-colors">Fil</Link>
-              <Link to="/recipes/new" className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 transition-colors">+ Proposer</Link>
-              <Link to="/favorites"   className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 transition-colors">Favoris</Link>
+              <Link to="/feed"        className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 transition-colors">{t('nav.feed')}</Link>
+              <Link to="/recipes/new" className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 transition-colors">{t('nav.propose')}</Link>
+              <Link to="/favorites"   className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 transition-colors">{t('nav.favorites')}</Link>
               <NotificationBell />
               <Link to={`/users/${user.id}`} className="font-medium text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 transition-colors">
                 {user.pseudo}
               </Link>
               {user.role === 'ADMIN' && (
-                <Link to="/admin" className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 transition-colors">Admin</Link>
+                <Link to="/admin" className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 transition-colors">{t('nav.admin')}</Link>
               )}
               <button onClick={handleLogout} className="text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors">
-                Déconnexion
+                {t('nav.logout')}
               </button>
             </>
           ) : (
             <>
-              <Link to="/login"    className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 transition-colors">Connexion</Link>
+              <Link to="/login"    className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 transition-colors">{t('nav.login')}</Link>
               <Link to="/register" className="px-3 py-1.5 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors font-medium">
-                S'inscrire
+                {t('nav.register')}
               </Link>
             </>
           )}
+          <LanguageToggle />
           <ThemeToggle />
         </nav>
 
@@ -80,7 +84,7 @@ function Header() {
         <button
           className="md:hidden ml-auto p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           onClick={() => setMenuOpen((o) => !o)}
-          aria-label="Menu"
+          aria-label={t('nav.menu')}
         >
           {menuOpen ? (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -104,26 +108,27 @@ function Header() {
         <nav className="md:hidden absolute top-full left-0 right-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 shadow-lg z-50 px-4 py-3 flex flex-col gap-3 text-sm">
           {user ? (
             <>
-              <Link to="/feed"        onClick={closeMenu} className="text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 py-1">Fil d'actualité</Link>
-              <Link to="/recipes/new" onClick={closeMenu} className="text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 py-1">+ Proposer une recette</Link>
-              <Link to="/favorites"   onClick={closeMenu} className="text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 py-1">Mes favoris</Link>
+              <Link to="/feed"        onClick={closeMenu} className="text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 py-1">{t('nav.feedFull')}</Link>
+              <Link to="/recipes/new" onClick={closeMenu} className="text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 py-1">{t('nav.proposeFull')}</Link>
+              <Link to="/favorites"   onClick={closeMenu} className="text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 py-1">{t('nav.favoritesFull')}</Link>
               <Link to={`/users/${user.id}`} onClick={closeMenu} className="font-medium text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 py-1">
-                Mon profil ({user.pseudo})
+                {t('nav.myProfile', { pseudo: user.pseudo })}
               </Link>
               {user.role === 'ADMIN' && (
-                <Link to="/admin" onClick={closeMenu} className="text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 py-1">Administration</Link>
+                <Link to="/admin" onClick={closeMenu} className="text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 py-1">{t('nav.administration')}</Link>
               )}
               <button onClick={handleLogout} className="text-left text-red-400 hover:text-red-600 py-1">
-                Déconnexion
+                {t('nav.logout')}
               </button>
             </>
           ) : (
             <>
-              <Link to="/login"    onClick={closeMenu} className="text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 py-1">Connexion</Link>
-              <Link to="/register" onClick={closeMenu} className="text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 py-1 font-medium">S'inscrire</Link>
+              <Link to="/login"    onClick={closeMenu} className="text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 py-1">{t('nav.login')}</Link>
+              <Link to="/register" onClick={closeMenu} className="text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 py-1 font-medium">{t('nav.register')}</Link>
             </>
           )}
-          <div className="pt-1 border-t border-gray-100 dark:border-gray-700">
+          <div className="pt-1 border-t border-gray-100 dark:border-gray-700 flex items-center gap-3">
+            <LanguageToggle />
             <ThemeToggle />
           </div>
         </nav>

@@ -1,8 +1,10 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
 
 export default function FollowButton({ targetUserId, initialIsFollowing }) {
+  const { t }                   = useTranslation()
   const { user, authFetch }     = useAuth()
   const { showToast }           = useToast()
   const [isFollowing, setIsFollowing] = useState(initialIsFollowing)
@@ -23,13 +25,13 @@ export default function FollowButton({ targetUserId, initialIsFollowing }) {
       )
       if (!res.ok) {
         setIsFollowing(prev) // rollback
-        showToast('Erreur lors de la mise à jour du suivi', 'error')
+        showToast(t('follow.errorToast'), 'error')
       } else {
-        showToast(isFollowing ? 'Abonnement retiré' : 'Abonnement ajouté !', 'success')
+        showToast(isFollowing ? t('follow.removedToast') : t('follow.addedToast'), 'success')
       }
     } catch {
       setIsFollowing(prev) // rollback
-      showToast('Erreur réseau', 'error')
+      showToast(t('follow.networkError'), 'error')
     } finally {
       setLoading(false)
     }
@@ -49,7 +51,7 @@ export default function FollowButton({ targetUserId, initialIsFollowing }) {
           : 'bg-amber-500 text-white hover:bg-amber-600'
       }`}
     >
-      {isFollowing ? (hovered ? 'Se désabonner' : 'Suivi ✓') : 'Suivre'}
+      {isFollowing ? (hovered ? t('follow.unfollow') : t('follow.following')) : t('follow.follow')}
     </button>
   )
 }

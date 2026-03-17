@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
+import { useTranslation } from 'react-i18next'
 import RecipeCard from '../components/RecipeCard'
 import { SkeletonCard } from '../components/Skeleton'
 import { useAuth } from '../contexts/AuthContext'
@@ -9,6 +10,7 @@ const LIMIT = 20
 
 export default function RecipeList() {
   const { user, authFetch }               = useAuth()
+  const { t }                             = useTranslation()
   const [searchParams, setSearchParams]   = useSearchParams()
 
   // L'URL est la source de vérité pour les filtres
@@ -137,12 +139,12 @@ export default function RecipeList() {
   }
 
   const SORT_OPTIONS = [
-    { label: 'Plus récentes',       sortBy: 'createdAt',      sortOrder: 'desc' },
-    { label: 'Plus anciennes',      sortBy: 'createdAt',      sortOrder: 'asc'  },
-    { label: 'Mieux notées',        sortBy: 'avgRating',      sortOrder: 'desc' },
-    { label: 'Temps (croissant)',   sortBy: 'prepTime',       sortOrder: 'asc'  },
-    { label: 'Temps (décroissant)', sortBy: 'prepTime',       sortOrder: 'desc' },
-    { label: 'Plus populaires',     sortBy: 'favoritesCount', sortOrder: 'desc' },
+    { label: t('recipes.sortOptions.newest'),   sortBy: 'createdAt',      sortOrder: 'desc' },
+    { label: t('recipes.sortOptions.oldest'),   sortBy: 'createdAt',      sortOrder: 'asc'  },
+    { label: t('recipes.sortOptions.topRated'), sortBy: 'avgRating',      sortOrder: 'desc' },
+    { label: t('recipes.sortOptions.timeAsc'),  sortBy: 'prepTime',       sortOrder: 'asc'  },
+    { label: t('recipes.sortOptions.timeDesc'), sortBy: 'prepTime',       sortOrder: 'desc' },
+    { label: t('recipes.sortOptions.popular'),  sortBy: 'favoritesCount', sortOrder: 'desc' },
   ]
 
   const handleSortChange = (e) => {
@@ -173,8 +175,8 @@ export default function RecipeList() {
   const hasMore = recipes.length < total
 
   const pageTitle = q
-    ? `Recherche "${q}" — Cocktails`
-    : 'Toutes les recettes de cocktails'
+    ? t('recipes.searchPageTitle', { q })
+    : t('recipes.pageTitle')
 
   return (
     <div>
@@ -185,7 +187,7 @@ export default function RecipeList() {
         <meta property="og:description" content="Explorez des centaines de recettes de cocktails." />
         <meta property="og:type" content="website" />
       </Helmet>
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">Toutes les recettes</h1>
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">{t('recipes.allTitle')}</h1>
 
       {/* Barre de recherche */}
       <div className="mb-4">
@@ -193,7 +195,7 @@ export default function RecipeList() {
           type="text"
           value={inputValue}
           onChange={handleSearchChange}
-          placeholder="Rechercher un cocktail..."
+          placeholder={t('recipes.searchPlaceholder')}
           className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent"
         />
       </div>
@@ -208,7 +210,7 @@ export default function RecipeList() {
               : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-amber-300 dark:hover:border-amber-500'
           }`}
         >
-          Toutes
+          {t('recipes.allCategories')}
         </button>
         {categories.map((cat) => (
           <button
@@ -229,7 +231,7 @@ export default function RecipeList() {
       <div className="flex flex-wrap items-center gap-3 md:gap-4 mb-6 py-3 border-t border-b border-gray-100 dark:border-gray-700">
         {/* Tri */}
         <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Trier</span>
+          <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">{t('recipes.sortLabel')}</span>
           <select
             value={currentSortIndex === -1 ? 0 : currentSortIndex}
             onChange={handleSortChange}
@@ -242,7 +244,7 @@ export default function RecipeList() {
         </div>
         {/* Note minimale */}
         <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Note min.</span>
+          <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">{t('recipes.minRatingLabel')}</span>
           <div className="flex gap-1">
             {[0, 1, 2, 3, 4, 5].map((n) => (
               <button
@@ -262,16 +264,16 @@ export default function RecipeList() {
 
         {/* Temps max */}
         <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Temps max</span>
+          <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">{t('recipes.maxTimeLabel')}</span>
           <input
             type="number"
             min="1"
             value={maxTimeInput}
             onChange={handleMaxTimeChange}
-            placeholder="min"
+            placeholder={t('recipes.maxTimeUnit')}
             className="w-20 px-2 py-1 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent"
           />
-          <span className="text-xs text-gray-400 dark:text-gray-500">min</span>
+          <span className="text-xs text-gray-400 dark:text-gray-500">{t('recipes.maxTimeUnit')}</span>
         </div>
 
         {/* Réinitialiser */}
@@ -280,7 +282,7 @@ export default function RecipeList() {
             onClick={resetFilters}
             className="text-xs text-gray-400 hover:text-red-500 transition-colors ml-auto"
           >
-            Réinitialiser les filtres
+            {t('recipes.resetFilters')}
           </button>
         )}
       </div>
@@ -293,7 +295,7 @@ export default function RecipeList() {
       ) : error ? (
         <p className="text-center text-red-500 py-16">{error}</p>
       ) : recipes.length === 0 ? (
-        <p className="text-center text-gray-400 dark:text-gray-500 py-16">Aucune recette trouvée.</p>
+        <p className="text-center text-gray-400 dark:text-gray-500 py-16">{t('recipes.noResults')}</p>
       ) : (
         <>
           <div className="flex flex-col gap-3">
@@ -315,7 +317,7 @@ export default function RecipeList() {
                 disabled={loadingMore}
                 className="px-6 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 text-sm font-medium text-gray-600 dark:text-gray-400 hover:border-amber-300 dark:hover:border-amber-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
-                {loadingMore ? 'Chargement...' : `Charger plus (${recipes.length} / ${total})`}
+                {loadingMore ? t('recipes.loadMoreLoading') : t('recipes.loadMore', { loaded: recipes.length, total })}
               </button>
             </div>
           )}
@@ -325,7 +327,7 @@ export default function RecipeList() {
       {/* Compteur total */}
       {!loading && total > 0 && (
         <p className="text-center text-xs text-gray-400 dark:text-gray-500 mt-4">
-          {total} recette{total > 1 ? 's' : ''} au total
+          {t('recipes.totalCount', { count: total })}
         </p>
       )}
     </div>

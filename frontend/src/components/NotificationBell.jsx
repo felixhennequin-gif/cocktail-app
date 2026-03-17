@@ -1,17 +1,18 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../contexts/AuthContext'
 
 // Texte affiché pour chaque type de notification
-const formatNotif = (notif) => {
+const formatNotif = (notif, t) => {
   const d = notif.data || {}
   switch (notif.type) {
     case 'NEW_RECIPE':
-      return `${d.authorPseudo} a publié "${d.recipeName}"`
+      return t('common.notifNewRecipe', { author: d.authorPseudo, recipe: d.recipeName })
     case 'COMMENT_ON_RECIPE':
-      return `${d.commenterPseudo} a commenté "${d.recipeName}" : ${d.commentPreview}`
+      return t('common.notifComment', { commenter: d.commenterPseudo, recipe: d.recipeName, preview: d.commentPreview })
     case 'RECIPE_APPROVED':
-      return `Votre recette "${d.recipeName}" a été publiée !`
+      return t('common.notifApproved', { recipe: d.recipeName })
     default:
       return notif.type
   }
@@ -19,6 +20,7 @@ const formatNotif = (notif) => {
 
 export default function NotificationBell() {
   const { user, authFetch }           = useAuth()
+  const { t }                         = useTranslation()
   const [notifications, setNotifications] = useState([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [open, setOpen]               = useState(false)
@@ -89,7 +91,7 @@ export default function NotificationBell() {
       <button
         onClick={handleToggle}
         className="relative text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 transition-colors"
-        title="Notifications"
+        title={t('common.notifications')}
       >
         🔔
         {unreadCount > 0 && (
@@ -102,11 +104,11 @@ export default function NotificationBell() {
       {open && (
         <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg z-50 overflow-hidden">
           <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
-            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Notifications</p>
+            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t('common.notifications')}</p>
           </div>
 
           {notifications.length === 0 ? (
-            <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-8">Aucune notification</p>
+            <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-8">{t('common.noNotifications')}</p>
           ) : (
             <div className="max-h-96 overflow-y-auto divide-y divide-gray-50 dark:divide-gray-700">
               {notifications.map((notif) => (
@@ -123,7 +125,7 @@ export default function NotificationBell() {
                     )}
                     <div className={!notif.read ? '' : 'ml-3.5'}>
                       <p className="text-sm text-gray-800 dark:text-gray-200 leading-snug">
-                        {formatNotif(notif)}
+                        {formatNotif(notif, t)}
                       </p>
                       <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                         {new Date(notif.createdAt).toLocaleDateString('fr-FR', {
