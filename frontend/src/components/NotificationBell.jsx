@@ -88,7 +88,7 @@ export default function NotificationBell() {
     <div ref={containerRef} className="relative">
       <button
         onClick={handleToggle}
-        className="relative text-gray-500 hover:text-gray-800 transition-colors"
+        className="relative text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 transition-colors"
         title="Notifications"
       >
         🔔
@@ -100,21 +100,21 @@ export default function NotificationBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-80 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden">
-          <div className="px-4 py-3 border-b border-gray-100">
-            <p className="text-sm font-semibold text-gray-900">Notifications</p>
+        <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg z-50 overflow-hidden">
+          <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
+            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Notifications</p>
           </div>
 
           {notifications.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-8">Aucune notification</p>
+            <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-8">Aucune notification</p>
           ) : (
-            <div className="max-h-96 overflow-y-auto divide-y divide-gray-50">
+            <div className="max-h-96 overflow-y-auto divide-y divide-gray-50 dark:divide-gray-700">
               {notifications.map((notif) => (
                 <button
                   key={notif.id}
                   onClick={() => handleClickNotif(notif)}
-                  className={`w-full text-left px-4 py-3 hover:bg-amber-50 transition-colors ${
-                    !notif.read ? 'bg-amber-50/40' : ''
+                  className={`w-full text-left px-4 py-3 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors ${
+                    !notif.read ? 'bg-amber-50/40 dark:bg-amber-900/10' : ''
                   }`}
                 >
                   <div className="flex items-start gap-2">
@@ -122,10 +122,10 @@ export default function NotificationBell() {
                       <span className="mt-1.5 shrink-0 w-1.5 h-1.5 rounded-full bg-amber-500" />
                     )}
                     <div className={!notif.read ? '' : 'ml-3.5'}>
-                      <p className="text-sm text-gray-800 leading-snug">
+                      <p className="text-sm text-gray-800 dark:text-gray-200 leading-snug">
                         {formatNotif(notif)}
                       </p>
-                      <p className="text-xs text-gray-400 mt-1">
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                         {new Date(notif.createdAt).toLocaleDateString('fr-FR', {
                           day: 'numeric', month: 'short',
                           hour: '2-digit', minute: '2-digit',

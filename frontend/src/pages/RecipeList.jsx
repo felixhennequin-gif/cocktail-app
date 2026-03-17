@@ -185,7 +185,7 @@ export default function RecipeList() {
         <meta property="og:description" content="Explorez des centaines de recettes de cocktails." />
         <meta property="og:type" content="website" />
       </Helmet>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Toutes les recettes</h1>
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">Toutes les recettes</h1>
 
       {/* Barre de recherche */}
       <div className="mb-4">
@@ -194,7 +194,7 @@ export default function RecipeList() {
           value={inputValue}
           onChange={handleSearchChange}
           placeholder="Rechercher un cocktail..."
-          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent"
+          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent"
         />
       </div>
 
@@ -205,7 +205,7 @@ export default function RecipeList() {
           className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
             categoryId === null
               ? 'bg-amber-500 text-white'
-              : 'bg-white border border-gray-200 text-gray-600 hover:border-amber-300'
+              : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-amber-300 dark:hover:border-amber-500'
           }`}
         >
           Toutes
@@ -217,7 +217,7 @@ export default function RecipeList() {
             className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
               categoryId === cat.id
                 ? 'bg-amber-500 text-white'
-                : 'bg-white border border-gray-200 text-gray-600 hover:border-amber-300'
+                : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-amber-300 dark:hover:border-amber-500'
             }`}
           >
             {cat.name}
@@ -226,14 +226,14 @@ export default function RecipeList() {
       </div>
 
       {/* Filtres supplémentaires */}
-      <div className="flex flex-wrap items-center gap-3 md:gap-4 mb-6 py-3 border-t border-b border-gray-100">
+      <div className="flex flex-wrap items-center gap-3 md:gap-4 mb-6 py-3 border-t border-b border-gray-100 dark:border-gray-700">
         {/* Tri */}
         <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500 font-medium">Trier</span>
+          <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Trier</span>
           <select
             value={currentSortIndex === -1 ? 0 : currentSortIndex}
             onChange={handleSortChange}
-            className="text-sm rounded-lg border border-gray-200 bg-white px-2 py-1 focus:outline-none focus:ring-2 focus:ring-amber-400"
+            className="text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 px-2 py-1 focus:outline-none focus:ring-2 focus:ring-amber-400"
           >
             {SORT_OPTIONS.map((o, i) => (
               <option key={i} value={i}>{o.label}</option>
@@ -242,7 +242,7 @@ export default function RecipeList() {
         </div>
         {/* Note minimale */}
         <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500 font-medium">Note min.</span>
+          <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Note min.</span>
           <div className="flex gap-1">
             {[0, 1, 2, 3, 4, 5].map((n) => (
               <button
@@ -251,7 +251,7 @@ export default function RecipeList() {
                 className={`w-7 h-7 rounded-lg text-xs font-medium transition-colors ${
                   (minRating ? parseInt(minRating) : 0) === n
                     ? 'bg-amber-500 text-white'
-                    : 'bg-white border border-gray-200 text-gray-600 hover:border-amber-300'
+                    : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-amber-300 dark:hover:border-amber-500'
                 }`}
               >
                 {n === 0 ? '–' : `${n}★`}
@@ -262,16 +262,16 @@ export default function RecipeList() {
 
         {/* Temps max */}
         <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500 font-medium">Temps max</span>
+          <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Temps max</span>
           <input
             type="number"
             min="1"
             value={maxTimeInput}
             onChange={handleMaxTimeChange}
             placeholder="min"
-            className="w-20 px-2 py-1 text-sm rounded-lg border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent"
+            className="w-20 px-2 py-1 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent"
           />
-          <span className="text-xs text-gray-400">min</span>
+          <span className="text-xs text-gray-400 dark:text-gray-500">min</span>
         </div>
 
         {/* Réinitialiser */}
@@ -293,7 +293,7 @@ export default function RecipeList() {
       ) : error ? (
         <p className="text-center text-red-500 py-16">{error}</p>
       ) : recipes.length === 0 ? (
-        <p className="text-center text-gray-400 py-16">Aucune recette trouvée.</p>
+        <p className="text-center text-gray-400 dark:text-gray-500 py-16">Aucune recette trouvée.</p>
       ) : (
         <>
           <div className="flex flex-col gap-3">
@@ -313,7 +313,7 @@ export default function RecipeList() {
               <button
                 onClick={handleLoadMore}
                 disabled={loadingMore}
-                className="px-6 py-2.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:border-amber-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="px-6 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 text-sm font-medium text-gray-600 dark:text-gray-400 hover:border-amber-300 dark:hover:border-amber-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 {loadingMore ? 'Chargement...' : `Charger plus (${recipes.length} / ${total})`}
               </button>
@@ -324,7 +324,7 @@ export default function RecipeList() {
 
       {/* Compteur total */}
       {!loading && total > 0 && (
-        <p className="text-center text-xs text-gray-400 mt-4">
+        <p className="text-center text-xs text-gray-400 dark:text-gray-500 mt-4">
           {total} recette{total > 1 ? 's' : ''} au total
         </p>
       )}

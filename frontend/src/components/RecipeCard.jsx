@@ -4,9 +4,9 @@ import { getImageUrl } from '../utils/image'
 
 const difficultyLabel = { EASY: 'Facile', MEDIUM: 'Moyen', HARD: 'Difficile' }
 const difficultyColor = {
-  EASY:   'bg-green-100 text-green-700',
-  MEDIUM: 'bg-amber-100 text-amber-700',
-  HARD:   'bg-red-100   text-red-700',
+  EASY:   'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+  MEDIUM: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+  HARD:   'bg-red-100   text-red-700   dark:bg-red-900/30   dark:text-red-400',
 }
 
 // Affichage étoiles — ex: 3.7 → ★★★★☆
@@ -16,7 +16,7 @@ function Stars({ value, count }) {
   const stars = '★'.repeat(full) + '☆'.repeat(5 - full)
   return (
     <span className="text-amber-400 text-xs" title={`${value}/5 (${count} note${count > 1 ? 's' : ''})`}>
-      {stars} <span className="text-gray-400">{value}</span>
+      {stars} <span className="text-gray-400 dark:text-gray-500">{value}</span>
     </span>
   )
 }
@@ -40,17 +40,17 @@ export default function RecipeCard({ recipe, isFavorited, onToggleFavorite }) {
   return (
     <Link
       to={`/recipes/${recipe.id}`}
-      className="flex gap-4 bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md hover:border-amber-300 transition-all"
+      className="flex gap-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md hover:border-amber-300 dark:hover:border-amber-500 transition-all"
     >
       <img
         src={getImageUrl(recipe.imageUrl)}
         alt={recipe.name}
-        className="w-20 h-16 sm:w-24 sm:h-20 object-cover rounded-lg shrink-0 bg-gray-100"
+        className="w-20 h-16 sm:w-24 sm:h-20 object-cover rounded-lg shrink-0 bg-gray-100 dark:bg-gray-700"
       />
 
       <div className="flex flex-col justify-between min-w-0 flex-1">
         <div className="flex items-start justify-between gap-2">
-          <h2 className="text-base font-semibold text-gray-900 truncate">{recipe.name}</h2>
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 truncate">{recipe.name}</h2>
           <div className="flex items-center gap-2 shrink-0">
             <span className={`text-xs font-medium px-2 py-1 rounded-full ${difficultyColor[recipe.difficulty]}`}>
               {difficultyLabel[recipe.difficulty]}
@@ -58,7 +58,7 @@ export default function RecipeCard({ recipe, isFavorited, onToggleFavorite }) {
             {user && (
               <button
                 onClick={handleFavorite}
-                className={`text-lg leading-none transition-colors ${isFavorited ? 'text-red-500' : 'text-gray-300 hover:text-red-400'}`}
+                className={`text-lg leading-none transition-colors ${isFavorited ? 'text-red-500' : 'text-gray-300 dark:text-gray-600 hover:text-red-400'}`}
                 title={isFavorited ? 'Retirer des favoris' : 'Ajouter aux favoris'}
               >
                 ♥
@@ -67,7 +67,7 @@ export default function RecipeCard({ recipe, isFavorited, onToggleFavorite }) {
           </div>
         </div>
 
-        <div className="flex items-center gap-4 text-xs text-gray-400 mt-2">
+        <div className="flex items-center gap-4 text-xs text-gray-400 dark:text-gray-500 mt-2">
           <span>⏱ {recipe.prepTime} min</span>
           {recipe.category && <span>📂 {recipe.category.name}</span>}
           {recipe.avgRating !== null && recipe.avgRating !== undefined && (
@@ -76,7 +76,7 @@ export default function RecipeCard({ recipe, isFavorited, onToggleFavorite }) {
           {recipe.author && (
             <button
               onClick={handleAuthorClick}
-              className="text-amber-600 hover:underline ml-auto"
+              className="text-amber-600 dark:text-amber-400 hover:underline ml-auto"
             >
               {recipe.author.pseudo}
             </button>

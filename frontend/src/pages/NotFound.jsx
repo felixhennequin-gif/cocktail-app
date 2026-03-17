@@ -8,9 +8,9 @@ export default function NotFound() {
         <title>404 — Page introuvable — Cocktails</title>
       </Helmet>
       <div className="text-7xl mb-6">🍹</div>
-      <h1 className="text-4xl font-bold text-gray-900 mb-3">404</h1>
-      <p className="text-xl text-gray-500 mb-2">Page introuvable</p>
-      <p className="text-sm text-gray-400 mb-8">
+      <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-3">404</h1>
+      <p className="text-xl text-gray-500 dark:text-gray-400 mb-2">Page introuvable</p>
+      <p className="text-sm text-gray-400 dark:text-gray-500 mb-8">
         Cette page n'existe pas ou a été déplacée.
       </p>
       <Link

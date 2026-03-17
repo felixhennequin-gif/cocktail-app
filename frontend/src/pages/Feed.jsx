@@ -71,7 +71,7 @@ export default function Feed() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Mon fil d'actualité</h1>
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">Mon fil d'actualité</h1>
 
       {loading ? (
         <div className="flex flex-col gap-3">
@@ -79,8 +79,8 @@ export default function Feed() {
         </div>
       ) : recipes.length === 0 ? (
         <div className="text-center py-16">
-          <p className="text-gray-500 mb-2 text-lg">Vous ne suivez personne encore.</p>
-          <p className="text-gray-400 text-sm mb-6">Suivez des utilisateurs pour voir leurs recettes ici.</p>
+          <p className="text-gray-500 dark:text-gray-400 mb-2 text-lg">Vous ne suivez personne encore.</p>
+          <p className="text-gray-400 dark:text-gray-500 text-sm mb-6">Suivez des utilisateurs pour voir leurs recettes ici.</p>
           <Link
             to="/"
             className="inline-block px-5 py-2.5 bg-amber-500 text-white rounded-lg text-sm font-medium hover:bg-amber-600 transition-colors"
@@ -106,7 +106,7 @@ export default function Feed() {
               <button
                 onClick={loadMore}
                 disabled={loadingMore}
-                className="px-6 py-2.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:border-amber-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="px-6 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 text-sm font-medium text-gray-600 dark:text-gray-400 hover:border-amber-300 dark:hover:border-amber-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 {loadingMore ? 'Chargement...' : 'Charger plus'}
               </button>

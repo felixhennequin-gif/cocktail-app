@@ -14,9 +14,9 @@ const STATUS_FILTERS = [
 ]
 
 const statusBadge = {
-  PUBLISHED: 'bg-green-100 text-green-700',
-  DRAFT:     'bg-gray-100 text-gray-500',
-  PENDING:   'bg-amber-100 text-amber-700',
+  PUBLISHED: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+  DRAFT:     'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400',
+  PENDING:   'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
 }
 const statusLabel = { PUBLISHED: 'Publié', DRAFT: 'Brouillon', PENDING: 'En attente' }
 
@@ -75,8 +75,8 @@ export default function AdminRecipeList() {
       />
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
-          <h1 className="text-2xl font-bold text-gray-900">Admin — Recettes</h1>
-          <Link to="/admin/pending" className="text-sm text-amber-600 hover:underline font-medium">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Admin — Recettes</h1>
+          <Link to="/admin/pending" className="text-sm text-amber-600 dark:text-amber-400 hover:underline font-medium">
             Voir les recettes en attente
           </Link>
         </div>
@@ -97,7 +97,7 @@ export default function AdminRecipeList() {
             className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
               statusFilter === key
                 ? 'bg-amber-500 text-white'
-                : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-300'
+                : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-500'
             }`}
           >
             {label}
@@ -105,46 +105,50 @@ export default function AdminRecipeList() {
         ))}
       </div>
 
-      {loading && <p className="text-gray-400 py-8 text-center">Chargement...</p>}
+      {loading && <p className="text-gray-400 dark:text-gray-500 py-8 text-center">Chargement...</p>}
       {error   && <p className="text-red-500 py-8 text-center">{error}</p>}
 
       {!loading && !error && (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="bg-gray-100 border-b-2 border-gray-200">
+            <thead className="bg-gray-100 dark:bg-gray-700 border-b-2 border-gray-200 dark:border-gray-600">
               <tr>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600 w-2/5">Nom</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600">Statut</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600">Catégorie</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600">Difficulté</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600">Créée le</th>
-                <th className="border-l-2 border-gray-300 px-4 py-3 font-semibold text-gray-600 text-center">Modifier</th>
-                <th className="px-4 py-3 font-semibold text-gray-600 text-center">Supprimer</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-300 w-2/5">Nom</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-300">Statut</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-300">Catégorie</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-300">Difficulté</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-300">Créée le</th>
+                <th className="border-l-2 border-gray-300 dark:border-gray-600 px-4 py-3 font-semibold text-gray-600 dark:text-gray-300 text-center">Modifier</th>
+                <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-300 text-center">Supprimer</th>
               </tr>
             </thead>
             <tbody>
               {recipes.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="text-center text-gray-400 py-8">Aucune recette.</td>
+                  <td colSpan={7} className="text-center text-gray-400 dark:text-gray-500 py-8">Aucune recette.</td>
                 </tr>
               )}
               {recipes.map((recipe, i) => (
                 <tr
                   key={recipe.id}
-                  className={`border-b border-gray-100 ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50 transition-colors`}
+                  className={`border-b border-gray-100 dark:border-gray-700 ${
+                    i % 2 === 0
+                      ? 'bg-white dark:bg-gray-800'
+                      : 'bg-gray-50 dark:bg-gray-750'
+                  } hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors`}
                 >
-                  <td className="px-4 py-3 font-medium text-gray-900">{recipe.name}</td>
+                  <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{recipe.name}</td>
                   <td className="px-4 py-3">
                     <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${statusBadge[recipe.status]}`}>
                       {statusLabel[recipe.status]}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-gray-500">{recipe.category?.name}</td>
-                  <td className="px-4 py-3 text-gray-500">{difficultyLabel[recipe.difficulty]}</td>
-                  <td className="px-4 py-3 text-gray-400">
+                  <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{recipe.category?.name}</td>
+                  <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{difficultyLabel[recipe.difficulty]}</td>
+                  <td className="px-4 py-3 text-gray-400 dark:text-gray-500">
                     {new Date(recipe.createdAt).toLocaleDateString('fr-FR')}
                   </td>
-                  <td className="border-l-2 border-gray-300 px-4 py-3 text-center">
+                  <td className="border-l-2 border-gray-300 dark:border-gray-600 px-4 py-3 text-center">
                     <button
                       onClick={() => navigate(`/admin/recipes/${recipe.id}/edit`)}
                       className="inline-flex items-center gap-1.5 bg-blue-500 text-white text-xs font-semibold rounded hover:bg-blue-700 hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer transition-all duration-150 px-3 py-1"

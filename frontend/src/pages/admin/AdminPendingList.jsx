@@ -45,7 +45,7 @@ export default function AdminPendingList() {
     }
   }
 
-  if (loading) return <p className="text-center text-gray-400 py-16">Chargement...</p>
+  if (loading) return <p className="text-center text-gray-400 dark:text-gray-500 py-16">Chargement...</p>
 
   return (
     <div>
@@ -59,15 +59,15 @@ export default function AdminPendingList() {
         onCancel={() => setRejectId(null)}
       />
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
           Recettes en attente{' '}
           {recipes.length > 0 && (
-            <span className="text-sm font-normal text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
+            <span className="text-sm font-normal text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-full">
               {recipes.length}
             </span>
           )}
         </h1>
-        <Link to="/admin" className="text-sm text-gray-500 hover:text-gray-800">
+        <Link to="/admin" className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200">
           ← Retour admin
         </Link>
       </div>
@@ -75,26 +75,26 @@ export default function AdminPendingList() {
       {error && <p className="text-red-500 mb-4">{error}</p>}
 
       {recipes.length === 0 ? (
-        <p className="text-center text-gray-400 py-16">Aucune recette en attente de validation.</p>
+        <p className="text-center text-gray-400 dark:text-gray-500 py-16">Aucune recette en attente de validation.</p>
       ) : (
         <div className="space-y-4">
           {recipes.map((recipe) => (
             <div
               key={recipe.id}
-              className="bg-white rounded-xl border border-amber-200 p-5 flex items-start justify-between gap-4"
+              className="bg-white dark:bg-gray-800 rounded-xl border border-amber-200 dark:border-amber-700 p-5 flex items-start justify-between gap-4"
             >
               <div className="min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <h2 className="font-semibold text-gray-900">{recipe.name}</h2>
-                  <span className="text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">En attente</span>
+                  <h2 className="font-semibold text-gray-900 dark:text-gray-100">{recipe.name}</h2>
+                  <span className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-full">En attente</span>
                 </div>
-                <p className="text-sm text-gray-500 mb-1">
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
                   {recipe.category?.name} · {recipe.prepTime} min
                 </p>
                 {recipe.author && (
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs text-gray-400 dark:text-gray-500">
                     Proposé par{' '}
-                    <Link to={`/users/${recipe.author.id}`} className="text-amber-600 hover:underline">
+                    <Link to={`/users/${recipe.author.id}`} className="text-amber-600 dark:text-amber-400 hover:underline">
                       {recipe.author.pseudo}
                     </Link>
                   </p>
@@ -104,7 +104,7 @@ export default function AdminPendingList() {
               <div className="flex gap-2 shrink-0">
                 <Link
                   to={`/recipes/${recipe.id}`}
-                  className="px-3 py-1.5 text-xs border border-gray-200 rounded-lg text-gray-600 hover:border-gray-300 transition-colors"
+                  className="px-3 py-1.5 text-xs border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 rounded-lg hover:border-gray-300 dark:hover:border-gray-500 transition-colors"
                 >
                   Voir
                 </Link>
@@ -116,7 +116,7 @@ export default function AdminPendingList() {
                 </button>
                 <button
                   onClick={() => handleReject(recipe.id)}
-                  className="px-3 py-1.5 text-xs bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
+                  className="px-3 py-1.5 text-xs bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/30 transition-colors"
                 >
                   Refuser
                 </button>

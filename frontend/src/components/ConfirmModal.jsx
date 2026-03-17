@@ -32,15 +32,15 @@ export default function ConfirmModal({
     >
       {/* Panel — stoppe la propagation pour éviter fermeture au clic intérieur */}
       <div
-        className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6"
+        className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-sm w-full p-6"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-lg font-bold text-gray-900 mb-2">{title}</h2>
-        {message && <p className="text-sm text-gray-600 mb-6">{message}</p>}
+        <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">{title}</h2>
+        {message && <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">{message}</p>}
         <div className="flex gap-3 justify-end">
           <button
             onClick={onCancel}
-            className="px-4 py-2 text-sm font-medium text-gray-600 border border-gray-200 rounded-xl hover:border-gray-300 transition-colors"
+            className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600 rounded-xl hover:border-gray-300 dark:hover:border-gray-500 transition-colors"
           >
             Annuler
           </button>

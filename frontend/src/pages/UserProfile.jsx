@@ -13,23 +13,23 @@ const LIMIT = 20
 // Mini-carte d'un utilisateur dans les listes abonnés/abonnements
 function UserCard({ person }) {
   return (
-    <div className="flex items-center gap-3 px-4 py-3 bg-white rounded-xl border border-gray-200">
+    <div className="flex items-center gap-3 px-4 py-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
       <Link to={`/users/${person.id}`} className="shrink-0">
         {person.avatar ? (
           <img
             src={getImageUrl(person.avatar)}
             alt={person.pseudo}
-            className="w-10 h-10 rounded-full object-cover bg-gray-100"
+            className="w-10 h-10 rounded-full object-cover bg-gray-100 dark:bg-gray-700"
           />
         ) : (
-          <div className="w-10 h-10 rounded-full bg-amber-100 text-amber-600 text-base font-bold flex items-center justify-center">
+          <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-base font-bold flex items-center justify-center">
             {person.pseudo[0].toUpperCase()}
           </div>
         )}
       </Link>
       <Link
         to={`/users/${person.id}`}
-        className="flex-1 text-sm font-medium text-gray-800 hover:text-amber-600 transition-colors"
+        className="flex-1 text-sm font-medium text-gray-800 dark:text-gray-200 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
       >
         {person.pseudo}
       </Link>
@@ -95,43 +95,43 @@ function EditProfileModal({ profile, onClose, onSaved, authFetch }) {
 
   return (
     <div className="fixed inset-0 z-[9000] flex items-center justify-center p-4 bg-black/40" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-lg font-bold text-gray-900 mb-4">Modifier mon profil</h2>
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-sm w-full p-6" onClick={(e) => e.stopPropagation()}>
+        <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Modifier mon profil</h2>
         {error && <p className="mb-3 text-sm text-red-500">{error}</p>}
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Avatar */}
           <div className="flex items-center gap-4">
             {preview ? (
-              <img src={preview} alt="avatar" className="w-14 h-14 rounded-full object-cover bg-gray-100" />
+              <img src={preview} alt="avatar" className="w-14 h-14 rounded-full object-cover bg-gray-100 dark:bg-gray-700" />
             ) : (
-              <div className="w-14 h-14 rounded-full bg-amber-100 text-amber-600 text-xl font-bold flex items-center justify-center">
+              <div className="w-14 h-14 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-xl font-bold flex items-center justify-center">
                 {form.pseudo[0]?.toUpperCase()}
               </div>
             )}
-            <label className="text-sm text-amber-600 hover:text-amber-800 cursor-pointer font-medium">
+            <label className="text-sm text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 cursor-pointer font-medium">
               <input type="file" accept="image/*" onChange={handleAvatar} className="hidden" />
               Changer l'avatar
             </label>
           </div>
           {/* Pseudo */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Pseudo</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Pseudo</label>
             <input
               name="pseudo" value={form.pseudo} onChange={handleField} required minLength={2}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+              className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
             />
           </div>
           {/* Bio */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Bio</label>
             <textarea
               name="bio" value={form.bio} onChange={handleField} rows={3}
               placeholder="Parlez un peu de vous..."
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none"
+              className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none"
             />
           </div>
           <div className="flex gap-3 pt-1">
-            <button type="button" onClick={onClose} className="flex-1 py-2 text-sm border border-gray-200 rounded-xl text-gray-600 hover:border-gray-300 transition-colors">
+            <button type="button" onClick={onClose} className="flex-1 py-2 text-sm border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 rounded-xl hover:border-gray-300 dark:hover:border-gray-500 transition-colors">
               Annuler
             </button>
             <button type="submit" disabled={saving} className="flex-1 py-2 text-sm bg-amber-500 text-white rounded-xl hover:bg-amber-600 disabled:opacity-60 transition-colors font-medium">
@@ -260,8 +260,8 @@ export default function UserProfile() {
   if (error)   return (
     <div className="flex flex-col items-center justify-center min-h-[50vh] text-center px-4">
       <div className="text-5xl mb-4">👤</div>
-      <h2 className="text-2xl font-bold text-gray-800 mb-2">Profil introuvable</h2>
-      <p className="text-gray-400 text-sm mb-6">{error}</p>
+      <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-2">Profil introuvable</h2>
+      <p className="text-gray-400 dark:text-gray-500 text-sm mb-6">{error}</p>
       <Link to="/" className="px-5 py-2.5 bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition-colors text-sm font-medium">
         ← Retour à l'accueil
       </Link>
@@ -301,25 +301,25 @@ export default function UserProfile() {
       )}
 
       {/* En-tête profil */}
-      <div className="flex items-center gap-5 mb-6 bg-white rounded-xl border border-gray-200 p-6">
+      <div className="flex items-center gap-5 mb-6 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
         {profile.avatar ? (
           <img
             src={getImageUrl(profile.avatar)}
             alt={profile.pseudo}
-            className="w-16 h-16 rounded-full object-cover bg-gray-100"
+            className="w-16 h-16 rounded-full object-cover bg-gray-100 dark:bg-gray-700"
           />
         ) : (
-          <div className="w-16 h-16 rounded-full bg-amber-100 text-amber-600 text-2xl font-bold flex items-center justify-center">
+          <div className="w-16 h-16 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-2xl font-bold flex items-center justify-center">
             {profile.pseudo[0].toUpperCase()}
           </div>
         )}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-2xl font-bold text-gray-900">{profile.pseudo}</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{profile.pseudo}</h1>
             {isOwnProfile ? (
               <button
                 onClick={() => setEditOpen(true)}
-                className="px-3 py-1 text-xs border border-gray-200 rounded-full text-gray-500 hover:border-amber-300 hover:text-amber-600 transition-colors"
+                className="px-3 py-1 text-xs border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 rounded-full hover:border-amber-300 dark:hover:border-amber-500 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
               >
                 Modifier
               </button>
@@ -330,23 +330,23 @@ export default function UserProfile() {
               />
             )}
           </div>
-          <p className="text-sm text-gray-400 mt-0.5">Membre depuis {joinedYear}</p>
+          <p className="text-sm text-gray-400 dark:text-gray-500 mt-0.5">Membre depuis {joinedYear}</p>
           {profile.bio && (
-            <p className="text-sm text-gray-600 mt-1">{profile.bio}</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{profile.bio}</p>
           )}
         </div>
       </div>
 
       {/* Onglets */}
-      <div className="flex gap-1 mb-6 border-b border-gray-200">
+      <div className="flex gap-1 mb-6 border-b border-gray-200 dark:border-gray-700">
         {tabs.map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
             className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
               activeTab === tab.key
-                ? 'border-amber-500 text-amber-600'
-                : 'border-transparent text-gray-500 hover:text-gray-800'
+                ? 'border-amber-500 text-amber-600 dark:text-amber-400'
+                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
             }`}
           >
             {tab.label}
@@ -361,7 +361,7 @@ export default function UserProfile() {
             {[1, 2, 3].map((i) => <SkeletonCard key={i} />)}
           </div>
         ) : recipes.length === 0 ? (
-          <p className="text-gray-400 text-sm">Aucune recette publiée.</p>
+          <p className="text-gray-400 dark:text-gray-500 text-sm">Aucune recette publiée.</p>
         ) : (
           <>
             <div className="flex flex-col gap-3">
@@ -380,17 +380,17 @@ export default function UserProfile() {
                 <button
                   onClick={() => setPage((p) => p - 1)}
                   disabled={page <= 1}
-                  className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:border-amber-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 text-sm font-medium text-gray-600 dark:text-gray-400 hover:border-amber-300 dark:hover:border-amber-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
                   ← Précédent
                 </button>
-                <span className="text-sm text-gray-500">
+                <span className="text-sm text-gray-500 dark:text-gray-400">
                   Page {page} / {totalPages}
                 </span>
                 <button
                   onClick={() => setPage((p) => p + 1)}
                   disabled={page >= totalPages}
-                  className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:border-amber-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 text-sm font-medium text-gray-600 dark:text-gray-400 hover:border-amber-300 dark:hover:border-amber-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
                   Suivant →
                 </button>
@@ -405,14 +405,14 @@ export default function UserProfile() {
         followersLoading ? (
           <SkeletonList count={4} />
         ) : followers.length === 0 ? (
-          <p className="text-gray-400 text-sm">Aucun abonné pour le moment.</p>
+          <p className="text-gray-400 dark:text-gray-500 text-sm">Aucun abonné pour le moment.</p>
         ) : (
           <div className="flex flex-col gap-2">
             {followers.map((person) => (
               <UserCard key={person.id} person={person} />
             ))}
             {followersTotal > followers.length && (
-              <p className="text-xs text-gray-400 text-center mt-2">
+              <p className="text-xs text-gray-400 dark:text-gray-500 text-center mt-2">
                 {followers.length} premiers sur {followersTotal}
               </p>
             )}
@@ -425,14 +425,14 @@ export default function UserProfile() {
         followingLoading ? (
           <SkeletonList count={4} />
         ) : following.length === 0 ? (
-          <p className="text-gray-400 text-sm">Aucun abonnement pour le moment.</p>
+          <p className="text-gray-400 dark:text-gray-500 text-sm">Aucun abonnement pour le moment.</p>
         ) : (
           <div className="flex flex-col gap-2">
             {following.map((person) => (
               <UserCard key={person.id} person={person} />
             ))}
             {followingTotal > following.length && (
-              <p className="text-xs text-gray-400 text-center mt-2">
+              <p className="text-xs text-gray-400 dark:text-gray-500 text-center mt-2">
                 {following.length} premiers sur {followingTotal}
               </p>
             )}

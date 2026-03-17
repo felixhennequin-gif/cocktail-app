@@ -8,9 +8,9 @@ import ConfirmModal from '../components/ConfirmModal'
 
 const difficultyLabel = { EASY: 'Facile', MEDIUM: 'Moyen', HARD: 'Difficile' }
 const difficultyColor = {
-  EASY:   'bg-green-100 text-green-700',
-  MEDIUM: 'bg-amber-100 text-amber-700',
-  HARD:   'bg-red-100 text-red-700',
+  EASY:   'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+  MEDIUM: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+  HARD:   'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
 }
 
 // Unités discrètes où on affiche des fractions plutôt que des décimales
@@ -49,7 +49,7 @@ function PortionSelector({ value, onChange }) {
       <button
         type="button"
         onClick={() => onChange(Math.max(1, value - 1))}
-        className="w-7 h-7 rounded-full border border-gray-300 text-gray-600 text-sm font-bold flex items-center justify-center hover:border-amber-400 hover:text-amber-600 transition-colors"
+        className="w-7 h-7 rounded-full border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 text-sm font-bold flex items-center justify-center hover:border-amber-400 hover:text-amber-600 transition-colors"
       >
         −
       </button>
@@ -61,12 +61,12 @@ function PortionSelector({ value, onChange }) {
           const v = parseInt(e.target.value)
           if (v >= 1) onChange(v)
         }}
-        className="w-12 text-center border border-gray-200 rounded-lg py-1 text-sm font-semibold text-gray-800 focus:outline-none focus:ring-2 focus:ring-amber-400"
+        className="w-12 text-center border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg py-1 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-amber-400"
       />
       <button
         type="button"
         onClick={() => onChange(value + 1)}
-        className="w-7 h-7 rounded-full border border-gray-300 text-gray-600 text-sm font-bold flex items-center justify-center hover:border-amber-400 hover:text-amber-600 transition-colors"
+        className="w-7 h-7 rounded-full border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 text-sm font-bold flex items-center justify-center hover:border-amber-400 hover:text-amber-600 transition-colors"
       >
         +
       </button>
@@ -89,7 +89,7 @@ function RatingStars({ value, onChange }) {
           onMouseEnter={() => setHovered(n)}
           onMouseLeave={() => setHovered(null)}
           className={`text-2xl leading-none transition-colors ${
-            n <= display ? 'text-amber-400' : 'text-gray-200'
+            n <= display ? 'text-amber-400' : 'text-gray-200 dark:text-gray-600'
           } hover:text-amber-400`}
         >
           ★
@@ -235,12 +235,12 @@ export default function RecipeDetail() {
     }
   }
 
-  if (loading) return <p className="text-center text-gray-400 py-16">Chargement...</p>
+  if (loading) return <p className="text-center text-gray-400 dark:text-gray-500 py-16">Chargement...</p>
   if (error) return (
     <div className="flex flex-col items-center justify-center min-h-[50vh] text-center px-4">
       <div className="text-5xl mb-4">🍹</div>
-      <h2 className="text-2xl font-bold text-gray-800 mb-2">Recette introuvable</h2>
-      <p className="text-gray-400 text-sm mb-6">{error}</p>
+      <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-2">Recette introuvable</h2>
+      <p className="text-gray-400 dark:text-gray-500 text-sm mb-6">{error}</p>
       <Link to="/" className="px-5 py-2.5 bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition-colors text-sm font-medium">
         ← Retour à la liste
       </Link>
@@ -271,7 +271,7 @@ export default function RecipeDetail() {
         onConfirm={confirmDeleteComment}
         onCancel={() => setDeleteCommentId(null)}
       />
-      <Link to="/" className="text-sm text-amber-600 hover:underline mb-6 inline-block">
+      <Link to="/" className="text-sm text-amber-600 dark:text-amber-400 hover:underline mb-6 inline-block">
         ← Toutes les recettes
       </Link>
 
@@ -280,10 +280,10 @@ export default function RecipeDetail() {
         <img
           src={getImageUrl(recipe.imageUrl)}
           alt={recipe.name}
-          className="w-full h-56 object-cover rounded-xl mb-6 bg-gray-100"
+          className="w-full h-56 object-cover rounded-xl mb-6 bg-gray-100 dark:bg-gray-700"
         />
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-3">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{recipe.name}</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">{recipe.name}</h1>
           <div className="flex items-center gap-2 shrink-0">
             <span className={`text-sm font-medium px-3 py-1 rounded-full ${difficultyColor[recipe.difficulty]}`}>
               {difficultyLabel[recipe.difficulty]}
@@ -291,7 +291,7 @@ export default function RecipeDetail() {
             {user && (
               <button
                 onClick={handleToggleFavorite}
-                className={`text-2xl leading-none transition-colors ${isFavorited ? 'text-red-500' : 'text-gray-300 hover:text-red-400'}`}
+                className={`text-2xl leading-none transition-colors ${isFavorited ? 'text-red-500' : 'text-gray-300 dark:text-gray-600 hover:text-red-400'}`}
                 title={isFavorited ? 'Retirer des favoris' : 'Ajouter aux favoris'}
               >
                 ♥
@@ -300,13 +300,13 @@ export default function RecipeDetail() {
           </div>
         </div>
 
-        <div className="flex items-center gap-4 text-sm text-gray-500 mb-2">
+        <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 mb-2">
           <span>⏱ {recipe.prepTime} min</span>
           {recipe.category && <span>📂 {recipe.category.name}</span>}
           {recipe.author && (
             <Link
               to={`/users/${recipe.author.id}`}
-              className="text-amber-600 hover:underline"
+              className="text-amber-600 dark:text-amber-400 hover:underline"
             >
               par {recipe.author.pseudo}
             </Link>
@@ -316,31 +316,31 @@ export default function RecipeDetail() {
         {/* Note moyenne */}
         <div className="flex items-center gap-3 mb-4">
           {avgRating !== null ? (
-            <span className="text-sm text-gray-500">
-              ★ <span className="font-medium text-gray-800">{avgRating}</span>/5
-              <span className="text-gray-400 ml-1">({ratingsCount} note{ratingsCount > 1 ? 's' : ''})</span>
+            <span className="text-sm text-gray-500 dark:text-gray-400">
+              ★ <span className="font-medium text-gray-800 dark:text-gray-200">{avgRating}</span>/5
+              <span className="text-gray-400 dark:text-gray-500 ml-1">({ratingsCount} note{ratingsCount > 1 ? 's' : ''})</span>
             </span>
           ) : (
-            <span className="text-sm text-gray-400">Pas encore noté</span>
+            <span className="text-sm text-gray-400 dark:text-gray-500">Pas encore noté</span>
           )}
         </div>
 
         {recipe.description && (
-          <p className="text-gray-600 leading-relaxed">{recipe.description}</p>
+          <p className="text-gray-600 dark:text-gray-400 leading-relaxed">{recipe.description}</p>
         )}
 
         {recipe.servings && (
           <div className="flex items-center gap-3 mt-4">
-            <span className="text-sm text-gray-500">Pour</span>
+            <span className="text-sm text-gray-500 dark:text-gray-400">Pour</span>
             <PortionSelector value={portionCount} onChange={setPortionCount} />
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-gray-500 dark:text-gray-400">
               {portionCount > 1 ? 'verres' : 'verre'}
             </span>
           </div>
         )}
 
         {recipe.status === 'PENDING' && (
-          <div className="mt-3 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-700">
+          <div className="mt-3 px-3 py-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg text-sm text-amber-700 dark:text-amber-400">
             En attente de validation par un administrateur
           </div>
         )}
@@ -349,15 +349,15 @@ export default function RecipeDetail() {
       {/* Ingrédients */}
       {recipe.ingredients?.length > 0 && (
         <section className="mb-8">
-          <h2 className="text-lg font-semibold text-gray-900 mb-3">Ingrédients</h2>
-          <ul className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">Ingrédients</h2>
+          <ul className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700">
             {recipe.ingredients.map((ri) => {
               const baseServings = recipe.servings ?? 1
               const displayQty   = ri.quantity * (portionCount / baseServings)
               return (
                 <li key={ri.id} className="flex justify-between items-center px-4 py-3 text-sm">
-                  <span className="text-gray-800">{ri.ingredient.name}</span>
-                  <span className="text-gray-500 font-medium">
+                  <span className="text-gray-800 dark:text-gray-200">{ri.ingredient.name}</span>
+                  <span className="text-gray-500 dark:text-gray-400 font-medium">
                     {formatQty(displayQty, ri.unit)} {ri.unit}
                   </span>
                 </li>
@@ -370,7 +370,7 @@ export default function RecipeDetail() {
       {/* Étapes */}
       {recipe.steps?.length > 0 && (
         <section className="mb-8">
-          <h2 className="text-lg font-semibold text-gray-900 mb-3">Préparation</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">Préparation</h2>
           <ol className="space-y-4">
             {recipe.steps.map((step) => (
               <li key={step.id} className="flex gap-4">
@@ -382,10 +382,10 @@ export default function RecipeDetail() {
                     <img
                       src={getImageUrl(step.imageUrl)}
                       alt={`Étape ${step.order}`}
-                      className="w-full max-w-sm rounded-lg mb-2 border border-gray-100"
+                      className="w-full max-w-sm rounded-lg mb-2 border border-gray-100 dark:border-gray-700"
                     />
                   )}
-                  <p className="text-gray-700 leading-relaxed">{step.description}</p>
+                  <p className="text-gray-700 dark:text-gray-300 leading-relaxed">{step.description}</p>
                 </div>
               </li>
             ))}
@@ -395,24 +395,24 @@ export default function RecipeDetail() {
 
       {/* Commentaires */}
       <section>
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
-          Commentaires {comments.length > 0 && <span className="text-gray-400 font-normal text-sm">({comments.length})</span>}
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+          Commentaires {comments.length > 0 && <span className="text-gray-400 dark:text-gray-500 font-normal text-sm">({comments.length})</span>}
         </h2>
 
         {user && isOwnRecipe ? (
-          <p className="text-sm text-gray-400 mb-6 px-4 py-3 bg-gray-50 rounded-lg border border-gray-100">
+          <p className="text-sm text-gray-400 dark:text-gray-500 mb-6 px-4 py-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700">
             Vous ne pouvez pas commenter votre propre recette.
           </p>
         ) : user ? (
-          <form onSubmit={handleSubmitComment} className="mb-6 bg-gray-50 rounded-xl border border-gray-100 p-4">
+          <form onSubmit={handleSubmitComment} className="mb-6 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-4">
             {myComment && (
-              <p className="text-xs text-amber-600 font-medium mb-3">
+              <p className="text-xs text-amber-600 dark:text-amber-400 font-medium mb-3">
                 Mode édition — vous avez déjà commenté cette recette
               </p>
             )}
             {/* Note obligatoire */}
             <div className="mb-3">
-              <span className="text-xs text-gray-500 font-medium mr-2">
+              <span className="text-xs text-gray-500 dark:text-gray-400 font-medium mr-2">
                 Votre note {!myComment && <span className="text-red-400">*</span>}
               </span>
               <RatingStars value={commentScore} onChange={setCommentScore} />
@@ -424,8 +424,8 @@ export default function RecipeDetail() {
               onBlur={() => setCommentTouched(true)}
               placeholder="Votre commentaire..."
               rows={3}
-              className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none mb-1 bg-white ${
-                commentTouched && !commentText.trim() ? 'border-red-400' : 'border-gray-200'
+              className={`w-full px-3 py-2 border rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none mb-1 ${
+                commentTouched && !commentText.trim() ? 'border-red-400' : 'border-gray-200 dark:border-gray-600'
               }`}
             />
             {commentTouched && !commentText.trim() && (
@@ -440,23 +440,23 @@ export default function RecipeDetail() {
             </button>
           </form>
         ) : (
-          <p className="text-sm text-gray-400 mb-6">
-            <Link to="/login" className="text-amber-600 hover:underline">Connectez-vous</Link> pour laisser un commentaire.
+          <p className="text-sm text-gray-400 dark:text-gray-500 mb-6">
+            <Link to="/login" className="text-amber-600 dark:text-amber-400 hover:underline">Connectez-vous</Link> pour laisser un commentaire.
           </p>
         )}
 
         {comments.length === 0 ? (
-          <p className="text-sm text-gray-400">Aucun commentaire pour l'instant.</p>
+          <p className="text-sm text-gray-400 dark:text-gray-500">Aucun commentaire pour l'instant.</p>
         ) : (
           <ul className="space-y-4">
             {comments.map((c) => (
-              <li key={c.id} className="bg-white rounded-xl border border-gray-200 px-4 py-3">
+              <li key={c.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3">
                 <div className="flex items-center justify-between mb-1">
-                  <Link to={`/users/${c.user.id}`} className="text-sm font-medium text-amber-600 hover:underline">
+                  <Link to={`/users/${c.user.id}`} className="text-sm font-medium text-amber-600 dark:text-amber-400 hover:underline">
                     {c.user.pseudo}
                   </Link>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-400">
+                    <span className="text-xs text-gray-400 dark:text-gray-500">
                       {new Date(c.createdAt).toLocaleDateString('fr-FR')}
                     </span>
                     {user?.id === c.userId && (
@@ -470,14 +470,14 @@ export default function RecipeDetail() {
                     {(user?.id === c.userId || user?.role === 'ADMIN' || isOwnRecipe) && (
                       <button
                         onClick={() => handleDeleteComment(c.id)}
-                        className="text-xs text-gray-300 hover:text-red-500 transition-colors"
+                        className="text-xs text-gray-300 dark:text-gray-600 hover:text-red-500 transition-colors"
                       >
                         Supprimer
                       </button>
                     )}
                   </div>
                 </div>
-                <p className="text-sm text-gray-700">{c.content}</p>
+                <p className="text-sm text-gray-700 dark:text-gray-300">{c.content}</p>
               </li>
             ))}
           </ul>

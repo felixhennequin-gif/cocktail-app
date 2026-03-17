@@ -49,23 +49,25 @@ export default function Register() {
   }
 
   const fieldClass = (name) =>
-    `w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 ${
-      touched[name] && errors[name] ? 'border-red-400 bg-red-50' : 'border-gray-200'
+    `w-full px-3 py-2 border rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-amber-400 ${
+      touched[name] && errors[name]
+        ? 'border-red-400 bg-red-50 dark:bg-red-900/20'
+        : 'border-gray-200 dark:border-gray-600'
     }`
 
   return (
     <div className="max-w-sm mx-auto mt-12">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6 text-center">Créer un compte</h1>
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6 text-center">Créer un compte</h1>
 
       {error && (
-        <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+        <div className="mb-4 px-4 py-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400">
           {error}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-gray-200 p-6 space-y-4" noValidate>
+      <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 space-y-4" noValidate>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
           <input
             name="email" type="email" value={form.email}
             onChange={handleField} onBlur={handleBlur}
@@ -76,7 +78,7 @@ export default function Register() {
           )}
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Pseudo</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Pseudo</label>
           <input
             name="pseudo" value={form.pseudo}
             onChange={handleField} onBlur={handleBlur}
@@ -87,8 +89,8 @@ export default function Register() {
           )}
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Mot de passe <span className="text-gray-400 font-normal">(6 caractères min.)</span>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Mot de passe <span className="text-gray-400 dark:text-gray-500 font-normal">(6 caractères min.)</span>
           </label>
           <input
             name="password" type="password" value={form.password}
@@ -100,7 +102,7 @@ export default function Register() {
           )}
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Confirmer le mot de passe</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirmer le mot de passe</label>
           <input
             name="confirm" type="password" value={form.confirm}
             onChange={handleField} onBlur={handleBlur}
@@ -118,9 +120,9 @@ export default function Register() {
         </button>
       </form>
 
-      <p className="text-center text-sm text-gray-500 mt-4">
+      <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-4">
         Déjà un compte ?{' '}
-        <Link to="/login" className="text-amber-600 hover:underline font-medium">
+        <Link to="/login" className="text-amber-600 dark:text-amber-400 hover:underline font-medium">
           Se connecter
         </Link>
       </p>

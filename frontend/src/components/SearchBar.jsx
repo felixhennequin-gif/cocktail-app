@@ -73,31 +73,31 @@ export default function SearchBar() {
         onChange={handleChange}
         onKeyDown={handleKeyDown}
         placeholder="Rechercher..."
-        className="w-full px-3 py-1.5 text-sm rounded-lg border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent"
+        className="w-full px-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent"
       />
 
       {open && results.length > 0 && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden">
+        <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg z-50 overflow-hidden">
           {results.map((r) => (
             <button
               key={r.id}
               onClick={() => handleSelect(r.id)}
-              className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-amber-50 text-left transition-colors"
+              className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-amber-50 dark:hover:bg-amber-900/20 text-left transition-colors"
             >
               {r.imageUrl ? (
                 <img
                   src={getImageUrl(r.imageUrl)}
                   alt=""
-                  className="w-10 h-8 object-cover rounded bg-gray-100 shrink-0"
+                  className="w-10 h-8 object-cover rounded bg-gray-100 dark:bg-gray-700 shrink-0"
                 />
               ) : (
-                <div className="w-10 h-8 rounded bg-amber-50 shrink-0 flex items-center justify-center text-lg">
+                <div className="w-10 h-8 rounded bg-amber-50 dark:bg-amber-900/20 shrink-0 flex items-center justify-center text-lg">
                   🍹
                 </div>
               )}
               <div className="min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">{r.name}</p>
-                <p className="text-xs text-gray-400">
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{r.name}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500">
                   {r.category?.name}
                   {r.avgRating ? ` · ★ ${r.avgRating}` : ''}
                 </p>
@@ -106,7 +106,7 @@ export default function SearchBar() {
           ))}
           <button
             onClick={handleViewAll}
-            className="w-full px-3 py-2 text-xs text-amber-600 hover:bg-amber-50 text-center border-t border-gray-100 font-medium transition-colors"
+            className="w-full px-3 py-2 text-xs text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 text-center border-t border-gray-100 dark:border-gray-700 font-medium transition-colors"
           >
             Voir tous les résultats →
           </button>
