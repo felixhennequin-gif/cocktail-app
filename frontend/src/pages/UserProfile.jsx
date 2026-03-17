@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import RecipeCard from '../components/RecipeCard'
 import FollowButton from '../components/FollowButton'
+import { SkeletonProfile, SkeletonCard, SkeletonList } from '../components/Skeleton'
 import { useAuth } from '../contexts/AuthContext'
 import { getImageUrl } from '../utils/image'
 
@@ -139,7 +140,7 @@ export default function UserProfile() {
 
   const totalPages = Math.ceil(total / LIMIT)
 
-  if (loading) return <p className="text-center text-gray-400 py-16">Chargement...</p>
+  if (loading) return <SkeletonProfile />
   if (error)   return <p className="text-center text-red-500 py-16">{error}</p>
 
   const joinedYear = new Date(profile.createdAt).getFullYear()
@@ -197,7 +198,9 @@ export default function UserProfile() {
       {/* Onglet Recettes */}
       {activeTab === 'recipes' && (
         recipesLoading ? (
-          <p className="text-center text-gray-400 py-8">Chargement...</p>
+          <div className="flex flex-col gap-3">
+            {[1, 2, 3].map((i) => <SkeletonCard key={i} />)}
+          </div>
         ) : recipes.length === 0 ? (
           <p className="text-gray-400 text-sm">Aucune recette publiée.</p>
         ) : (
@@ -241,7 +244,7 @@ export default function UserProfile() {
       {/* Onglet Abonnés */}
       {activeTab === 'followers' && (
         followersLoading ? (
-          <p className="text-center text-gray-400 py-8">Chargement...</p>
+          <SkeletonList count={4} />
         ) : followers.length === 0 ? (
           <p className="text-gray-400 text-sm">Aucun abonné pour le moment.</p>
         ) : (
@@ -261,7 +264,7 @@ export default function UserProfile() {
       {/* Onglet Abonnements */}
       {activeTab === 'following' && (
         followingLoading ? (
-          <p className="text-center text-gray-400 py-8">Chargement...</p>
+          <SkeletonList count={4} />
         ) : following.length === 0 ? (
           <p className="text-gray-400 text-sm">Aucun abonnement pour le moment.</p>
         ) : (

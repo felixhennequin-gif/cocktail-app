@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import RecipeCard from '../components/RecipeCard'
+import { SkeletonCard } from '../components/Skeleton'
 import { useAuth } from '../contexts/AuthContext'
 
 const LIMIT = 20
@@ -216,7 +217,9 @@ export default function RecipeList() {
 
       {/* Liste des recettes */}
       {loading ? (
-        <p className="text-center text-gray-400 py-16">Chargement...</p>
+        <div className="flex flex-col gap-3">
+          {[1, 2, 3, 4, 5].map((i) => <SkeletonCard key={i} />)}
+        </div>
       ) : error ? (
         <p className="text-center text-red-500 py-16">{error}</p>
       ) : recipes.length === 0 ? (

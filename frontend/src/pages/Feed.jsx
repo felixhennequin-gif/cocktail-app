@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import RecipeCard from '../components/RecipeCard'
+import { SkeletonCard } from '../components/Skeleton'
 import { useAuth } from '../contexts/AuthContext'
 
 const LIMIT = 20
@@ -73,7 +74,9 @@ export default function Feed() {
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Mon fil d'actualité</h1>
 
       {loading ? (
-        <p className="text-center text-gray-400 py-16">Chargement...</p>
+        <div className="flex flex-col gap-3">
+          {[1, 2, 3].map((i) => <SkeletonCard key={i} />)}
+        </div>
       ) : recipes.length === 0 ? (
         <div className="text-center py-16">
           <p className="text-gray-500 mb-2 text-lg">Vous ne suivez personne encore.</p>
