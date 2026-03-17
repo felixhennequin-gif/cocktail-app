@@ -142,7 +142,7 @@ export default function RecipeList() {
       </div>
 
       {/* Filtre par catégorie */}
-      <div className="flex flex-wrap gap-2 mb-4">
+      <div className="flex flex-wrap gap-2 mb-4 overflow-x-auto pb-1">
         <button
           onClick={() => setParam('categoryId', null)}
           className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
@@ -169,7 +169,7 @@ export default function RecipeList() {
       </div>
 
       {/* Filtres supplémentaires */}
-      <div className="flex flex-wrap items-center gap-4 mb-6 py-3 border-t border-b border-gray-100">
+      <div className="flex flex-wrap items-center gap-3 md:gap-4 mb-6 py-3 border-t border-b border-gray-100">
         {/* Note minimale */}
         <div className="flex items-center gap-2">
           <span className="text-xs text-gray-500 font-medium">Note min.</span>

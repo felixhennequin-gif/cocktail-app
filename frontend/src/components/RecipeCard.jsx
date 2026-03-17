@@ -45,7 +45,7 @@ export default function RecipeCard({ recipe, isFavorited, onToggleFavorite }) {
       <img
         src={getImageUrl(recipe.imageUrl)}
         alt={recipe.name}
-        className="w-24 h-20 object-cover rounded-lg shrink-0 bg-gray-100"
+        className="w-20 h-16 sm:w-24 sm:h-20 object-cover rounded-lg shrink-0 bg-gray-100"
       />
 
       <div className="flex flex-col justify-between min-w-0 flex-1">

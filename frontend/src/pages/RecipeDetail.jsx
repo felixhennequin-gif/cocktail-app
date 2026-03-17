@@ -258,8 +258,8 @@ export default function RecipeDetail() {
           alt={recipe.name}
           className="w-full h-56 object-cover rounded-xl mb-6 bg-gray-100"
         />
-        <div className="flex items-start justify-between gap-4 mb-3">
-          <h1 className="text-3xl font-bold text-gray-900">{recipe.name}</h1>
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-3">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{recipe.name}</h1>
           <div className="flex items-center gap-2 shrink-0">
             <span className={`text-sm font-medium px-3 py-1 rounded-full ${difficultyColor[recipe.difficulty]}`}>
               {difficultyLabel[recipe.difficulty]}

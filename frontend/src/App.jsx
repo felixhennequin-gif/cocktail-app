@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Routes, Route, Link, useNavigate } from 'react-router-dom'
 import { useAuth } from './contexts/AuthContext'
 import SearchBar        from './components/SearchBar'
@@ -18,57 +19,110 @@ import NotFound         from './pages/NotFound'
 function Header() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+  const [menuOpen, setMenuOpen] = useState(false)
 
   const handleLogout = () => {
     logout()
     navigate('/')
+    setMenuOpen(false)
   }
 
+  const closeMenu = () => setMenuOpen(false)
+
   return (
-    <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center gap-6">
-      <Link to="/" className="text-xl font-bold text-gray-900 hover:text-amber-600 transition-colors shrink-0">
-        🍹 Cocktails
-      </Link>
+    <header className="bg-white border-b border-gray-200 px-4 md:px-6 py-4 relative">
+      {/* Ligne principale */}
+      <div className="flex items-center gap-4">
+        <Link
+          to="/"
+          onClick={closeMenu}
+          className="text-xl font-bold text-gray-900 hover:text-amber-600 transition-colors shrink-0"
+        >
+          🍹 Cocktails
+        </Link>
 
-      <SearchBar />
+        {/* SearchBar — cachée sur très petit mobile */}
+        <div className="flex-1 hidden sm:block max-w-xs">
+          <SearchBar />
+        </div>
 
-      <nav className="flex items-center gap-4 text-sm ml-auto">
-        {user ? (
-          <>
-            <Link to="/feed" className="text-gray-500 hover:text-gray-800 transition-colors">
-              Fil
-            </Link>
-            <Link to="/recipes/new" className="text-gray-500 hover:text-gray-800 transition-colors">
-              + Proposer
-            </Link>
-            <Link to="/favorites" className="text-gray-500 hover:text-gray-800 transition-colors">
-              Favoris
-            </Link>
-            <NotificationBell />
-            <Link to={`/users/${user.id}`} className="font-medium text-amber-600 hover:text-amber-800 transition-colors">
-              {user.pseudo}
-            </Link>
-            {user.role === 'ADMIN' && (
-              <Link to="/admin" className="text-gray-500 hover:text-gray-800 transition-colors">
-                Admin
+        {/* Nav desktop (md et plus) */}
+        <nav className="hidden md:flex items-center gap-4 text-sm ml-auto">
+          {user ? (
+            <>
+              <Link to="/feed"        className="text-gray-500 hover:text-gray-800 transition-colors">Fil</Link>
+              <Link to="/recipes/new" className="text-gray-500 hover:text-gray-800 transition-colors">+ Proposer</Link>
+              <Link to="/favorites"   className="text-gray-500 hover:text-gray-800 transition-colors">Favoris</Link>
+              <NotificationBell />
+              <Link to={`/users/${user.id}`} className="font-medium text-amber-600 hover:text-amber-800 transition-colors">
+                {user.pseudo}
               </Link>
-            )}
-            <button
-              onClick={handleLogout}
-              className="text-gray-400 hover:text-red-500 transition-colors"
-            >
-              Déconnexion
-            </button>
-          </>
-        ) : (
-          <>
-            <Link to="/login"    className="text-gray-500 hover:text-gray-800 transition-colors">Connexion</Link>
-            <Link to="/register" className="px-3 py-1.5 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors font-medium">
-              S'inscrire
-            </Link>
-          </>
-        )}
-      </nav>
+              {user.role === 'ADMIN' && (
+                <Link to="/admin" className="text-gray-500 hover:text-gray-800 transition-colors">Admin</Link>
+              )}
+              <button onClick={handleLogout} className="text-gray-400 hover:text-red-500 transition-colors">
+                Déconnexion
+              </button>
+            </>
+          ) : (
+            <>
+              <Link to="/login"    className="text-gray-500 hover:text-gray-800 transition-colors">Connexion</Link>
+              <Link to="/register" className="px-3 py-1.5 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors font-medium">
+                S'inscrire
+              </Link>
+            </>
+          )}
+        </nav>
+
+        {/* Bouton hamburger (mobile uniquement) */}
+        <button
+          className="md:hidden ml-auto p-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors"
+          onClick={() => setMenuOpen((o) => !o)}
+          aria-label="Menu"
+        >
+          {menuOpen ? (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          ) : (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          )}
+        </button>
+      </div>
+
+      {/* SearchBar mobile */}
+      <div className="sm:hidden mt-3">
+        <SearchBar />
+      </div>
+
+      {/* Menu déroulant mobile */}
+      {menuOpen && (
+        <nav className="md:hidden absolute top-full left-0 right-0 bg-white border-b border-gray-200 shadow-lg z-50 px-4 py-3 flex flex-col gap-3 text-sm">
+          {user ? (
+            <>
+              <Link to="/feed"        onClick={closeMenu} className="text-gray-700 hover:text-amber-600 py-1">Fil d'actualité</Link>
+              <Link to="/recipes/new" onClick={closeMenu} className="text-gray-700 hover:text-amber-600 py-1">+ Proposer une recette</Link>
+              <Link to="/favorites"   onClick={closeMenu} className="text-gray-700 hover:text-amber-600 py-1">Mes favoris</Link>
+              <Link to={`/users/${user.id}`} onClick={closeMenu} className="font-medium text-amber-600 hover:text-amber-800 py-1">
+                Mon profil ({user.pseudo})
+              </Link>
+              {user.role === 'ADMIN' && (
+                <Link to="/admin" onClick={closeMenu} className="text-gray-700 hover:text-amber-600 py-1">Administration</Link>
+              )}
+              <button onClick={handleLogout} className="text-left text-red-400 hover:text-red-600 py-1">
+                Déconnexion
+              </button>
+            </>
+          ) : (
+            <>
+              <Link to="/login"    onClick={closeMenu} className="text-gray-700 hover:text-amber-600 py-1">Connexion</Link>
+              <Link to="/register" onClick={closeMenu} className="text-gray-700 hover:text-amber-600 py-1 font-medium">S'inscrire</Link>
+            </>
+          )}
+        </nav>
+      )}
     </header>
   )
 }
@@ -82,7 +136,7 @@ export default function App() {
     <div className="min-h-screen bg-gray-50">
       <Header />
 
-      <main className="max-w-5xl mx-auto px-4 py-8">
+      <main className="max-w-5xl mx-auto px-4 py-6 md:py-8">
         <Routes>
           <Route path="/"                        element={<RecipeList />} />
           <Route path="/feed"                    element={<Feed />} />
