@@ -15,6 +15,8 @@ export default function RecipeList() {
   const categoryId = searchParams.get('categoryId') ? parseInt(searchParams.get('categoryId')) : null
   const minRating  = searchParams.get('minRating')  || ''
   const maxTime    = searchParams.get('maxTime')     || ''
+  const sortBy     = searchParams.get('sortBy')      || 'createdAt'
+  const sortOrder  = searchParams.get('sortOrder')   || 'desc'
   const page       = parseInt(searchParams.get('page')) || 1
 
   // Valeur affichée dans l'input de recherche (mise à jour immédiate, envoyée après debounce)
@@ -70,6 +72,10 @@ export default function RecipeList() {
     if (categoryId) params.set('categoryId', categoryId)
     if (minRating)  params.set('minRating', minRating)
     if (maxTime)    params.set('maxTime', maxTime)
+    if (sortBy !== 'createdAt' || sortOrder !== 'desc') {
+      params.set('sortBy', sortBy)
+      params.set('sortOrder', sortOrder)
+    }
 
     fetch(`/api/recipes?${params}`)
       .then(async (res) => {
@@ -114,6 +120,30 @@ export default function RecipeList() {
       return next
     })
   }
+
+  const SORT_OPTIONS = [
+    { label: 'Plus récentes',         sortBy: 'createdAt',    sortOrder: 'desc' },
+    { label: 'Plus anciennes',        sortBy: 'createdAt',    sortOrder: 'asc'  },
+    { label: 'Mieux notées',          sortBy: 'avgRating',    sortOrder: 'desc' },
+    { label: 'Temps (croissant)',     sortBy: 'prepTime',     sortOrder: 'asc'  },
+    { label: 'Temps (décroissant)',   sortBy: 'prepTime',     sortOrder: 'desc' },
+    { label: 'Plus populaires',       sortBy: 'favoritesCount', sortOrder: 'desc' },
+  ]
+
+  const handleSortChange = (e) => {
+    const opt = SORT_OPTIONS[parseInt(e.target.value)]
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev)
+      next.set('sortBy', opt.sortBy)
+      next.set('sortOrder', opt.sortOrder)
+      next.delete('page')
+      return next
+    }, { replace: true })
+  }
+
+  const currentSortIndex = SORT_OPTIONS.findIndex(
+    (o) => o.sortBy === sortBy && o.sortOrder === sortOrder
+  )
 
   const hasActiveFilters = categoryId || minRating || maxTime
 
@@ -170,6 +200,19 @@ export default function RecipeList() {
 
       {/* Filtres supplémentaires */}
       <div className="flex flex-wrap items-center gap-3 md:gap-4 mb-6 py-3 border-t border-b border-gray-100">
+        {/* Tri */}
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-500 font-medium">Trier</span>
+          <select
+            value={currentSortIndex === -1 ? 0 : currentSortIndex}
+            onChange={handleSortChange}
+            className="text-sm rounded-lg border border-gray-200 bg-white px-2 py-1 focus:outline-none focus:ring-2 focus:ring-amber-400"
+          >
+            {SORT_OPTIONS.map((o, i) => (
+              <option key={i} value={i}>{o.label}</option>
+            ))}
+          </select>
+        </div>
         {/* Note minimale */}
         <div className="flex items-center gap-2">
           <span className="text-xs text-gray-500 font-medium">Note min.</span>

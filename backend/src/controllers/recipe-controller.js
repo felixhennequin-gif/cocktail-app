@@ -16,6 +16,8 @@ const recipeListSchema = z.object({
   maxTime:    z.coerce.number().int().positive().optional(),
   authorId:   z.coerce.number().int().positive().optional(),
   status:     z.enum(['PUBLISHED', 'PENDING', 'DRAFT']).optional(),
+  sortBy:     z.enum(['createdAt', 'prepTime', 'avgRating', 'favoritesCount']).default('createdAt'),
+  sortOrder:  z.enum(['asc', 'desc']).default('desc'),
 });
 
 // Inclusions réutilisables
@@ -80,7 +82,7 @@ const getAllRecipes = async (req, res) => {
     return res.status(400).json({ error: parsed.error.flatten().fieldErrors });
   }
 
-  const { page, limit, q, categoryId, minRating, maxTime, authorId, status } = parsed.data;
+  const { page, limit, q, categoryId, minRating, maxTime, authorId, status, sortBy, sortOrder } = parsed.data;
   const offset = (page - 1) * limit;
 
   // Clause where de base (sans q ni minRating)
@@ -163,6 +165,44 @@ const getAllRecipes = async (req, res) => {
     where.id = { in: minRatingIds.length > 0 ? minRatingIds : [-1] };
   }
 
+  // Tri par avgRating ou favoritesCount nécessite un raw SQL ou un post-sort
+  const needsAggSort = sortBy === 'avgRating' || sortBy === 'favoritesCount';
+
+  if (needsAggSort) {
+    // Récupère toutes les recettes filtrées sans pagination pour trier côté app
+    const allRecipes = await prisma.recipe.findMany({
+      where,
+      include: {
+        category: true,
+        author: { select: { id: true, pseudo: true } },
+        ratings: { select: { score: true } },
+        _count: { select: { favorites: true } },
+      },
+    });
+
+    const withAgg = allRecipes.map((r) => {
+      const { ratings, _count, ...rest } = r;
+      const avgRating = ratings.length > 0
+        ? Math.round((ratings.reduce((s, x) => s + x.score, 0) / ratings.length) * 10) / 10
+        : null;
+      return { ...rest, avgRating, ratingsCount: ratings.length, favoritesCount: _count.favorites };
+    });
+
+    const dir = sortOrder === 'asc' ? 1 : -1;
+    withAgg.sort((a, b) => {
+      const av = sortBy === 'avgRating' ? (a.avgRating ?? -Infinity) : a.favoritesCount;
+      const bv = sortBy === 'avgRating' ? (b.avgRating ?? -Infinity) : b.favoritesCount;
+      return dir * (av - bv);
+    });
+
+    const total = withAgg.length;
+    const data  = withAgg.slice(offset, offset + limit).map(({ favoritesCount, ...r }) => r);
+    return res.json({ data, total, page, limit });
+  }
+
+  // Tri standard Prisma
+  const orderBy = { [sortBy]: sortOrder };
+
   const [recipes, total] = await Promise.all([
     prisma.recipe.findMany({
       where,
@@ -171,7 +211,7 @@ const getAllRecipes = async (req, res) => {
         author: { select: { id: true, pseudo: true } },
         ratings: { select: { score: true } },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy,
       skip: offset,
       take: limit,
     }),
