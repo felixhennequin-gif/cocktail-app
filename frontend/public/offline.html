@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hors connexion — Cocktails</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: #f9fafb;
+      color: #374151;
+      text-align: center;
+      padding: 1rem;
+    }
+    .container { max-width: 360px; }
+    .icon { font-size: 4rem; margin-bottom: 1.5rem; }
+    h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.75rem; }
+    p { color: #6b7280; line-height: 1.6; margin-bottom: 1.5rem; }
+    button {
+      padding: 0.625rem 1.5rem;
+      background: #f59e0b;
+      color: #fff;
+      border: none;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    button:hover { background: #d97706; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">🍹</div>
+    <h1>Vous êtes hors connexion</h1>
+    <p>Impossible de charger la page. Vérifiez votre connexion internet et réessayez.</p>
+    <button onclick="location.reload()">Réessayer</button>
+  </div>
+</body>
+</html>
