@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import RecipeCard from '../components/RecipeCard'
 import FollowButton from '../components/FollowButton'
 import { useAuth } from '../contexts/AuthContext'
+import { getImageUrl } from '../utils/image'
 
 const LIMIT = 20
 
@@ -13,7 +14,7 @@ function UserCard({ person }) {
       <Link to={`/users/${person.id}`} className="shrink-0">
         {person.avatar ? (
           <img
-            src={person.avatar}
+            src={getImageUrl(person.avatar)}
             alt={person.pseudo}
             className="w-10 h-10 rounded-full object-cover bg-gray-100"
           />
@@ -155,7 +156,7 @@ export default function UserProfile() {
       <div className="flex items-center gap-5 mb-6 bg-white rounded-xl border border-gray-200 p-6">
         {profile.avatar ? (
           <img
-            src={profile.avatar}
+            src={getImageUrl(profile.avatar)}
             alt={profile.pseudo}
             className="w-16 h-16 rounded-full object-cover bg-gray-100"
           />

@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
-
-const API_BASE = 'http://192.168.1.85:3000'
+import { getImageUrl } from '../../utils/image'
 
 const EMPTY_INGREDIENT = { name: '', quantity: '', unit: '' }
 const EMPTY_STEP       = { description: '', imageUrl: '', preview: '' }
@@ -16,12 +15,6 @@ const defaultForm = {
   servings: '',
   imageUrl: '',
   status: 'PUBLISHED',
-}
-
-const resolvePreview = (url) => {
-  if (!url) return ''
-  if (url.startsWith('/uploads/')) return `${API_BASE}${url}`
-  return url
 }
 
 export default function AdminRecipeForm() {
@@ -73,7 +66,7 @@ export default function AdminRecipeForm() {
           status:      recipe.status ?? 'PUBLISHED',
         })
         if (recipe.imageUrl) {
-          setPreview(resolvePreview(recipe.imageUrl))
+          setPreview(getImageUrl(recipe.imageUrl))
         }
         setIngredients(
           recipe.ingredients.length > 0
@@ -89,7 +82,7 @@ export default function AdminRecipeForm() {
             ? recipe.steps.map((s) => ({
                 description: s.description,
                 imageUrl:    s.imageUrl || '',
-                preview:     resolvePreview(s.imageUrl),
+                preview:     getImageUrl(s.imageUrl),
               }))
             : [{ ...EMPTY_STEP }]
         )
@@ -113,7 +106,7 @@ export default function AdminRecipeForm() {
       if (!res.ok) throw new Error('Erreur upload')
       const data = await res.json()
       setForm((f) => ({ ...f, imageUrl: data.url }))
-      setPreview(`${API_BASE}${data.url}`)
+      setPreview(getImageUrl(data.url))
     } catch (err) {
       setError(err.message)
     } finally {
@@ -135,7 +128,7 @@ export default function AdminRecipeForm() {
       if (!res.ok) throw new Error('Erreur upload image étape')
       const data = await res.json()
       setSteps((list) => list.map((s, i) =>
-        i === index ? { ...s, imageUrl: data.url, preview: `${API_BASE}${data.url}` } : s
+        i === index ? { ...s, imageUrl: data.url, preview: getImageUrl(data.url) } : s
       ))
     } catch (err) {
       setError(err.message)
@@ -376,7 +369,7 @@ export default function AdminRecipeForm() {
                     {step.imageUrl && (
                       <>
                         <img
-                          src={step.preview || resolvePreview(step.imageUrl)}
+                          src={step.preview || getImageUrl(step.imageUrl)}
                           alt={`Étape ${i + 1}`}
                           className="w-16 h-12 object-cover rounded border border-gray-200"
                         />

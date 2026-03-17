@@ -1,13 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-
-const API_BASE = 'http://192.168.1.85:3000'
-
-const resolveImageUrl = (url) => {
-  if (!url) return null
-  if (url.startsWith('/uploads/')) return `${API_BASE}${url}`
-  return url
-}
+import { getImageUrl } from '../utils/image'
 
 export default function SearchBar() {
   const [value, setValue]     = useState('')
@@ -91,9 +84,9 @@ export default function SearchBar() {
               onClick={() => handleSelect(r.id)}
               className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-amber-50 text-left transition-colors"
             >
-              {resolveImageUrl(r.imageUrl) ? (
+              {r.imageUrl ? (
                 <img
-                  src={resolveImageUrl(r.imageUrl)}
+                  src={getImageUrl(r.imageUrl)}
                   alt=""
                   className="w-10 h-8 object-cover rounded bg-gray-100 shrink-0"
                 />

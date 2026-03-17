@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { getImageUrl } from '../utils/image'
 
 const EMPTY_INGREDIENT = { name: '', quantity: '', unit: '' }
 const EMPTY_STEP       = { description: '' }
@@ -45,7 +46,7 @@ export default function RecipeSubmit() {
       if (!res.ok) throw new Error('Erreur upload')
       const data = await res.json()
       setForm((f) => ({ ...f, imageUrl: data.url }))
-      setPreview(`http://192.168.1.85:3000${data.url}`)
+      setPreview(getImageUrl(data.url))
     } catch (err) {
       setError(err.message)
     } finally {

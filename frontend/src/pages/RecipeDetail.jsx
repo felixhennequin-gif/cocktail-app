@@ -1,15 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-
-const PLACEHOLDER = 'https://placehold.co/400x300?text=Cocktail'
-const API_BASE    = 'http://192.168.1.85:3000'
-
-const resolveImageUrl = (url) => {
-  if (!url) return PLACEHOLDER
-  if (url.startsWith('/uploads/')) return `${API_BASE}${url}`
-  return url
-}
+import { getImageUrl } from '../utils/image'
 
 const difficultyLabel = { EASY: 'Facile', MEDIUM: 'Moyen', HARD: 'Difficile' }
 const difficultyColor = {
@@ -250,7 +242,7 @@ export default function RecipeDetail() {
       {/* En-tête */}
       <div className="mb-8">
         <img
-          src={resolveImageUrl(recipe.imageUrl)}
+          src={getImageUrl(recipe.imageUrl)}
           alt={recipe.name}
           className="w-full h-56 object-cover rounded-xl mb-6 bg-gray-100"
         />
@@ -352,7 +344,7 @@ export default function RecipeDetail() {
                 <div className="flex-1 pt-0.5">
                   {step.imageUrl && (
                     <img
-                      src={resolveImageUrl(step.imageUrl)}
+                      src={getImageUrl(step.imageUrl)}
                       alt={`Étape ${step.order}`}
                       className="w-full max-w-sm rounded-lg mb-2 border border-gray-100"
                     />
