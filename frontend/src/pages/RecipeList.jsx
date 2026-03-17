@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import RecipeCard from '../components/RecipeCard'
 import { SkeletonCard } from '../components/Skeleton'
@@ -17,24 +17,27 @@ export default function RecipeList() {
   const maxTime    = searchParams.get('maxTime')     || ''
   const sortBy     = searchParams.get('sortBy')      || 'createdAt'
   const sortOrder  = searchParams.get('sortOrder')   || 'desc'
-  const page       = parseInt(searchParams.get('page')) || 1
 
   // Valeur affichée dans l'input de recherche (mise à jour immédiate, envoyée après debounce)
-  const [inputValue, setInputValue]       = useState(q)
-  const [maxTimeInput, setMaxTimeInput]   = useState(maxTime)
+  const [inputValue, setInputValue]     = useState(q)
+  const [maxTimeInput, setMaxTimeInput] = useState(maxTime)
 
-  const [recipes, setRecipes]             = useState([])
-  const [categories, setCategories]       = useState([])
-  const [total, setTotal]                 = useState(0)
-  const [loading, setLoading]             = useState(true)
-  const [error, setError]                 = useState(null)
-  const [favoriteIds, setFavoriteIds]     = useState(new Set())
+  const [recipes, setRecipes]         = useState([])
+  const [categories, setCategories]   = useState([])
+  const [total, setTotal]             = useState(0)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [loading, setLoading]         = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [error, setError]             = useState(null)
+  const [favoriteIds, setFavoriteIds] = useState(new Set())
 
   const debounceRef = useRef(null)
   const maxTimeDebounceRef = useRef(null)
+  // Clé de filtres : quand elle change, on repart de la page 1
+  const filterKey = `${q}|${categoryId}|${minRating}|${maxTime}|${sortBy}|${sortOrder}`
 
-  // Met à jour un param URL — réinitialise la page sauf si on change la page elle-même
-  const setParam = (key, value, resetPage = true) => {
+  // Met à jour un param URL — réinitialise la page
+  const setParam = (key, value) => {
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev)
       if (value === null || value === '' || value === undefined) {
@@ -42,7 +45,6 @@ export default function RecipeList() {
       } else {
         next.set(key, String(value))
       }
-      if (resetPage && key !== 'page') next.delete('page')
       return next
     }, { replace: true })
   }
@@ -62,9 +64,10 @@ export default function RecipeList() {
       .then((data) => setFavoriteIds(new Set(data.map((r) => r.id))))
   }, [user]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Rechargement des recettes à chaque changement de l'URL
-  useEffect(() => {
-    setLoading(true)
+  // Fonction de fetch d'une page de recettes
+  const fetchPage = useCallback((page, append = false) => {
+    if (page === 1) setLoading(true)
+    else            setLoadingMore(true)
     setError(null)
 
     const params = new URLSearchParams({ page, limit: LIMIT })
@@ -81,19 +84,26 @@ export default function RecipeList() {
       .then(async (res) => {
         if (!res.ok) {
           const body = await res.json().catch(() => ({}))
-          throw new Error(body.error || `Erreur ${res.status} lors du chargement des recettes`)
+          throw new Error(body.error || `Erreur ${res.status}`)
         }
         return res.json()
       })
       .then((data) => {
-        setRecipes(data.data ?? [])
+        const newRecipes = data.data ?? []
+        setRecipes((prev) => append ? [...prev, ...newRecipes] : newRecipes)
         setTotal(data.total ?? 0)
+        setCurrentPage(page)
       })
       .catch((err) => setError(err.message))
-      .finally(() => setLoading(false))
-  }, [searchParams]) // eslint-disable-line react-hooks/exhaustive-deps
+      .finally(() => { setLoading(false); setLoadingMore(false) })
+  }, [q, categoryId, minRating, maxTime, sortBy, sortOrder]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const totalPages = Math.ceil(total / LIMIT)
+  // Rechargement initial quand les filtres changent
+  useEffect(() => {
+    fetchPage(1, false)
+  }, [filterKey]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleLoadMore = () => fetchPage(currentPage + 1, true)
 
   const handleSearchChange = (e) => {
     const val = e.target.value
@@ -122,12 +132,12 @@ export default function RecipeList() {
   }
 
   const SORT_OPTIONS = [
-    { label: 'Plus récentes',         sortBy: 'createdAt',    sortOrder: 'desc' },
-    { label: 'Plus anciennes',        sortBy: 'createdAt',    sortOrder: 'asc'  },
-    { label: 'Mieux notées',          sortBy: 'avgRating',    sortOrder: 'desc' },
-    { label: 'Temps (croissant)',     sortBy: 'prepTime',     sortOrder: 'asc'  },
-    { label: 'Temps (décroissant)',   sortBy: 'prepTime',     sortOrder: 'desc' },
-    { label: 'Plus populaires',       sortBy: 'favoritesCount', sortOrder: 'desc' },
+    { label: 'Plus récentes',       sortBy: 'createdAt',      sortOrder: 'desc' },
+    { label: 'Plus anciennes',      sortBy: 'createdAt',      sortOrder: 'asc'  },
+    { label: 'Mieux notées',        sortBy: 'avgRating',      sortOrder: 'desc' },
+    { label: 'Temps (croissant)',   sortBy: 'prepTime',       sortOrder: 'asc'  },
+    { label: 'Temps (décroissant)', sortBy: 'prepTime',       sortOrder: 'desc' },
+    { label: 'Plus populaires',     sortBy: 'favoritesCount', sortOrder: 'desc' },
   ]
 
   const handleSortChange = (e) => {
@@ -136,7 +146,6 @@ export default function RecipeList() {
       const next = new URLSearchParams(prev)
       next.set('sortBy', opt.sortBy)
       next.set('sortOrder', opt.sortOrder)
-      next.delete('page')
       return next
     }, { replace: true })
   }
@@ -155,6 +164,8 @@ export default function RecipeList() {
       return next
     }, { replace: true })
   }
+
+  const hasMore = recipes.length < total
 
   return (
     <div>
@@ -268,41 +279,31 @@ export default function RecipeList() {
       ) : recipes.length === 0 ? (
         <p className="text-center text-gray-400 py-16">Aucune recette trouvée.</p>
       ) : (
-        <div className="flex flex-col gap-3">
-          {recipes.map((recipe) => (
-            <RecipeCard
-              key={recipe.id}
-              recipe={recipe}
-              isFavorited={favoriteIds.has(recipe.id)}
-              onToggleFavorite={handleToggleFavorite}
-            />
-          ))}
-        </div>
-      )}
+        <>
+          <div className="flex flex-col gap-3">
+            {recipes.map((recipe) => (
+              <RecipeCard
+                key={recipe.id}
+                recipe={recipe}
+                isFavorited={favoriteIds.has(recipe.id)}
+                onToggleFavorite={handleToggleFavorite}
+              />
+            ))}
+          </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-4 mt-8">
-          <button
-            onClick={() => setParam('page', page - 1, false)}
-            disabled={page <= 1}
-            className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:border-amber-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          >
-            ← Précédent
-          </button>
-
-          <span className="text-sm text-gray-500">
-            Page {page} / {totalPages}
-          </span>
-
-          <button
-            onClick={() => setParam('page', page + 1, false)}
-            disabled={page >= totalPages}
-            className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:border-amber-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          >
-            Suivant →
-          </button>
-        </div>
+          {/* Charger plus */}
+          {hasMore && (
+            <div className="flex justify-center mt-8">
+              <button
+                onClick={handleLoadMore}
+                disabled={loadingMore}
+                className="px-6 py-2.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:border-amber-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                {loadingMore ? 'Chargement...' : `Charger plus (${recipes.length} / ${total})`}
+              </button>
+            </div>
+          )}
+        </>
       )}
 
       {/* Compteur total */}
