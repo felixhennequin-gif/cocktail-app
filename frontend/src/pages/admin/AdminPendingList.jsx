@@ -2,15 +2,17 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
+import ConfirmModal from '../../components/ConfirmModal'
 
 export default function AdminPendingList() {
   const { user, authFetch } = useAuth()
   const { showToast }       = useToast()
   const navigate = useNavigate()
 
-  const [recipes, setRecipes] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError]     = useState(null)
+  const [recipes, setRecipes]   = useState([])
+  const [loading, setLoading]   = useState(true)
+  const [error, setError]       = useState(null)
+  const [rejectId, setRejectId] = useState(null)
 
   useEffect(() => {
     if (!user || user.role !== 'ADMIN') { navigate('/'); return }
@@ -31,8 +33,11 @@ export default function AdminPendingList() {
     }
   }
 
-  const handleReject = async (id) => {
-    if (!window.confirm('Supprimer définitivement cette recette ?')) return
+  const handleReject = (id) => setRejectId(id)
+
+  const confirmReject = async () => {
+    const id = rejectId
+    setRejectId(null)
     const res = await authFetch(`/api/recipes/${id}`, { method: 'DELETE' })
     if (res.ok || res.status === 204) {
       setRecipes((prev) => prev.filter((r) => r.id !== id))
@@ -44,6 +49,15 @@ export default function AdminPendingList() {
 
   return (
     <div>
+      <ConfirmModal
+        isOpen={!!rejectId}
+        title="Refuser la recette"
+        message="Supprimer définitivement cette recette ? Cette action est irréversible."
+        confirmLabel="Refuser et supprimer"
+        variant="danger"
+        onConfirm={confirmReject}
+        onCancel={() => setRejectId(null)}
+      />
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900">
           Recettes en attente{' '}

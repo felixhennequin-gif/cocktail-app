@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
 import { getImageUrl } from '../utils/image'
+import ConfirmModal from '../components/ConfirmModal'
 
 const difficultyLabel = { EASY: 'Facile', MEDIUM: 'Moyen', HARD: 'Difficile' }
 const difficultyColor = {
@@ -114,6 +115,7 @@ export default function RecipeDetail() {
   const [commentScore, setCommentScore] = useState(null)
   const [commentTouched, setCommentTouched] = useState(false)
   const [submittingComment, setSubmittingComment] = useState(false)
+  const [deleteCommentId, setDeleteCommentId] = useState(null)
   const [portionCount, setPortionCount] = useState(1)
   const commentInputRef = useRef(null)
 
@@ -216,7 +218,11 @@ export default function RecipeDetail() {
     commentInputRef.current?.focus()
   }
 
-  const handleDeleteComment = async (commentId) => {
+  const handleDeleteComment = (commentId) => setDeleteCommentId(commentId)
+
+  const confirmDeleteComment = async () => {
+    const commentId = deleteCommentId
+    setDeleteCommentId(null)
     const res = await authFetch(`/api/comments/${commentId}`, { method: 'DELETE' })
     if (res.ok) {
       setComments((prev) => prev.filter((c) => c.id !== commentId))
@@ -247,6 +253,15 @@ export default function RecipeDetail() {
 
   return (
     <div className="max-w-2xl mx-auto">
+      <ConfirmModal
+        isOpen={!!deleteCommentId}
+        title="Supprimer le commentaire"
+        message="Supprimer ce commentaire ? Cette action est irréversible."
+        confirmLabel="Supprimer"
+        variant="danger"
+        onConfirm={confirmDeleteComment}
+        onCancel={() => setDeleteCommentId(null)}
+      />
       <Link to="/" className="text-sm text-amber-600 hover:underline mb-6 inline-block">
         ← Toutes les recettes
       </Link>
