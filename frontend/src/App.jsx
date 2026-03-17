@@ -13,6 +13,7 @@ import RecipeSubmit     from './pages/RecipeSubmit'
 import AdminRecipeList  from './pages/admin/AdminRecipeList'
 import AdminRecipeForm  from './pages/admin/AdminRecipeForm'
 import AdminPendingList from './pages/admin/AdminPendingList'
+import NotFound         from './pages/NotFound'
 
 function Header() {
   const { user, logout } = useAuth()
@@ -95,6 +96,7 @@ export default function App() {
           <Route path="/admin/pending"           element={<AdminPendingList />} />
           <Route path="/admin/recipes/new"       element={<AdminRecipeForm />} />
           <Route path="/admin/recipes/:id/edit"  element={<AdminRecipeForm />} />
+          <Route path="*"                        element={<NotFound />} />
         </Routes>
       </main>
     </div>

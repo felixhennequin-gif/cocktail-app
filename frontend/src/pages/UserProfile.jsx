@@ -141,7 +141,16 @@ export default function UserProfile() {
   const totalPages = Math.ceil(total / LIMIT)
 
   if (loading) return <SkeletonProfile />
-  if (error)   return <p className="text-center text-red-500 py-16">{error}</p>
+  if (error)   return (
+    <div className="flex flex-col items-center justify-center min-h-[50vh] text-center px-4">
+      <div className="text-5xl mb-4">👤</div>
+      <h2 className="text-2xl font-bold text-gray-800 mb-2">Profil introuvable</h2>
+      <p className="text-gray-400 text-sm mb-6">{error}</p>
+      <Link to="/" className="px-5 py-2.5 bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition-colors text-sm font-medium">
+        ← Retour à l'accueil
+      </Link>
+    </div>
+  )
 
   const joinedYear = new Date(profile.createdAt).getFullYear()
 
