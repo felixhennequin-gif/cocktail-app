@@ -31,6 +31,9 @@ frontend/dist/
 frontend/build/
 frontend/.next/
 
+# Tests — couverture
+coverage/
+
 # OS
 .DS_Store
 Thumbs.db
@@ -40,6 +43,15 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+# npm config locale
+.npmrc
+
+# Fichiers racine orphelins (les vrais sont dans backend/)
+/package.json
+/package-lock.json
+/prisma.config.ts
+/prisma/
 
 # Claude Code
 .claude/
