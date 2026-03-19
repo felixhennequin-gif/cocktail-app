@@ -72,6 +72,23 @@ export default function RecipeCard({ recipe, isFavorited, onToggleFavorite }) {
           </div>
         </div>
 
+        {/* Tags */}
+        {recipe.tags?.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-1.5">
+            {recipe.tags.slice(0, 3).map((tag) => (
+              <span
+                key={tag.id}
+                className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-700"
+              >
+                {tag.name}
+              </span>
+            ))}
+            {recipe.tags.length > 3 && (
+              <span className="text-[10px] text-gray-400 dark:text-gray-500">+{recipe.tags.length - 3}</span>
+            )}
+          </div>
+        )}
+
         <div className="flex items-center gap-4 text-xs text-gray-400 dark:text-gray-500 mt-2">
           <span>⏱ {recipe.prepTime} min</span>
           {recipe.category && <span>📂 {recipe.category.name}</span>}

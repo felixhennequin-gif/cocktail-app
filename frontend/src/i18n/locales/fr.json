@@ -116,7 +116,18 @@
       "PUBLISHED": "Publié",
       "DRAFT": "Brouillon",
       "PENDING": "En attente"
-    }
+    },
+    "tags": "Tags",
+    "filterByTags": "Filtrer par tags",
+    "noTags": "Aucun tag",
+    "variant": "Variante",
+    "variantOf": "Variante de",
+    "variantOfFull": "Cette recette est une variante de",
+    "variants": "Variantes",
+    "proposeVariant": "Proposer une variante",
+    "variantOfRecipe": "Vous proposez une variante de {{name}}",
+    "dailyCocktail": "Cocktail du jour",
+    "discover": "Découvrir"
   },
   "favorites": {
     "title": "Mes favoris",
@@ -200,7 +211,9 @@
       "ingredientUnit": "Unité",
       "addIngredient": "+ Ajouter un ingrédient",
       "addStep": "+ Ajouter une étape",
-      "categoryPlaceholder": "--"
+      "categoryPlaceholder": "--",
+      "tags": "Tags",
+      "tagsPlaceholder": "Ajouter un tag..."
     },
     "errors": {
       "nameRequired": "Le titre est requis",
@@ -209,6 +222,39 @@
       "ingredientRequired": "Au moins un ingrédient est requis",
       "stepRequired": "Au moins une étape est requise"
     }
+  },
+  "collections": {
+    "title": "Mes collections",
+    "create": "Nouvelle collection",
+    "nameLabel": "Nom",
+    "namePlaceholder": "Ex : Cocktails d'été",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Décrivez cette collection...",
+    "publicLabel": "Collection publique",
+    "save": "Créer",
+    "saving": "Création...",
+    "edit": "Modifier",
+    "editSave": "Enregistrer",
+    "editSaving": "Enregistrement...",
+    "delete": "Supprimer",
+    "deleteMessage": "Supprimer cette collection ? Les recettes ne seront pas supprimées.",
+    "addRecipe": "Ajouter à une collection",
+    "removeRecipe": "Retirer de la collection",
+    "noCollections": "Aucune collection pour le moment.",
+    "recipesCount_one": "{{count}} recette",
+    "recipesCount_other": "{{count}} recettes",
+    "empty": "Cette collection est vide.",
+    "browseLink": "Parcourir les recettes",
+    "addedToast": "Ajouté à la collection !",
+    "removedToast": "Retiré de la collection",
+    "createdToast": "Collection créée !",
+    "updatedToast": "Collection mise à jour !",
+    "deletedToast": "Collection supprimée",
+    "errorToast": "Erreur lors de la mise à jour",
+    "alreadyIn": "Déjà dans cette collection",
+    "private": "Privée",
+    "public": "Publique",
+    "by": "par {{pseudo}}"
   },
   "admin": {
     "loadError": "Erreur lors du chargement",

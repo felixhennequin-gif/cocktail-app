@@ -116,7 +116,18 @@
       "PUBLISHED": "Published",
       "DRAFT": "Draft",
       "PENDING": "Pending"
-    }
+    },
+    "tags": "Tags",
+    "filterByTags": "Filter by tags",
+    "noTags": "No tags",
+    "variant": "Variant",
+    "variantOf": "Variant of",
+    "variantOfFull": "This recipe is a variant of",
+    "variants": "Variants",
+    "proposeVariant": "Propose a variant",
+    "variantOfRecipe": "You are proposing a variant of {{name}}",
+    "dailyCocktail": "Cocktail of the day",
+    "discover": "Discover"
   },
   "favorites": {
     "title": "My favorites",
@@ -200,7 +211,9 @@
       "ingredientUnit": "Unit",
       "addIngredient": "+ Add an ingredient",
       "addStep": "+ Add a step",
-      "categoryPlaceholder": "--"
+      "categoryPlaceholder": "--",
+      "tags": "Tags",
+      "tagsPlaceholder": "Add a tag..."
     },
     "errors": {
       "nameRequired": "Title is required",
@@ -209,6 +222,39 @@
       "ingredientRequired": "At least one ingredient is required",
       "stepRequired": "At least one step is required"
     }
+  },
+  "collections": {
+    "title": "My collections",
+    "create": "New collection",
+    "nameLabel": "Name",
+    "namePlaceholder": "E.g.: Summer cocktails",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Describe this collection...",
+    "publicLabel": "Public collection",
+    "save": "Create",
+    "saving": "Creating...",
+    "edit": "Edit",
+    "editSave": "Save",
+    "editSaving": "Saving...",
+    "delete": "Delete",
+    "deleteMessage": "Delete this collection? Recipes will not be deleted.",
+    "addRecipe": "Add to a collection",
+    "removeRecipe": "Remove from collection",
+    "noCollections": "No collections yet.",
+    "recipesCount_one": "{{count}} recipe",
+    "recipesCount_other": "{{count}} recipes",
+    "empty": "This collection is empty.",
+    "browseLink": "Browse recipes",
+    "addedToast": "Added to collection!",
+    "removedToast": "Removed from collection",
+    "createdToast": "Collection created!",
+    "updatedToast": "Collection updated!",
+    "deletedToast": "Collection deleted",
+    "errorToast": "Error updating collection",
+    "alreadyIn": "Already in this collection",
+    "private": "Private",
+    "public": "Public",
+    "by": "by {{pseudo}}"
   },
   "admin": {
     "loadError": "Error loading recipes",

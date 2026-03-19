@@ -14,6 +14,8 @@ const favoriteRoutes = require('./routes/favorite-routes');
 const ratingRoutes   = require('./routes/rating-routes');
 const commentRoutes  = require('./routes/comment-routes');
 const userRoutes     = require('./routes/user-routes');
+const tagRoutes          = require('./routes/tag-routes');
+const collectionRoutes   = require('./routes/collection-routes');
 const feedRoutes         = require('./routes/feed-routes');
 const notificationRoutes = require('./routes/notification-routes');
 
@@ -91,6 +93,8 @@ app.use('/favorites',  favoriteRoutes);
 app.use('/ratings',    ratingRoutes);
 app.use('/comments',   commentRoutes);
 app.use('/users',      userRoutes);
+app.use('/tags',       tagRoutes);
+app.use('/collections', collectionRoutes);
 app.use('/feed',           feedRoutes);
 app.use('/notifications',  notificationRoutes);
 

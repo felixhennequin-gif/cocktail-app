@@ -2,6 +2,7 @@ const { z } = require('zod');
 const prisma = require('../prisma');
 const { createNotification, notifyFollowers } = require('../services/notification-service');
 const { invalidateCacheByPattern } = require('../cache');
+const { resolveTagNames } = require('./tag-controller');
 
 // Invalide toutes les entrées de cache liées aux recettes
 const bustRecipeCache = () => invalidateCacheByPattern('/recipes*').catch(() => {});
@@ -16,9 +17,13 @@ const recipeListSchema = z.object({
   maxTime:    z.coerce.number().int().positive().optional(),
   authorId:   z.coerce.number().int().positive().optional(),
   status:     z.enum(['PUBLISHED', 'PENDING', 'DRAFT']).optional(),
+  tags:       z.string().optional(), // ids séparés par virgule
   sortBy:     z.enum(['createdAt', 'prepTime', 'avgRating', 'favoritesCount']).default('createdAt'),
   sortOrder:  z.enum(['asc', 'desc']).default('desc'),
 });
+
+// Inclusion des tags (réutilisable)
+const includeTags = { tags: { include: { tag: true } } };
 
 // Inclusions réutilisables
 const includeDetail = {
@@ -35,16 +40,30 @@ const includeDetail = {
   ratings: {
     select: { score: true },
   },
+  ...includeTags,
 };
 
-// Calcule la moyenne des notes d'une recette
+// Inclusions pour les listes (plus légères)
+const includeList = {
+  category: true,
+  author: { select: { id: true, pseudo: true } },
+  ratings: { select: { score: true } },
+  ...includeTags,
+};
+
+// Calcule la moyenne des notes et aplatit les tags
 const computeAvgRating = (recipe) => {
-  const { ratings, ...rest } = recipe;
+  const { ratings, tags, ...rest } = recipe;
   const avgRating =
     ratings.length > 0
       ? Math.round((ratings.reduce((sum, r) => sum + r.score, 0) / ratings.length) * 10) / 10
       : null;
-  return { ...rest, avgRating, ratingsCount: ratings.length };
+  return {
+    ...rest,
+    avgRating,
+    ratingsCount: ratings.length,
+    ...(tags ? { tags: tags.map((rt) => rt.tag) } : {}),
+  };
 };
 
 // Convertit les erreurs Prisma connues en réponses HTTP appropriées
@@ -82,7 +101,7 @@ const getAllRecipes = async (req, res) => {
     return res.status(400).json({ error: parsed.error.flatten().fieldErrors });
   }
 
-  const { page, limit, q, categoryId, minRating, maxTime, authorId, status, sortBy, sortOrder } = parsed.data;
+  const { page, limit, q, categoryId, minRating, maxTime, authorId, status, tags, sortBy, sortOrder } = parsed.data;
   const offset = (page - 1) * limit;
 
   // Clause where de base (sans q ni minRating)
@@ -101,6 +120,14 @@ const getAllRecipes = async (req, res) => {
   if (categoryId !== undefined) where.categoryId = categoryId;
   if (maxTime    !== undefined) where.prepTime    = { lte: maxTime };
   if (authorId   !== undefined) where.authorId    = authorId;
+
+  // Filtre par tags (OR : au moins un des tags)
+  if (tags) {
+    const tagIds = tags.split(',').map(Number).filter(n => n > 0);
+    if (tagIds.length > 0) {
+      where.tags = { some: { tagId: { in: tagIds } } };
+    }
+  }
 
   // minRating : sous-requête raw (avgRating n'est pas une colonne)
   let minRatingIds = null;
@@ -148,11 +175,7 @@ const getAllRecipes = async (req, res) => {
 
     const recipes = await prisma.recipe.findMany({
       where: { id: { in: pageIds } },
-      include: {
-        category: true,
-        author: { select: { id: true, pseudo: true } },
-        ratings: { select: { score: true } },
-      },
+      include: includeList,
     });
     const ranked = pageIds.map(id => recipes.find(r => r.id === id)).filter(Boolean);
     return res.json({ data: ranked.map(computeAvgRating), total, page, limit });
@@ -173,9 +196,7 @@ const getAllRecipes = async (req, res) => {
     const allRecipes = await prisma.recipe.findMany({
       where,
       include: {
-        category: true,
-        author: { select: { id: true, pseudo: true } },
-        ratings: { select: { score: true } },
+        ...includeList,
         _count: { select: { favorites: true } },
       },
     });
@@ -206,11 +227,7 @@ const getAllRecipes = async (req, res) => {
   const [recipes, total] = await Promise.all([
     prisma.recipe.findMany({
       where,
-      include: {
-        category: true,
-        author: { select: { id: true, pseudo: true } },
-        ratings: { select: { score: true } },
-      },
+      include: includeList,
       orderBy,
       skip: offset,
       take: limit,
@@ -228,12 +245,7 @@ const getRecipeById = async (req, res) => {
   const [recipe, ratingAgg] = await Promise.all([
     prisma.recipe.findUnique({
       where: { id },
-      include: {
-        category: true,
-        author:   { select: { id: true, pseudo: true, avatar: true } },
-        ingredients: { include: { ingredient: true } },
-        steps:    { orderBy: { order: 'asc' } },
-      },
+      include: includeDetail,
     }),
     prisma.rating.aggregate({
       where:  { recipeId: id },
@@ -274,14 +286,18 @@ const getRecipeById = async (req, res) => {
     userFields = { isFavorited: !!fav, userScore: userRating?.score ?? null };
   }
 
-  res.json({ ...recipe, avgRating, ratingsCount, ...userFields });
+  // Aplatir les tags
+  const { tags: recipeTags, ratings, ...recipeRest } = recipe;
+  const flatTags = recipeTags ? recipeTags.map((rt) => rt.tag) : [];
+
+  res.json({ ...recipeRest, tags: flatTags, avgRating, ratingsCount, ...userFields });
 };
 
 // POST /recipes — auth requise
 // ingredients : [{ ingredientId, quantity, unit }] OU [{ name, quantity, unit }]
 // steps       : [{ order, description }]
 const createRecipe = async (req, res) => {
-  const { name, description, imageUrl, difficulty, prepTime, servings, categoryId, ingredients = [], steps = [], status: requestedStatus } = req.body;
+  const { name, description, imageUrl, difficulty, prepTime, servings, categoryId, ingredients = [], steps = [], tagIds, tagNames, parentRecipeId, status: requestedStatus } = req.body;
 
   // Calcul du statut final selon le rôle
   let status;
@@ -296,6 +312,22 @@ const createRecipe = async (req, res) => {
   try {
     const resolved = await resolveIngredients(ingredients);
 
+    // Résoudre les tags (par ids ou par noms)
+    let resolvedTagIds = [];
+    if (tagIds && tagIds.length > 0) {
+      resolvedTagIds = tagIds.map(Number);
+    } else if (tagNames && tagNames.length > 0) {
+      resolvedTagIds = await resolveTagNames(tagNames);
+    }
+
+    // Vérifier la contrainte variante (Feature 4)
+    if (parentRecipeId) {
+      const parent = await prisma.recipe.findUnique({ where: { id: parseInt(parentRecipeId) } });
+      if (!parent) return res.status(400).json({ error: 'Recette parente introuvable' });
+      if (parent.status !== 'PUBLISHED') return res.status(400).json({ error: 'La recette parente doit être publiée' });
+      if (parent.parentRecipeId) return res.status(400).json({ error: 'Impossible de créer une variante d\'une variante' });
+    }
+
     const recipe = await prisma.recipe.create({
       data: {
         name,
@@ -307,6 +339,7 @@ const createRecipe = async (req, res) => {
         categoryId: parseInt(categoryId),
         status,
         authorId,
+        ...(parentRecipeId ? { parentRecipeId: parseInt(parentRecipeId) } : {}),
         ingredients: {
           create: resolved.map(({ id, quantity, unit }) => ({
             quantity: parseFloat(quantity),
@@ -321,6 +354,11 @@ const createRecipe = async (req, res) => {
             ...(stepImg ? { imageUrl: stepImg } : {}),
           })),
         },
+        ...(resolvedTagIds.length > 0 ? {
+          tags: {
+            create: resolvedTagIds.map((tagId) => ({ tag: { connect: { id: tagId } } })),
+          },
+        } : {}),
       },
       include: includeDetail,
     });
@@ -350,7 +388,7 @@ const createRecipe = async (req, res) => {
 // PUT /recipes/:id — auth requise (auteur ou admin)
 const updateRecipe = async (req, res) => {
   const id = parseInt(req.params.id);
-  const { name, description, imageUrl, difficulty, prepTime, servings, categoryId, ingredients, steps, status: requestedStatus } = req.body;
+  const { name, description, imageUrl, difficulty, prepTime, servings, categoryId, ingredients, steps, tagIds, tagNames, status: requestedStatus } = req.body;
 
   const exists = await prisma.recipe.findUnique({ where: { id } });
   if (!exists) {
@@ -375,12 +413,24 @@ const updateRecipe = async (req, res) => {
   try {
     const resolved = ingredients !== undefined ? await resolveIngredients(ingredients) : undefined;
 
+    // Résoudre les tags si fournis
+    let resolvedTagIds;
+    if (tagIds !== undefined) {
+      resolvedTagIds = tagIds.map(Number);
+    } else if (tagNames !== undefined) {
+      resolvedTagIds = await resolveTagNames(tagNames);
+    }
+
     const recipe = await prisma.$transaction(async (tx) => {
       if (resolved !== undefined) {
         await tx.recipeIngredient.deleteMany({ where: { recipeId: id } });
       }
       if (steps !== undefined) {
         await tx.step.deleteMany({ where: { recipeId: id } });
+      }
+      // Recréer les tags si fournis
+      if (resolvedTagIds !== undefined) {
+        await tx.recipeTag.deleteMany({ where: { recipeId: id } });
       }
 
       return tx.recipe.update({
@@ -412,6 +462,11 @@ const updateRecipe = async (req, res) => {
               })),
             },
           }),
+          ...(resolvedTagIds !== undefined && {
+            tags: {
+              create: resolvedTagIds.map((tagId) => ({ tag: { connect: { id: tagId } } })),
+            },
+          }),
         },
         include: includeDetail,
       });
@@ -441,8 +496,12 @@ const deleteRecipe = async (req, res) => {
     prisma.comment.deleteMany({ where: { recipeId: id } }),
     prisma.rating.deleteMany({ where: { recipeId: id } }),
     prisma.favorite.deleteMany({ where: { recipeId: id } }),
+    prisma.recipeTag.deleteMany({ where: { recipeId: id } }),
+    prisma.collectionRecipe.deleteMany({ where: { recipeId: id } }),
     prisma.recipeIngredient.deleteMany({ where: { recipeId: id } }),
     prisma.step.deleteMany({ where: { recipeId: id } }),
+    // Détacher les variantes avant suppression
+    prisma.recipe.updateMany({ where: { parentRecipeId: id }, data: { parentRecipeId: null } }),
     prisma.recipe.delete({ where: { id } }),
   ]);
 
@@ -557,11 +616,7 @@ const searchRecipes = async (req, res) => {
   // Récupérer les recettes avec leurs relations
   const recipes = await prisma.recipe.findMany({
     where: { id: { in: ids } },
-    include: {
-      category: true,
-      author: { select: { id: true, pseudo: true } },
-      ratings: { select: { score: true } },
-    },
+    include: includeList,
   });
 
   // Réordonner selon le rang de pertinence
@@ -595,11 +650,7 @@ const getFeed = async (req, res) => {
   // On prend limit+1 pour détecter s'il reste des résultats
   const recipes = await prisma.recipe.findMany({
     where,
-    include: {
-      category: true,
-      author: { select: { id: true, pseudo: true } },
-      ratings: { select: { score: true } },
-    },
+    include: includeList,
     orderBy: { id: 'desc' },
     take: limit + 1,
   });

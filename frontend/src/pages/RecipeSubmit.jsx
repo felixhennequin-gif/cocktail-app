@@ -27,6 +27,9 @@ export default function RecipeSubmit() {
   const [ingredients, setIngredients] = useState([{ ...EMPTY_INGREDIENT }])
   const [steps, setSteps]           = useState([{ ...EMPTY_STEP }])
   const [categories, setCategories] = useState([])
+  const [allTags, setAllTags]       = useState([])
+  const [selectedTags, setSelectedTags] = useState([])
+  const [tagInput, setTagInput]     = useState('')
   const [saving, setSaving]         = useState(false)
   const [uploading, setUploading]   = useState(false)
   const [error, setError]           = useState(null)
@@ -36,6 +39,7 @@ export default function RecipeSubmit() {
   useEffect(() => {
     if (!user) { navigate('/login', { state: { from: '/recipes/new' } }); return }
     fetch('/api/categories').then((r) => r.json()).then(setCategories)
+    fetch('/api/tags').then((r) => r.ok ? r.json() : []).then(setAllTags)
   }, [user]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleField = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }))
@@ -85,6 +89,10 @@ export default function RecipeSubmit() {
     setSaving(true)
     setError(null)
 
+    // Séparer les tags existants (par id) et les nouveaux (par nom)
+    const existingTagIds = selectedTags.filter((t) => t.id).map((t) => t.id)
+    const newTagNames = selectedTags.filter((t) => !t.id).map((t) => t.name)
+
     const body = {
       ...form,
       categoryId: parseInt(form.categoryId),
@@ -95,6 +103,8 @@ export default function RecipeSubmit() {
       steps: steps
         .filter((s) => s.description.trim())
         .map((s, idx) => ({ order: idx + 1, description: s.description.trim() })),
+      ...(existingTagIds.length > 0 && { tagIds: existingTagIds }),
+      ...(newTagNames.length > 0 && { tagNames: newTagNames }),
     }
 
     try {
@@ -207,6 +217,57 @@ export default function RecipeSubmit() {
             {preview && (
               <img src={preview} alt="Aperçu" className="mt-3 w-40 h-28 object-cover rounded-lg border border-gray-200 dark:border-gray-600" />
             )}
+          </div>
+
+          {/* Tags */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('submit.fields.tags')}</label>
+            <div className="flex flex-wrap gap-1.5 mb-2">
+              {selectedTags.map((tag, i) => (
+                <span
+                  key={tag.id || `new-${i}`}
+                  className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-700"
+                >
+                  {tag.name}
+                  <button type="button" onClick={() => setSelectedTags((t) => t.filter((_, j) => j !== i))} className="hover:text-red-500">✕</button>
+                </span>
+              ))}
+            </div>
+            <div className="relative">
+              <input
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && tagInput.trim()) {
+                    e.preventDefault()
+                    const name = tagInput.trim().toLowerCase()
+                    if (selectedTags.some((t) => t.name === name)) { setTagInput(''); return }
+                    const existing = allTags.find((t) => t.name === name)
+                    setSelectedTags((prev) => [...prev, existing || { name }])
+                    setTagInput('')
+                  }
+                }}
+                placeholder={t('submit.fields.tagsPlaceholder')}
+                className={`${inputClass}`}
+              />
+              {tagInput.trim() && (
+                <div className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg max-h-32 overflow-y-auto">
+                  {allTags
+                    .filter((t) => t.name.includes(tagInput.trim().toLowerCase()) && !selectedTags.some((s) => s.name === t.name))
+                    .slice(0, 5)
+                    .map((tag) => (
+                      <button
+                        key={tag.id}
+                        type="button"
+                        onClick={() => { setSelectedTags((prev) => [...prev, tag]); setTagInput('') }}
+                        className="w-full text-left px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+                      >
+                        {tag.name}
+                      </button>
+                    ))}
+                </div>
+              )}
+            </div>
           </div>
         </section>
 

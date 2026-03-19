@@ -11,7 +11,7 @@ async function seed() {
   console.log('Nettoyage des données existantes...');
   // TRUNCATE remet les séquences à zéro (IDs stables à chaque re-seed)
   await pool.query(
-    'TRUNCATE "RecipeIngredient", "Step", "Recipe", "Ingredient", "Category" RESTART IDENTITY CASCADE'
+    'TRUNCATE "CollectionRecipe", "Collection", "RecipeTag", "Tag", "RecipeIngredient", "Step", "Recipe", "Ingredient", "Category" RESTART IDENTITY CASCADE'
   );
 
   console.log('Création des catégories...');
@@ -56,7 +56,42 @@ async function seed() {
     console.log(`  ✓ ${recipe.name}`);
   }
 
-  console.log(`\nSeed terminé : ${data.recipes.length} recettes insérées.`);
+  // Tags par défaut
+  console.log('Création des tags...');
+  const defaultTags = ['été', 'hiver', 'fête', 'brunch', 'sans alcool', 'rapide', 'classique', 'tropical', 'after-dinner'];
+  const tagMap = {};
+  for (const name of defaultTags) {
+    const tag = await prisma.tag.create({ data: { name } });
+    tagMap[name] = tag.id;
+    console.log(`  ✓ tag: ${name}`);
+  }
+
+  // Associer quelques tags aux recettes existantes
+  const tagAssociations = {
+    'Mojito':         ['été', 'tropical', 'fête', 'rapide'],
+    'Old Fashioned':  ['classique', 'hiver', 'after-dinner'],
+    'Negroni':        ['classique', 'after-dinner'],
+    'Aperol Spritz':  ['été', 'fête', 'brunch', 'rapide'],
+    'Piña Colada':    ['été', 'tropical', 'fête'],
+    'Moscow Mule':    ['fête', 'rapide'],
+    'Daiquiri':       ['classique', 'tropical', 'rapide'],
+    'Manhattan':      ['classique', 'hiver', 'after-dinner'],
+    'Mai Tai':        ['tropical', 'été', 'fête'],
+    'Cosmopolitan':   ['classique', 'fête'],
+  };
+  console.log('Association des tags aux recettes...');
+  for (const [recipeName, tags] of Object.entries(tagAssociations)) {
+    const recipe = await prisma.recipe.findFirst({ where: { name: recipeName } });
+    if (!recipe) continue;
+    for (const tagName of tags) {
+      await prisma.recipeTag.create({
+        data: { recipeId: recipe.id, tagId: tagMap[tagName] },
+      });
+    }
+    console.log(`  ✓ ${recipeName}: ${tags.join(', ')}`);
+  }
+
+  console.log(`\nSeed terminé : ${data.recipes.length} recettes, ${defaultTags.length} tags insérés.`);
 }
 
 seed()

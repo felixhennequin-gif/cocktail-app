@@ -20,6 +20,7 @@ export default function RecipeList() {
   const maxTime    = searchParams.get('maxTime')     || ''
   const sortBy     = searchParams.get('sortBy')      || 'createdAt'
   const sortOrder  = searchParams.get('sortOrder')   || 'desc'
+  const tagIds     = searchParams.get('tags') ? searchParams.get('tags').split(',').map(Number).filter(Boolean) : []
 
   // Valeur affichée dans l'input de recherche (mise à jour immédiate, envoyée après debounce)
   const [inputValue, setInputValue]     = useState(q)
@@ -27,6 +28,7 @@ export default function RecipeList() {
 
   const [recipes, setRecipes]         = useState([])
   const [categories, setCategories]   = useState([])
+  const [tags, setTags]               = useState([])
   const [total, setTotal]             = useState(0)
   const [currentPage, setCurrentPage] = useState(1)
   const [loading, setLoading]         = useState(true)
@@ -38,7 +40,7 @@ export default function RecipeList() {
   const maxTimeDebounceRef = useRef(null)
   const sentinelRef = useRef(null)
   // Clé de filtres : quand elle change, on repart de la page 1
-  const filterKey = `${q}|${categoryId}|${minRating}|${maxTime}|${sortBy}|${sortOrder}`
+  const filterKey = `${q}|${categoryId}|${minRating}|${maxTime}|${sortBy}|${sortOrder}|${tagIds.join(',')}`
 
   // Met à jour un param URL — réinitialise la page
   const setParam = (key, value) => {
@@ -53,11 +55,14 @@ export default function RecipeList() {
     }, { replace: true })
   }
 
-  // Chargement des catégories au montage
+  // Chargement des catégories et tags au montage
   useEffect(() => {
     fetch('/api/categories')
       .then((r) => r.ok ? r.json() : [])
       .then(setCategories)
+    fetch('/api/tags')
+      .then((r) => r.ok ? r.json() : [])
+      .then(setTags)
   }, [])
 
   // Chargement des favoris si connecté
@@ -83,6 +88,7 @@ export default function RecipeList() {
       params.set('sortBy', sortBy)
       params.set('sortOrder', sortOrder)
     }
+    if (tagIds.length > 0) params.set('tags', tagIds.join(','))
 
     fetch(`/api/recipes?${params}`, { signal })
       .then(async (res) => {
@@ -102,7 +108,7 @@ export default function RecipeList() {
         if (err.name !== 'AbortError') setError(err.message)
       })
       .finally(() => { setLoading(false); setLoadingMore(false) })
-  }, [q, categoryId, minRating, maxTime, sortBy, sortOrder]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [q, categoryId, minRating, maxTime, sortBy, sortOrder, tagIds.join(',')]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Rechargement initial quand les filtres changent
   useEffect(() => {
@@ -177,13 +183,27 @@ export default function RecipeList() {
     (o) => o.sortBy === sortBy && o.sortOrder === sortOrder
   )
 
-  const hasActiveFilters = categoryId || minRating || maxTime
+  const hasActiveFilters = categoryId || minRating || maxTime || tagIds.length > 0
+
+  const toggleTag = (tagId) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev)
+      const current = prev.get('tags') ? prev.get('tags').split(',').map(Number).filter(Boolean) : []
+      const updated = current.includes(tagId)
+        ? current.filter((id) => id !== tagId)
+        : [...current, tagId]
+      if (updated.length === 0) next.delete('tags')
+      else next.set('tags', updated.join(','))
+      return next
+    }, { replace: true })
+  }
 
   const resetFilters = () => {
     setMaxTimeInput('')
     setSearchParams((prev) => {
       const next = new URLSearchParams()
       if (prev.get('q')) next.set('q', prev.get('q'))
+      // tags aussi réinitialisés
       return next
     }, { replace: true })
   }
@@ -240,6 +260,29 @@ export default function RecipeList() {
           </button>
         ))}
       </div>
+
+      {/* Filtre par tags */}
+      {tags.length > 0 && (
+        <div className="mb-4">
+          <span className="text-xs text-gray-500 dark:text-gray-400 font-medium mr-2">{t('recipes.filterByTags')}</span>
+          <div className="flex flex-wrap gap-1.5 mt-1.5">
+            {tags.map((tag) => (
+              <button
+                key={tag.id}
+                onClick={() => toggleTag(tag.id)}
+                className={`text-xs px-2.5 py-1 rounded-full font-medium transition-colors ${
+                  tagIds.includes(tag.id)
+                    ? 'bg-amber-500 text-white'
+                    : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-amber-300 dark:hover:border-amber-500'
+                }`}
+              >
+                {tag.name}
+                {tag.recipesCount > 0 && <span className="ml-1 opacity-60">{tag.recipesCount}</span>}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Filtres supplémentaires */}
       <div className="flex flex-wrap items-center gap-3 md:gap-4 mb-6 py-3 border-t border-b border-gray-100 dark:border-gray-700">

@@ -330,6 +330,21 @@ export default function RecipeDetail() {
           <p className="text-gray-600 dark:text-gray-400 leading-relaxed">{recipe.description}</p>
         )}
 
+        {/* Tags */}
+        {recipe.tags?.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mt-3">
+            {recipe.tags.map((tag) => (
+              <Link
+                key={tag.id}
+                to={`/?tags=${tag.id}`}
+                className="text-xs px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors"
+              >
+                {tag.name}
+              </Link>
+            ))}
+          </div>
+        )}
+
         {recipe.servings && (
           <div className="flex items-center gap-3 mt-4">
             <span className="text-sm text-gray-500 dark:text-gray-400">{t('recipes.for')}</span>

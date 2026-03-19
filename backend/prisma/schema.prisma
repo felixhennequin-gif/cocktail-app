@@ -23,6 +23,7 @@ model User {
   following      Follow[]       @relation("Followers")
   followers      Follow[]       @relation("Following")
   notifications  Notification[]
+  collections    Collection[]
 }
 
 model Recipe {
@@ -46,6 +47,13 @@ model Recipe {
   ratings       Rating[]
   comments      Comment[]
   searchVector  Unsupported("tsvector")?
+  tags          RecipeTag[]
+  // Variantes (Feature 4)
+  parentRecipeId Int?
+  parentRecipe   Recipe?  @relation("RecipeVariants", fields: [parentRecipeId], references: [id])
+  variants       Recipe[] @relation("RecipeVariants")
+  // Collections (Feature 2)
+  collections    CollectionRecipe[]
 }
 
 model Category {
@@ -140,6 +148,44 @@ model Notification {
 
   @@index([userId, read])
   @@index([userId, createdAt])
+}
+
+model Tag {
+  id        Int         @id @default(autoincrement())
+  name      String      @unique
+  createdAt DateTime    @default(now())
+  recipes   RecipeTag[]
+}
+
+model RecipeTag {
+  recipeId Int
+  tagId    Int
+  recipe   Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  tag      Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([recipeId, tagId])
+}
+
+model Collection {
+  id          Int                @id @default(autoincrement())
+  name        String
+  description String?
+  isPublic    Boolean            @default(true)
+  userId      Int
+  user        User               @relation(fields: [userId], references: [id])
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  recipes     CollectionRecipe[]
+}
+
+model CollectionRecipe {
+  collectionId Int
+  recipeId     Int
+  addedAt      DateTime   @default(now())
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  recipe       Recipe     @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@id([collectionId, recipeId])
 }
 
 enum NotificationType {
