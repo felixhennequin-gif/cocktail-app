@@ -174,6 +174,11 @@ export default function UserProfile() {
   const [followingLoaded, setFollowingLoaded] = useState(false)
   const [followingLoading, setFollowingLoading] = useState(false)
 
+  // Collections (propre profil uniquement)
+  const [collections, setCollections]           = useState([])
+  const [collectionsLoaded, setCollectionsLoaded] = useState(false)
+  const [collectionsLoading, setCollectionsLoading] = useState(false)
+
   const [loading, setLoading] = useState(true)
   const [error, setError]     = useState(null)
 
@@ -186,6 +191,8 @@ export default function UserProfile() {
     setFollowing([])
     setFollowersLoaded(false)
     setFollowingLoaded(false)
+    setCollections([])
+    setCollectionsLoaded(false)
     authFetch(`/api/users/${id}`, { signal: controller.signal })
       .then((r) => {
         if (!r.ok) throw new Error('Utilisateur introuvable')
@@ -245,6 +252,17 @@ export default function UserProfile() {
       .finally(() => setFollowingLoading(false))
   }, [activeTab, id]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Chargement lazy des collections (propre profil uniquement)
+  useEffect(() => {
+    if (activeTab !== 'collections' || collectionsLoaded) return
+    if (!user || user.id !== parseInt(id)) return
+    setCollectionsLoading(true)
+    authFetch('/api/collections/me')
+      .then((r) => r.ok ? r.json() : [])
+      .then((data) => { setCollections(data); setCollectionsLoaded(true) })
+      .finally(() => setCollectionsLoading(false))
+  }, [activeTab, id]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleToggleFavorite = async (recipeId) => {
     if (!user) return
     const res = await authFetch(`/api/favorites/${recipeId}`, { method: 'POST' })
@@ -277,6 +295,8 @@ export default function UserProfile() {
     { key: 'recipes',   label: t('profile.tabs.recipes', { count: total }) },
     { key: 'followers', label: t('profile.tabs.followers', { count: profile.followersCount }) },
     { key: 'following', label: t('profile.tabs.following', { count: profile.followingCount }) },
+    // Onglet collections uniquement sur son propre profil
+    ...(user?.id === parseInt(id) ? [{ key: 'collections', label: t('collections.title') }] : []),
   ]
 
   const isOwnProfile = user?.id === parseInt(id)
@@ -439,6 +459,53 @@ export default function UserProfile() {
                 {t('profile.firstOf', { shown: following.length, total: followingTotal })}
               </p>
             )}
+          </div>
+        )
+      )}
+
+      {/* Onglet Collections (propre profil uniquement) */}
+      {activeTab === 'collections' && (
+        collectionsLoading ? (
+          <SkeletonList count={3} />
+        ) : collections.length === 0 ? (
+          <p className="text-gray-400 dark:text-gray-500 text-sm">{t('collections.noCollections')}</p>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {collections.map((col) => (
+              <Link
+                key={col.id}
+                to={`/collections/${col.id}`}
+                className="flex gap-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md hover:border-amber-300 dark:hover:border-amber-500 transition-all"
+              >
+                {/* Image de prévisualisation */}
+                {col.previewImage ? (
+                  <img
+                    src={getImageUrl(col.previewImage)}
+                    alt={col.name}
+                    className="w-20 h-16 sm:w-24 sm:h-20 object-cover rounded-lg shrink-0 bg-gray-100 dark:bg-gray-700"
+                  />
+                ) : (
+                  <div className="w-20 h-16 sm:w-24 sm:h-20 rounded-lg shrink-0 bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-300 dark:text-gray-600 text-2xl">
+                    📂
+                  </div>
+                )}
+                <div className="flex flex-col justify-center min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 truncate">{col.name}</h3>
+                    <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full shrink-0 ${
+                      col.isPublic
+                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                        : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'
+                    }`}>
+                      {col.isPublic ? t('collections.public') : t('collections.private')}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                    {t('collections.recipesCount', { count: col.recipesCount ?? 0 })}
+                  </p>
+                </div>
+              </Link>
+            ))}
           </div>
         )
       )}

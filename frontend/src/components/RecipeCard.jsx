@@ -57,6 +57,11 @@ export default function RecipeCard({ recipe, isFavorited, onToggleFavorite }) {
         <div className="flex items-start justify-between gap-2">
           <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 truncate">{recipe.name}</h2>
           <div className="flex items-center gap-2 shrink-0">
+            {recipe.parentRecipeId && (
+              <span className="text-xs font-medium px-2 py-1 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400">
+                {t('recipes.variant')}
+              </span>
+            )}
             <span className={`text-xs font-medium px-2 py-1 rounded-full ${difficultyColor[recipe.difficulty]}`}>
               {t(`recipes.difficulty.${recipe.difficulty}`)}
             </span>

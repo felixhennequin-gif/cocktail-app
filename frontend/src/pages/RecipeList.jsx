@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, Link } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { useTranslation } from 'react-i18next'
 import RecipeCard from '../components/RecipeCard'
@@ -25,6 +25,8 @@ export default function RecipeList() {
   // Valeur affichée dans l'input de recherche (mise à jour immédiate, envoyée après debounce)
   const [inputValue, setInputValue]     = useState(q)
   const [maxTimeInput, setMaxTimeInput] = useState(maxTime)
+
+  const [dailyRecipe, setDailyRecipe] = useState(null)
 
   const [recipes, setRecipes]         = useState([])
   const [categories, setCategories]   = useState([])
@@ -55,7 +57,7 @@ export default function RecipeList() {
     }, { replace: true })
   }
 
-  // Chargement des catégories et tags au montage
+  // Chargement des catégories, tags et cocktail du jour au montage
   useEffect(() => {
     fetch('/api/categories')
       .then((r) => r.ok ? r.json() : [])
@@ -63,6 +65,10 @@ export default function RecipeList() {
     fetch('/api/tags')
       .then((r) => r.ok ? r.json() : [])
       .then(setTags)
+    fetch('/api/recipes/daily')
+      .then((r) => r.ok ? r.json() : null)
+      .then(setDailyRecipe)
+      .catch(() => setDailyRecipe(null))
   }, [])
 
   // Chargement des favoris si connecté
@@ -221,6 +227,58 @@ export default function RecipeList() {
         <meta property="og:description" content="Explorez des centaines de recettes de cocktails." />
         <meta property="og:type" content="website" />
       </Helmet>
+      {/* Cocktail du jour — hero section */}
+      {dailyRecipe && (
+        <Link
+          to={`/recipes/${dailyRecipe.id}`}
+          className="block mb-8 rounded-2xl overflow-hidden bg-gradient-to-r from-amber-100 to-amber-50 dark:from-amber-900/40 dark:to-amber-800/20 border border-amber-200 dark:border-amber-700/50 hover:shadow-lg transition-shadow"
+        >
+          <div className="flex flex-col sm:flex-row">
+            {dailyRecipe.imageUrl && (
+              <div className="sm:w-56 h-48 sm:h-auto flex-shrink-0">
+                <img
+                  src={dailyRecipe.imageUrl}
+                  alt={dailyRecipe.name}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
+            <div className="flex-1 p-5 sm:p-6 flex flex-col justify-center">
+              <span className="inline-block text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400 mb-2">
+                {t('recipes.dailyCocktail')}
+              </span>
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+                {dailyRecipe.name}
+              </h2>
+              {dailyRecipe.description && (
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
+                  {dailyRecipe.description}
+                </p>
+              )}
+              <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400 mb-3">
+                {dailyRecipe.avgRating !== null && (
+                  <span className="flex items-center gap-1">
+                    <span className="text-amber-500">&#9733;</span>
+                    {dailyRecipe.avgRating}
+                  </span>
+                )}
+                <span>{dailyRecipe.prepTime} min</span>
+                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                  dailyRecipe.difficulty === 'EASY'   ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400' :
+                  dailyRecipe.difficulty === 'MEDIUM' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400' :
+                  'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400'
+                }`}>
+                  {dailyRecipe.difficulty}
+                </span>
+              </div>
+              <span className="inline-flex items-center text-sm font-medium text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300">
+                {t('recipes.discover')} &rarr;
+              </span>
+            </div>
+          </div>
+        </Link>
+      )}
+
       <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">{t('recipes.allTitle')}</h1>
 
       {/* Barre de recherche */}

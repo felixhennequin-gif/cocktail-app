@@ -17,6 +17,7 @@ import RecipeSubmit     from './pages/RecipeSubmit'
 import AdminRecipeList  from './pages/admin/AdminRecipeList'
 import AdminRecipeForm  from './pages/admin/AdminRecipeForm'
 import AdminPendingList from './pages/admin/AdminPendingList'
+import CollectionDetail from './pages/CollectionDetail'
 import NotFound         from './pages/NotFound'
 
 function Header() {
@@ -156,6 +157,7 @@ export default function App() {
           <Route path="/register"                element={<Register />} />
           <Route path="/favorites"               element={<Favorites />} />
           <Route path="/users/:id"               element={<UserProfile />} />
+          <Route path="/collections/:id"          element={<CollectionDetail />} />
           <Route path="/admin"                   element={<AdminRecipeList />} />
           <Route path="/admin/pending"           element={<AdminPendingList />} />
           <Route path="/admin/recipes/new"       element={<AdminRecipeForm />} />

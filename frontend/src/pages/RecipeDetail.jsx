@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
 import { getImageUrl } from '../utils/image'
 import ConfirmModal from '../components/ConfirmModal'
+import AddToCollectionModal from '../components/AddToCollectionModal'
 
 const difficultyColor = {
   EASY:   'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
@@ -119,6 +120,7 @@ export default function RecipeDetail() {
   const [submittingComment, setSubmittingComment] = useState(false)
   const [deleteCommentId, setDeleteCommentId] = useState(null)
   const [portionCount, setPortionCount] = useState(1)
+  const [collectionModalOpen, setCollectionModalOpen] = useState(false)
   const commentInputRef = useRef(null)
 
   // Chargement de la recette (isFavorited + userScore inclus si connecté) et des commentaires
@@ -272,9 +274,25 @@ export default function RecipeDetail() {
         onConfirm={confirmDeleteComment}
         onCancel={() => setDeleteCommentId(null)}
       />
+      {/* Modale d'ajout à une collection */}
+      <AddToCollectionModal
+        isOpen={collectionModalOpen}
+        onClose={() => setCollectionModalOpen(false)}
+        recipeId={id}
+      />
       <Link to="/" className="text-sm text-amber-600 dark:text-amber-400 hover:underline mb-6 inline-block">
         {t('recipes.backToList')}
       </Link>
+
+      {/* Bannière variante de */}
+      {recipe.parentRecipe && (
+        <div className="mb-4 px-4 py-3 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-700 rounded-lg text-sm text-indigo-700 dark:text-indigo-400">
+          {t('recipes.variantOfFull')}{' '}
+          <Link to={`/recipes/${recipe.parentRecipe.id}`} className="font-semibold hover:underline">
+            {recipe.parentRecipe.name}
+          </Link>
+        </div>
+      )}
 
       {/* En-tête */}
       <div className="mb-8">
@@ -296,6 +314,15 @@ export default function RecipeDetail() {
                 title={isFavorited ? t('recipes.removeFavorite') : t('recipes.addFavorite')}
               >
                 ♥
+              </button>
+            )}
+            {user && (
+              <button
+                onClick={() => setCollectionModalOpen(true)}
+                className="text-xl leading-none text-gray-300 dark:text-gray-600 hover:text-amber-500 transition-colors"
+                title={t('collections.addRecipe')}
+              >
+                +
               </button>
             )}
           </div>
@@ -407,6 +434,49 @@ export default function RecipeDetail() {
             ))}
           </ol>
         </section>
+      )}
+
+      {/* Variantes */}
+      {recipe.variants?.length > 0 && (
+        <section className="mb-8">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">{t('recipes.variants')}</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {recipe.variants.map((v) => (
+              <Link
+                key={v.id}
+                to={`/recipes/${v.id}`}
+                className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md hover:border-amber-300 dark:hover:border-amber-500 transition-all"
+              >
+                <img
+                  src={getImageUrl(v.imageUrl)}
+                  alt={v.name}
+                  className="w-full h-24 object-cover bg-gray-100 dark:bg-gray-700"
+                />
+                <div className="p-2.5">
+                  <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{v.name}</h3>
+                  <div className="flex items-center gap-2 mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    <span className={`font-medium px-1.5 py-0.5 rounded-full ${difficultyColor[v.difficulty]}`}>
+                      {t(`recipes.difficulty.${v.difficulty}`)}
+                    </span>
+                    <span>{v.prepTime} min</span>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Bouton proposer une variante — seulement si connecté et recette non-variante */}
+      {user && !recipe.parentRecipeId && (
+        <div className="mb-8">
+          <Link
+            to={`/recipes/new?variantOf=${recipe.id}`}
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-700 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
+          >
+            {t('recipes.proposeVariant')}
+          </Link>
+        </div>
       )}
 
       {/* Commentaires */}

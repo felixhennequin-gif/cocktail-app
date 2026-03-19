@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
@@ -22,6 +22,7 @@ export default function RecipeSubmit() {
   const { showToast }       = useToast()
   const { t }               = useTranslation()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
 
   const [form, setForm]             = useState(defaultForm)
   const [ingredients, setIngredients] = useState([{ ...EMPTY_INGREDIENT }])
@@ -35,11 +36,30 @@ export default function RecipeSubmit() {
   const [error, setError]           = useState(null)
   const [preview, setPreview]       = useState(null)
   const [fieldErrors, setFieldErrors] = useState({})
+  const [parentRecipe, setParentRecipe] = useState(null)
 
   useEffect(() => {
     if (!user) { navigate('/login', { state: { from: '/recipes/new' } }); return }
     fetch('/api/categories').then((r) => r.json()).then(setCategories)
     fetch('/api/tags').then((r) => r.ok ? r.json() : []).then(setAllTags)
+
+    // Si variantOf est présent, récupérer la recette parente et pré-remplir
+    const variantOfId = searchParams.get('variantOf')
+    if (variantOfId) {
+      fetch(`/api/recipes/${variantOfId}`)
+        .then((r) => r.ok ? r.json() : null)
+        .then((data) => {
+          if (data) {
+            setParentRecipe(data)
+            setForm((f) => ({
+              ...f,
+              categoryId: String(data.categoryId ?? ''),
+              difficulty: data.difficulty ?? 'EASY',
+            }))
+          }
+        })
+        .catch(() => {})
+    }
   }, [user]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleField = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }))
@@ -105,6 +125,7 @@ export default function RecipeSubmit() {
         .map((s, idx) => ({ order: idx + 1, description: s.description.trim() })),
       ...(existingTagIds.length > 0 && { tagIds: existingTagIds }),
       ...(newTagNames.length > 0 && { tagNames: newTagNames }),
+      ...(parentRecipe && { parentRecipeId: parentRecipe.id }),
     }
 
     try {
@@ -141,6 +162,13 @@ export default function RecipeSubmit() {
         </div>
         <Link to="/" className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200">{t('submit.back')}</Link>
       </div>
+
+      {/* Bannière variante */}
+      {parentRecipe && (
+        <div className="mb-4 px-4 py-3 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-700 rounded-lg text-sm text-indigo-700 dark:text-indigo-400">
+          {t('recipes.variantOfRecipe', { name: parentRecipe.name })}
+        </div>
+      )}
 
       {error && (
         <div className="mb-4 px-4 py-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400">
