@@ -33,6 +33,7 @@ export default function RecipeList() {
   const [recipes, setRecipes]         = useState([])
   const [categories, setCategories]   = useState([])
   const [tags, setTags]               = useState([])
+  const [dynamicTagCounts, setDynamicTagCounts] = useState({})
   const [total, setTotal]             = useState(0)
   const [currentPage, setCurrentPage] = useState(1)
   const [loading, setLoading]         = useState(true)
@@ -112,6 +113,11 @@ export default function RecipeList() {
         setRecipes((prev) => append ? [...prev, ...newRecipes] : newRecipes)
         setTotal(data.total ?? 0)
         setCurrentPage(page)
+        if (data.tagCounts) {
+          const countsMap = {}
+          data.tagCounts.forEach(tc => { countsMap[tc.id] = tc.count })
+          setDynamicTagCounts(countsMap)
+        }
       })
       .catch((err) => {
         if (err.name !== 'AbortError') setError(err.message)
@@ -367,7 +373,10 @@ export default function RecipeList() {
                 }`}
               >
                 {tag.name}
-                {tag.recipesCount > 0 && <span className="ml-1 opacity-60">{tag.recipesCount}</span>}
+                {(() => {
+                  const count = dynamicTagCounts[tag.id] ?? tag.recipesCount
+                  return count > 0 ? <span className="ml-1 opacity-60">{count}</span> : null
+                })()}
               </button>
             ))}
           </div>

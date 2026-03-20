@@ -8,6 +8,24 @@ const { resolveTagNames } = require('./tag-controller');
 // Invalide toutes les entrées de cache liées aux recettes
 const bustRecipeCache = () => invalidateCacheByPattern('/recipes*').catch(() => {});
 
+// Calcule les compteurs de tags filtrés (faceted filter : tous les filtres SAUF les tags)
+const computeTagCounts = async (whereWithoutTags) => {
+  const filteredIds = await prisma.recipe.findMany({
+    where: whereWithoutTags,
+    select: { id: true },
+  });
+  const ids = filteredIds.map(r => r.id);
+  if (ids.length === 0) return [];
+  return prisma.$queryRaw`
+    SELECT t.id, t.name, COUNT(DISTINCT rt."recipeId")::int AS count
+    FROM "Tag" t
+    JOIN "RecipeTag" rt ON rt."tagId" = t.id
+    WHERE rt."recipeId" = ANY(${ids}::int[])
+    GROUP BY t.id, t.name
+    ORDER BY count DESC
+  `;
+};
+
 // Schéma de validation des query params de GET /recipes
 const recipeListSchema = z.object({
   page:       z.coerce.number().int().min(1).default(1),
@@ -129,13 +147,22 @@ const getAllRecipes = async (req, res) => {
   if (maxTime    !== undefined) where.prepTime    = { lte: maxTime };
   if (authorId   !== undefined) where.authorId    = authorId;
 
-  // Filtre par tags (OR : au moins un des tags)
+  // Filtre par tags (AND : tous les tags doivent être présents)
   if (tags) {
-    const tagIds = tags.split(',').map(Number).filter(n => n > 0);
-    if (tagIds.length > 0) {
-      where.tags = { some: { tagId: { in: tagIds } } };
+    const tagIdList = tags.split(',').map(Number).filter(n => n > 0);
+    if (tagIdList.length > 0) {
+      where.AND = [
+        ...(where.AND || []),
+        ...tagIdList.map(tagId => ({
+          tags: { some: { tagId } }
+        }))
+      ];
     }
   }
+
+  // Snapshot du where SANS les tags pour les compteurs facettés
+  const { AND: _andWithTags, ...whereBase } = where;
+  const whereWithoutTags = { ...whereBase };
 
   // minRating : sous-requête raw (avgRating n'est pas une colonne)
   let minRatingIds = null;
@@ -177,8 +204,27 @@ const getAllRecipes = async (req, res) => {
     const total      = orderedIds.length;
     const pageIds    = orderedIds.slice(offset, offset + limit);
 
+    // Compteurs de tags facettés (filtres hors tags)
+    const facetWhere = { ...whereWithoutTags };
+    if (minRatingIds !== null) {
+      facetWhere.id = { in: minRatingIds.length > 0 ? minRatingIds : [-1] };
+    }
+    const facetFilterRows = await prisma.recipe.findMany({ where: facetWhere, select: { id: true } });
+    const facetIds = facetFilterRows.map(r => r.id);
+    const facetSearchIds = searchIds.filter(id => facetIds.includes(id));
+    const tagCounts = facetSearchIds.length > 0
+      ? await prisma.$queryRaw`
+          SELECT t.id, t.name, COUNT(DISTINCT rt."recipeId")::int AS count
+          FROM "Tag" t
+          JOIN "RecipeTag" rt ON rt."tagId" = t.id
+          WHERE rt."recipeId" = ANY(${facetSearchIds}::int[])
+          GROUP BY t.id, t.name
+          ORDER BY count DESC
+        `
+      : [];
+
     if (pageIds.length === 0) {
-      return res.json({ data: [], total, page, limit });
+      return res.json({ data: [], total, page, limit, tagCounts });
     }
 
     const recipes = await prisma.recipe.findMany({
@@ -186,7 +232,7 @@ const getAllRecipes = async (req, res) => {
       include: includeList,
     });
     const ranked = pageIds.map(id => recipes.find(r => r.id === id)).filter(Boolean);
-    return res.json({ data: ranked.map(computeAvgRating), total, page, limit });
+    return res.json({ data: ranked.map(computeAvgRating), total, page, limit, tagCounts });
   }
 
   // ----------------------------------------------------------------
@@ -226,13 +272,27 @@ const getAllRecipes = async (req, res) => {
 
     const total = withAgg.length;
     const data  = withAgg.slice(offset, offset + limit).map(({ favoritesCount, ...r }) => r);
-    return res.json({ data, total, page, limit });
+
+    // Compteurs de tags facettés
+    const facetWhere = { ...whereWithoutTags };
+    if (minRatingIds !== null) {
+      facetWhere.id = { in: minRatingIds.length > 0 ? minRatingIds : [-1] };
+    }
+    const tagCounts = await computeTagCounts(facetWhere);
+
+    return res.json({ data, total, page, limit, tagCounts });
   }
 
   // Tri standard Prisma
   const orderBy = { [sortBy]: sortOrder };
 
-  const [recipes, total] = await Promise.all([
+  // Compteurs de tags facettés
+  const facetWhere = { ...whereWithoutTags };
+  if (minRatingIds !== null) {
+    facetWhere.id = { in: minRatingIds.length > 0 ? minRatingIds : [-1] };
+  }
+
+  const [recipes, total, tagCounts] = await Promise.all([
     prisma.recipe.findMany({
       where,
       include: includeList,
@@ -241,9 +301,10 @@ const getAllRecipes = async (req, res) => {
       take: limit,
     }),
     prisma.recipe.count({ where }),
+    computeTagCounts(facetWhere),
   ]);
 
-  res.json({ data: recipes.map(computeAvgRating), total, page, limit });
+  res.json({ data: recipes.map(computeAvgRating), total, page, limit, tagCounts });
 };
 
 // GET /recipes/:id
