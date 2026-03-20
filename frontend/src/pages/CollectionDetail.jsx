@@ -285,7 +285,7 @@ export default function CollectionDetail() {
       {collection.recipes?.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-gray-400 dark:text-gray-500 text-sm mb-3">{t('collections.empty')}</p>
-          <Link to="/" className="text-sm text-gold-500 dark:text-gold-400 hover:underline">
+          <Link to="/recipes" className="text-sm text-gold-500 dark:text-gold-400 hover:underline">
             {t('collections.browseLink')}
           </Link>
         </div>

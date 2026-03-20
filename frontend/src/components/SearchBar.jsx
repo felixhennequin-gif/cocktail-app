@@ -51,7 +51,7 @@ export default function SearchBar() {
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && value.trim().length >= 2) {
       setOpen(false)
-      navigate(`/?q=${encodeURIComponent(value.trim())}`)
+      navigate(`/recipes?q=${encodeURIComponent(value.trim())}`)
     }
     if (e.key === 'Escape') setOpen(false)
   }
@@ -64,11 +64,11 @@ export default function SearchBar() {
 
   const handleViewAll = () => {
     setOpen(false)
-    navigate(`/?q=${encodeURIComponent(value.trim())}`)
+    navigate(`/recipes?q=${encodeURIComponent(value.trim())}`)
   }
 
   return (
-    <div ref={containerRef} className="relative w-56">
+    <div ref={containerRef} className="relative w-full sm:w-56 lg:w-72">
       <label htmlFor="search-nav" className="sr-only">{t('recipes.searchNavPlaceholder')}</label>
       <input
         id="search-nav"

@@ -56,9 +56,15 @@ async function seed() {
     console.log(`  ✓ ${recipe.name}`);
   }
 
-  // Tags par défaut
+  // Tags par défaut (nettoyés — voir prisma/cleanup-tags.js pour le contexte)
   console.log('Création des tags...');
-  const defaultTags = ['été', 'hiver', 'fête', 'brunch', 'sans alcool', 'rapide', 'classique', 'tropical', 'after-dinner'];
+  const defaultTags = [
+    'été', 'hiver', 'toute-saison', 'fête', 'brunch', 'apéro',
+    'sans alcool', 'rapide', 'classique', 'tropical', 'digestif',
+    'soirée', 'gin', 'rhum', 'whisky', 'vodka',
+    'IBA officiel', 'nouvelle vague', 'classique moderne',
+    'rendez-vous', 'sucré',
+  ];
   const tagMap = {};
   for (const name of defaultTags) {
     const tag = await prisma.tag.create({ data: { name } });
@@ -68,16 +74,16 @@ async function seed() {
 
   // Associer quelques tags aux recettes existantes
   const tagAssociations = {
-    'Mojito':         ['été', 'tropical', 'fête', 'rapide'],
-    'Old Fashioned':  ['classique', 'hiver', 'after-dinner'],
-    'Negroni':        ['classique', 'after-dinner'],
-    'Aperol Spritz':  ['été', 'fête', 'brunch', 'rapide'],
-    'Piña Colada':    ['été', 'tropical', 'fête'],
-    'Moscow Mule':    ['fête', 'rapide'],
-    'Daiquiri':       ['classique', 'tropical', 'rapide'],
-    'Manhattan':      ['classique', 'hiver', 'after-dinner'],
-    'Mai Tai':        ['tropical', 'été', 'fête'],
-    'Cosmopolitan':   ['classique', 'fête'],
+    'Mojito':         ['été', 'tropical', 'fête', 'rapide', 'rhum'],
+    'Old Fashioned':  ['classique', 'hiver', 'digestif', 'whisky', 'IBA officiel'],
+    'Negroni':        ['classique', 'digestif', 'apéro', 'gin', 'IBA officiel'],
+    'Aperol Spritz':  ['été', 'fête', 'brunch', 'rapide', 'apéro'],
+    'Piña Colada':    ['été', 'tropical', 'fête', 'rhum', 'sucré'],
+    'Moscow Mule':    ['fête', 'rapide', 'vodka'],
+    'Daiquiri':       ['classique', 'tropical', 'rapide', 'rhum', 'IBA officiel'],
+    'Manhattan':      ['classique', 'hiver', 'digestif', 'whisky', 'IBA officiel'],
+    'Mai Tai':        ['tropical', 'été', 'fête', 'rhum'],
+    'Cosmopolitan':   ['classique moderne', 'fête', 'vodka', 'soirée'],
   };
   console.log('Association des tags aux recettes...');
   for (const [recipeName, tags] of Object.entries(tagAssociations)) {
@@ -91,7 +97,7 @@ async function seed() {
     console.log(`  ✓ ${recipeName}: ${tags.join(', ')}`);
   }
 
-  console.log(`\nSeed terminé : ${data.recipes.length} recettes, ${defaultTags.length} tags insérés.`);
+  console.log(`\nSeed terminé : ${data.recipes.length} recettes, ${defaultTags.length} tags insérés.\n  (Pour nettoyer les tags en prod, lancer : node prisma/cleanup-tags.js)`);
 }
 
 seed()

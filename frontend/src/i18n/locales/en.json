@@ -55,6 +55,7 @@
     "maxTimeLabel": "Max time",
     "maxTimeUnit": "min",
     "resetFilters": "Reset filters",
+    "advancedFilters": "Filters",
     "loadMore": "Load more ({{loaded}} / {{total}})",
     "loadMoreLoading": "Loading...",
     "noResults": "No recipes found.",
@@ -119,6 +120,8 @@
     },
     "tags": "Tags",
     "filterByTags": "Filter by tags",
+    "moreTags": "more",
+    "lessTags": "Show less",
     "noTags": "No tags",
     "variant": "Variant",
     "variantOf": "Variant of",
@@ -129,9 +132,11 @@
     "dailyCocktail": "Cocktail of the day",
     "discover": "Discover",
     "heroTitle": "The right cocktail for every occasion",
-    "heroSubtitle": "Explore our handcrafted recipes. Filter by ingredient, difficulty, or mood.",
+    "heroSubtitle": "Find your next cocktail from our recipes sorted by ingredient, difficulty, and occasion.",
     "heroCta": "Explore recipes",
-    "heroCtaSecondary": "Create an account"
+    "heroCtaSecondary": "Create an account — it's free",
+    "heroCtaHint": "Save your favorites, rate and comment on recipes.",
+    "heroSocialProof": "{{recipes}}+ recipes · {{categories}} categories · 100% free"
   },
   "favorites": {
     "title": "My favorites",
@@ -334,5 +339,15 @@
     "notFoundTitle": "Page not found",
     "notFoundMessage": "This page doesn't exist or has been moved.",
     "backHome": "← Back to home"
+  },
+  "landing": {
+    "popularTitle": "Popular recipes",
+    "seeAllRecipes": "See all {{count}}+ recipes"
+  },
+  "footer": {
+    "legal": "Legal notice",
+    "contact": "Contact",
+    "about": "About",
+    "copyright": "© 2025 Cocktails. All rights reserved."
   }
 }

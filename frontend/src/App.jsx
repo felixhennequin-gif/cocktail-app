@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Routes, Route, Link, useNavigate } from 'react-router-dom'
+import { Helmet } from 'react-helmet-async'
 import Logo from './components/Logo'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from './contexts/AuthContext'
@@ -7,6 +8,7 @@ import SearchBar        from './components/SearchBar'
 import NotificationBell from './components/NotificationBell'
 import ThemeToggle      from './components/ThemeToggle'
 import LanguageToggle   from './components/LanguageToggle'
+import LandingPage      from './pages/LandingPage'
 import RecipeList       from './pages/RecipeList'
 import RecipeDetail     from './pages/RecipeDetail'
 import Login            from './pages/Login'
@@ -20,6 +22,7 @@ import AdminRecipeForm  from './pages/admin/AdminRecipeForm'
 import AdminPendingList from './pages/admin/AdminPendingList'
 import CollectionDetail from './pages/CollectionDetail'
 import NotFound         from './pages/NotFound'
+import Footer           from './components/Footer'
 
 function Header() {
   const { user, logout } = useAuth()
@@ -147,6 +150,9 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-ink-950 transition-colors">
+      <Helmet>
+        <title>Cocktails — Recettes &amp; Inspiration</title>
+      </Helmet>
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2 focus:bg-gold-400 focus:text-ink-900 focus:rounded-lg focus:text-sm focus:font-medium"
@@ -157,7 +163,8 @@ export default function App() {
 
       <main id="main-content" role="main" className="max-w-5xl mx-auto px-4 py-6 md:py-8">
         <Routes>
-          <Route path="/"                        element={<RecipeList />} />
+          <Route path="/"                        element={<LandingPage />} />
+          <Route path="/recipes"                  element={<RecipeList />} />
           <Route path="/feed"                    element={<Feed />} />
           <Route path="/recipes/new"             element={<RecipeSubmit />} />
           <Route path="/recipes/:id"             element={<RecipeDetail />} />
@@ -173,6 +180,7 @@ export default function App() {
           <Route path="*"                        element={<NotFound />} />
         </Routes>
       </main>
+      <Footer />
     </div>
   )
 }

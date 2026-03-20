@@ -84,7 +84,7 @@ export default function Feed() {
           <p className="text-gray-500 dark:text-gray-400 mb-2 text-lg">{t('feed.empty')}</p>
           <p className="text-gray-400 dark:text-gray-500 text-sm mb-6">{t('feed.emptyHint')}</p>
           <Link
-            to="/"
+            to="/recipes"
             className="inline-block px-5 py-2.5 bg-gold-400 text-ink-900 rounded-lg text-sm font-medium hover:bg-gold-500 transition-colors"
           >
             {t('feed.discover')}

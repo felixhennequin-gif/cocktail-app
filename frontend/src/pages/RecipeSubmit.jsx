@@ -139,7 +139,7 @@ export default function RecipeSubmit() {
         throw new Error(data.error || 'Erreur lors de la soumission')
       }
       showToast(isAdmin ? t('submit.publishedToast') : t('submit.submittedToast'), 'success')
-      navigate('/')
+      navigate('/recipes')
     } catch (err) {
       setError(err.message)
     } finally {
@@ -160,7 +160,7 @@ export default function RecipeSubmit() {
             <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">{t('submit.pendingHint')}</p>
           )}
         </div>
-        <Link to="/" className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200">{t('submit.back')}</Link>
+        <Link to="/recipes" className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200">{t('submit.back')}</Link>
       </div>
 
       {/* Bannière variante */}
@@ -368,7 +368,7 @@ export default function RecipeSubmit() {
             {saving ? t('submit.sending') : isAdmin ? t('submit.publish') : t('submit.submit')}
           </button>
           <Link
-            to="/"
+            to="/recipes"
             className="px-6 py-2.5 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 text-sm font-medium rounded-lg hover:border-gray-300 dark:hover:border-gray-500 transition-colors"
           >
             {t('submit.cancel')}

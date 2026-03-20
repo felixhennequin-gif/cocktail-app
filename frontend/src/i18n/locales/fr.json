@@ -55,6 +55,7 @@
     "maxTimeLabel": "Temps max",
     "maxTimeUnit": "min",
     "resetFilters": "Réinitialiser les filtres",
+    "advancedFilters": "Filtres",
     "loadMore": "Charger plus ({{loaded}} / {{total}})",
     "loadMoreLoading": "Chargement...",
     "noResults": "Aucune recette trouvée.",
@@ -119,6 +120,8 @@
     },
     "tags": "Tags",
     "filterByTags": "Filtrer par tags",
+    "moreTags": "autres",
+    "lessTags": "Réduire",
     "noTags": "Aucun tag",
     "variant": "Variante",
     "variantOf": "Variante de",
@@ -129,9 +132,11 @@
     "dailyCocktail": "Cocktail du jour",
     "discover": "Découvrir",
     "heroTitle": "Le bon cocktail pour chaque occasion",
-    "heroSubtitle": "Explorez nos recettes artisanales. Filtrez par ingrédient, difficulté ou envie du moment.",
+    "heroSubtitle": "Trouvez votre prochain cocktail parmi nos recettes triées par ingrédient, difficulté et occasion.",
     "heroCta": "Explorer les recettes",
-    "heroCtaSecondary": "Créer un compte"
+    "heroCtaSecondary": "Créer un compte — c'est gratuit",
+    "heroCtaHint": "Sauvegardez vos favoris, notez et commentez les recettes.",
+    "heroSocialProof": "{{recipes}}+ recettes · {{categories}} catégories · 100% gratuit"
   },
   "favorites": {
     "title": "Mes favoris",
@@ -334,5 +339,15 @@
     "notFoundTitle": "Page introuvable",
     "notFoundMessage": "Cette page n'existe pas ou a été déplacée.",
     "backHome": "← Retour à l'accueil"
+  },
+  "landing": {
+    "popularTitle": "Recettes populaires",
+    "seeAllRecipes": "Voir les {{count}}+ recettes"
+  },
+  "footer": {
+    "legal": "Mentions légales",
+    "contact": "Contact",
+    "about": "À propos",
+    "copyright": "© 2025 Cocktails. Tous droits réservés."
   }
 }

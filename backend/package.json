@@ -11,6 +11,7 @@
     "prisma:seed": "node prisma/seed.js",
     "seed:big": "node prisma/seed-big.js",
     "seed:realistic": "node prisma/seed-realistic.js",
+    "tags:cleanup": "node prisma/cleanup-tags.js",
     "test": "jest --runInBand --forceExit",
     "test:watch": "jest --watch --runInBand"
   },

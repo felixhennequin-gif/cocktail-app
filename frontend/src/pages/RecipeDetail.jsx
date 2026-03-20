@@ -276,7 +276,7 @@ export default function RecipeDetail() {
         onClose={() => setCollectionModalOpen(false)}
         recipeId={id}
       />
-      <Link to="/" className="text-sm text-gold-500 dark:text-gold-400 hover:underline mb-6 inline-block">
+      <Link to="/recipes" className="text-sm text-gold-500 dark:text-gold-400 hover:underline mb-6 inline-block">
         {t('recipes.backToList')}
       </Link>
 
@@ -356,7 +356,7 @@ export default function RecipeDetail() {
             {recipe.tags?.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mt-3">
                 {recipe.tags.map((tag) => (
-                  <Link key={tag.id} to={`/?tags=${tag.id}`} className="text-xs px-2.5 py-1 rounded-full bg-gold-50 dark:bg-gold-900/20 text-gold-600 dark:text-gold-400 border border-gold-200 dark:border-gold-700 hover:bg-gold-100 dark:hover:bg-gold-900/40 transition-colors">
+                  <Link key={tag.id} to={`/recipes?tags=${tag.id}`} className="text-xs px-2.5 py-1 rounded-full bg-gold-50 dark:bg-gold-900/20 text-gold-600 dark:text-gold-400 border border-gold-200 dark:border-gold-700 hover:bg-gold-100 dark:hover:bg-gold-900/40 transition-colors">
                     {tag.name}
                   </Link>
                 ))}
@@ -454,7 +454,7 @@ export default function RecipeDetail() {
             {recipe.tags?.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mt-3">
                 {recipe.tags.map((tag) => (
-                  <Link key={tag.id} to={`/?tags=${tag.id}`} className="text-xs px-2.5 py-1 rounded-full bg-gold-50 dark:bg-gold-900/20 text-gold-600 dark:text-gold-400 border border-gold-200 dark:border-gold-700 hover:bg-gold-100 dark:hover:bg-gold-900/40 transition-colors">
+                  <Link key={tag.id} to={`/recipes?tags=${tag.id}`} className="text-xs px-2.5 py-1 rounded-full bg-gold-50 dark:bg-gold-900/20 text-gold-600 dark:text-gold-400 border border-gold-200 dark:border-gold-700 hover:bg-gold-100 dark:hover:bg-gold-900/40 transition-colors">
                     {tag.name}
                   </Link>
                 ))}
