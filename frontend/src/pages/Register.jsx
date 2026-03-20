@@ -69,49 +69,53 @@ export default function Register() {
 
       <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 space-y-4" noValidate>
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('auth.emailLabel')}</label>
+          <label htmlFor="register-email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('auth.emailLabel')}</label>
           <input
-            name="email" type="email" value={form.email}
+            id="register-email" name="email" type="email" value={form.email}
             onChange={handleField} onBlur={handleBlur}
+            aria-describedby={touched.email && errors.email ? 'register-email-error' : undefined}
             className={fieldClass('email')}
           />
           {touched.email && errors.email && (
-            <p className="mt-1 text-xs text-red-500">{errors.email}</p>
+            <p id="register-email-error" role="alert" className="mt-1 text-xs text-red-500">{errors.email}</p>
           )}
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('auth.pseudoLabel')}</label>
+          <label htmlFor="register-pseudo" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('auth.pseudoLabel')}</label>
           <input
-            name="pseudo" value={form.pseudo}
+            id="register-pseudo" name="pseudo" value={form.pseudo}
             onChange={handleField} onBlur={handleBlur}
+            aria-describedby={touched.pseudo && errors.pseudo ? 'register-pseudo-error' : undefined}
             className={fieldClass('pseudo')}
           />
           {touched.pseudo && errors.pseudo && (
-            <p className="mt-1 text-xs text-red-500">{errors.pseudo}</p>
+            <p id="register-pseudo-error" role="alert" className="mt-1 text-xs text-red-500">{errors.pseudo}</p>
           )}
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label htmlFor="register-password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             {t('auth.passwordLabel')} <span className="text-gray-400 dark:text-gray-500 font-normal">{t('auth.passwordHint')}</span>
           </label>
           <input
-            name="password" type="password" value={form.password}
+            id="register-password" name="password" type="password" value={form.password}
             onChange={handleField} onBlur={handleBlur}
+            aria-describedby={touched.password && errors.password ? 'register-password-error' : undefined}
             className={fieldClass('password')}
           />
           {touched.password && errors.password && (
-            <p className="mt-1 text-xs text-red-500">{errors.password}</p>
+            <p id="register-password-error" role="alert" className="mt-1 text-xs text-red-500">{errors.password}</p>
           )}
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('auth.confirmLabel')}</label>
+          <label htmlFor="register-confirm" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('auth.confirmLabel')}</label>
           <input
-            name="confirm" type="password" value={form.confirm}
+            id="register-confirm" name="confirm" type="password" value={form.confirm}
             onChange={handleField} onBlur={handleBlur}
+            aria-describedby={touched.confirm && errors.confirm ? 'register-confirm-error' : undefined}
             className={fieldClass('confirm')}
           />
           {touched.confirm && errors.confirm && (
-            <p className="mt-1 text-xs text-red-500">{errors.confirm}</p>
+            <p id="register-confirm-error" role="alert" className="mt-1 text-xs text-red-500">{errors.confirm}</p>
           )}
         </div>
         <button

@@ -313,7 +313,9 @@ export default function RecipeList() {
 
       {/* Barre de recherche */}
       <div className="mb-4">
+        <label htmlFor="search-recipes" className="sr-only">{t('recipes.searchPlaceholder')}</label>
         <input
+          id="search-recipes"
           type="text"
           value={inputValue}
           onChange={handleSearchChange}

@@ -91,7 +91,8 @@ export default function NotificationBell() {
       <button
         onClick={handleToggle}
         className="relative text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 transition-colors"
-        title={t('common.notifications')}
+        aria-label={t('common.notifications')}
+        aria-expanded={open}
       >
         🔔
         {unreadCount > 0 && (

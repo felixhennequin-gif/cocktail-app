@@ -66,25 +66,27 @@ export default function Login() {
 
       <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 space-y-4" noValidate>
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('auth.emailLabel')}</label>
+          <label htmlFor="login-email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('auth.emailLabel')}</label>
           <input
-            name="email" type="email" value={form.email}
+            id="login-email" name="email" type="email" value={form.email}
             onChange={handleField} onBlur={handleBlur}
+            aria-describedby={touched.email && errors.email ? 'login-email-error' : undefined}
             className={fieldClass('email')}
           />
           {touched.email && errors.email && (
-            <p className="mt-1 text-xs text-red-500">{errors.email}</p>
+            <p id="login-email-error" role="alert" className="mt-1 text-xs text-red-500">{errors.email}</p>
           )}
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('auth.passwordLabel')}</label>
+          <label htmlFor="login-password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('auth.passwordLabel')}</label>
           <input
-            name="password" type="password" value={form.password}
+            id="login-password" name="password" type="password" value={form.password}
             onChange={handleField} onBlur={handleBlur}
+            aria-describedby={touched.password && errors.password ? 'login-password-error' : undefined}
             className={fieldClass('password')}
           />
           {touched.password && errors.password && (
-            <p className="mt-1 text-xs text-red-500">{errors.password}</p>
+            <p id="login-password-error" role="alert" className="mt-1 text-xs text-red-500">{errors.password}</p>
           )}
         </div>
         <button

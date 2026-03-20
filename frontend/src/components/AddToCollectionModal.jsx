@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
@@ -136,15 +136,25 @@ export default function AddToCollectionModal({ isOpen, onClose, recipeId }) {
     }
   }
 
+  const modalRef = useRef(null)
+
+  useEffect(() => {
+    if (isOpen && modalRef.current) {
+      const firstFocusable = modalRef.current.querySelector('button, input, [tabindex]:not([tabindex="-1"])')
+      firstFocusable?.focus()
+    }
+  }, [isOpen])
+
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-[9000] flex items-center justify-center p-4 bg-black/40" onClick={onClose}>
+    <div role="dialog" aria-modal="true" aria-labelledby="collection-modal-title" className="fixed inset-0 z-[9000] flex items-center justify-center p-4 bg-black/40" onClick={onClose}>
       <div
+        ref={modalRef}
         className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-sm w-full p-6 max-h-[80vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">
+        <h2 id="collection-modal-title" className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">
           {t('collections.addRecipe')}
         </h2>
 

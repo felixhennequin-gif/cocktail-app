@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { useTranslation } from 'react-i18next'
@@ -51,6 +51,14 @@ function EditProfileModal({ profile, onClose, onSaved, authFetch }) {
   const [preview, setPreview] = useState(profile.avatar ? getImageUrl(profile.avatar) : null)
   const [saving, setSaving]   = useState(false)
   const [error, setError]     = useState(null)
+  const modalRef              = useRef(null)
+
+  useEffect(() => {
+    if (modalRef.current) {
+      const firstFocusable = modalRef.current.querySelector('button, input, [tabindex]:not([tabindex="-1"])')
+      firstFocusable?.focus()
+    }
+  }, [])
 
   const handleField = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }))
 
@@ -96,9 +104,9 @@ function EditProfileModal({ profile, onClose, onSaved, authFetch }) {
   }
 
   return (
-    <div className="fixed inset-0 z-[9000] flex items-center justify-center p-4 bg-black/40" onClick={onClose}>
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-sm w-full p-6" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">{t('profile.editTitle')}</h2>
+    <div role="dialog" aria-modal="true" aria-labelledby="edit-profile-modal-title" className="fixed inset-0 z-[9000] flex items-center justify-center p-4 bg-black/40" onClick={onClose}>
+      <div ref={modalRef} className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-sm w-full p-6" onClick={(e) => e.stopPropagation()}>
+        <h2 id="edit-profile-modal-title" className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">{t('profile.editTitle')}</h2>
         {error && <p className="mb-3 text-sm text-red-500">{error}</p>}
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Avatar */}

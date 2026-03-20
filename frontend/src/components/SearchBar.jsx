@@ -69,7 +69,9 @@ export default function SearchBar() {
 
   return (
     <div ref={containerRef} className="relative w-56">
+      <label htmlFor="search-nav" className="sr-only">{t('recipes.searchNavPlaceholder')}</label>
       <input
+        id="search-nav"
         type="text"
         value={value}
         onChange={handleChange}

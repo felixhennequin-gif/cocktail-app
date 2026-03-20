@@ -84,6 +84,7 @@ function RatingStars({ value, onChange }) {
           onClick={() => onChange(n)}
           onMouseEnter={() => setHovered(n)}
           onMouseLeave={() => setHovered(null)}
+          aria-label={`${n} / 5`}
           className={`text-2xl leading-none transition-colors ${
             n <= display ? 'text-amber-400' : 'text-gray-200 dark:text-gray-600'
           } hover:text-amber-400`}
@@ -313,6 +314,7 @@ export default function RecipeDetail() {
                   <button
                     onClick={handleToggleFavorite}
                     className={`text-2xl leading-none transition-colors ${isFavorited ? 'text-red-500' : 'text-gray-300 dark:text-gray-600 hover:text-red-400'}`}
+                    aria-label={isFavorited ? t('recipes.removeFavorite') : t('recipes.addFavorite')}
                     title={isFavorited ? t('recipes.removeFavorite') : t('recipes.addFavorite')}
                   >
                     ♥
@@ -410,6 +412,7 @@ export default function RecipeDetail() {
                   <button
                     onClick={handleToggleFavorite}
                     className={`text-2xl leading-none transition-colors ${isFavorited ? 'text-red-500' : 'text-gray-300 dark:text-gray-600 hover:text-red-400'}`}
+                    aria-label={isFavorited ? t('recipes.removeFavorite') : t('recipes.addFavorite')}
                     title={isFavorited ? t('recipes.removeFavorite') : t('recipes.addFavorite')}
                   >
                     ♥

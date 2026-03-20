@@ -36,7 +36,7 @@ function Header() {
   const closeMenu = () => setMenuOpen(false)
 
   return (
-    <header className="bg-white dark:bg-ink-900 border-b border-gray-200 dark:border-gray-700 px-4 md:px-6 py-4 relative">
+    <header role="banner" className="bg-white dark:bg-ink-900 border-b border-gray-200 dark:border-gray-700 px-4 md:px-6 py-4 relative">
       {/* Ligne principale */}
       <div className="flex items-center gap-4">
         <Link
@@ -53,7 +53,7 @@ function Header() {
         </div>
 
         {/* Nav desktop (md et plus) */}
-        <nav className="hidden md:flex items-center gap-4 text-sm ml-auto">
+        <nav aria-label="Navigation principale" className="hidden md:flex items-center gap-4 text-sm ml-auto">
           {user ? (
             <>
               <Link to="/feed"        className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 transition-colors">{t('nav.feed')}</Link>
@@ -87,6 +87,7 @@ function Header() {
           className="md:hidden ml-auto p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           onClick={() => setMenuOpen((o) => !o)}
           aria-label={t('nav.menu')}
+          aria-expanded={menuOpen}
         >
           {menuOpen ? (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -107,7 +108,7 @@ function Header() {
 
       {/* Menu déroulant mobile */}
       {menuOpen && (
-        <nav className="md:hidden absolute top-full left-0 right-0 bg-white dark:bg-ink-900 border-b border-gray-200 dark:border-gray-700 shadow-lg z-50 px-4 py-3 flex flex-col gap-3 text-sm">
+        <nav aria-label="Menu mobile" className="md:hidden absolute top-full left-0 right-0 bg-white dark:bg-ink-900 border-b border-gray-200 dark:border-gray-700 shadow-lg z-50 px-4 py-3 flex flex-col gap-3 text-sm">
           {user ? (
             <>
               <Link to="/feed"        onClick={closeMenu} className="text-gray-700 dark:text-gray-300 hover:text-gold-400 dark:hover:text-gold-300 py-1">{t('nav.feedFull')}</Link>
@@ -146,9 +147,15 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-ink-950 transition-colors">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2 focus:bg-gold-400 focus:text-ink-900 focus:rounded-lg focus:text-sm focus:font-medium"
+      >
+        Aller au contenu principal
+      </a>
       <Header />
 
-      <main className="max-w-5xl mx-auto px-4 py-6 md:py-8">
+      <main id="main-content" role="main" className="max-w-5xl mx-auto px-4 py-6 md:py-8">
         <Routes>
           <Route path="/"                        element={<RecipeList />} />
           <Route path="/feed"                    element={<Feed />} />

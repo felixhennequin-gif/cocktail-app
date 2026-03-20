@@ -48,6 +48,7 @@ export default function RecipeCardGrid({ recipe, isFavorited, onToggleFavorite }
           <button
             onClick={handleFavorite}
             className={`absolute top-2 right-2 text-lg leading-none transition-colors drop-shadow ${isFavorited ? 'text-red-500' : 'text-white/70 hover:text-red-400'}`}
+            aria-label={isFavorited ? t('recipes.removeFavorite') : t('recipes.addFavorite')}
             title={isFavorited ? t('recipes.removeFavorite') : t('recipes.addFavorite')}
           >
             ♥
@@ -61,7 +62,7 @@ export default function RecipeCardGrid({ recipe, isFavorited, onToggleFavorite }
           {recipe.name}
         </h2>
 
-        <div className="flex items-center gap-3 text-xs text-gray-400 dark:text-gray-500">
+        <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-500">
           <span>{recipe.prepTime} min</span>
           {recipe.category && <span>{recipe.category.name}</span>}
           {recipe.avgRating != null && (
