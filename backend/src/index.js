@@ -101,9 +101,25 @@ app.use('/notifications',  notificationRoutes);
 // Frontend production — sert le build React si le dossier dist existe
 const frontendDist = path.join(__dirname, '..', '..', 'frontend', 'dist');
 if (fs.existsSync(frontendDist)) {
-  app.use(express.static(frontendDist));
-  // Catch-all pour React Router (SPA) — regex compatible Express 5
-  app.get(/.*/, (req, res) => res.sendFile(path.join(frontendDist, 'index.html')));
+  // Assets avec hash → cache long (1 an)
+  app.use('/assets', express.static(path.join(frontendDist, 'assets'), {
+    maxAge: '1y',
+    immutable: true,
+  }));
+  // Autres fichiers statiques (manifest, sw.js, etc.) → cache court
+  app.use(express.static(frontendDist, {
+    maxAge: '1h',
+    setHeaders: (res, filePath) => {
+      if (filePath.endsWith('.html')) {
+        res.setHeader('Cache-Control', 'no-cache');
+      }
+    },
+  }));
+  // Catch-all pour React Router (SPA) — toujours no-cache sur index.html
+  app.get(/.*/, (req, res) => {
+    res.setHeader('Cache-Control', 'no-cache');
+    res.sendFile(path.join(frontendDist, 'index.html'));
+  });
 }
 
 // Gestion des erreurs globale
