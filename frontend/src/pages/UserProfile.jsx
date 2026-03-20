@@ -23,14 +23,14 @@ function UserCard({ person }) {
             className="w-10 h-10 rounded-full object-cover bg-gray-100 dark:bg-gray-700"
           />
         ) : (
-          <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-base font-bold flex items-center justify-center">
+          <div className="w-10 h-10 rounded-full bg-gold-100 dark:bg-gold-900/30 text-gold-500 dark:text-gold-400 text-base font-bold flex items-center justify-center">
             {person.pseudo[0].toUpperCase()}
           </div>
         )}
       </Link>
       <Link
         to={`/users/${person.id}`}
-        className="flex-1 text-sm font-medium text-gray-800 dark:text-gray-200 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
+        className="flex-1 text-sm font-medium text-gray-800 dark:text-gray-200 hover:text-gold-400 dark:hover:text-gold-300 transition-colors"
       >
         {person.pseudo}
       </Link>
@@ -106,11 +106,11 @@ function EditProfileModal({ profile, onClose, onSaved, authFetch }) {
             {preview ? (
               <img src={preview} alt="avatar" className="w-14 h-14 rounded-full object-cover bg-gray-100 dark:bg-gray-700" />
             ) : (
-              <div className="w-14 h-14 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-xl font-bold flex items-center justify-center">
+              <div className="w-14 h-14 rounded-full bg-gold-100 dark:bg-gold-900/30 text-gold-500 dark:text-gold-400 text-xl font-bold flex items-center justify-center">
                 {form.pseudo[0]?.toUpperCase()}
               </div>
             )}
-            <label className="text-sm text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 cursor-pointer font-medium">
+            <label className="text-sm text-gold-500 dark:text-gold-400 hover:text-gold-600 dark:hover:text-gold-300 cursor-pointer font-medium">
               <input type="file" accept="image/*" onChange={handleAvatar} className="hidden" />
               {t('profile.changeAvatar')}
             </label>
@@ -120,7 +120,7 @@ function EditProfileModal({ profile, onClose, onSaved, authFetch }) {
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('profile.pseudoLabel')}</label>
             <input
               name="pseudo" value={form.pseudo} onChange={handleField} required minLength={2}
-              className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+              className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold-400"
             />
           </div>
           {/* Bio */}
@@ -129,14 +129,14 @@ function EditProfileModal({ profile, onClose, onSaved, authFetch }) {
             <textarea
               name="bio" value={form.bio} onChange={handleField} rows={3}
               placeholder={t('profile.bioPlaceholder')}
-              className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none"
+              className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold-400 resize-none"
             />
           </div>
           <div className="flex gap-3 pt-1">
             <button type="button" onClick={onClose} className="flex-1 py-2 text-sm border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 rounded-xl hover:border-gray-300 dark:hover:border-gray-500 transition-colors">
               {t('profile.cancel')}
             </button>
-            <button type="submit" disabled={saving} className="flex-1 py-2 text-sm bg-amber-500 text-white rounded-xl hover:bg-amber-600 disabled:opacity-60 transition-colors font-medium">
+            <button type="submit" disabled={saving} className="flex-1 py-2 text-sm bg-gold-400 text-ink-900 rounded-xl hover:bg-gold-500 disabled:opacity-60 transition-colors font-medium">
               {saving ? t('profile.saving') : t('profile.save')}
             </button>
           </div>
@@ -283,7 +283,7 @@ export default function UserProfile() {
       <div className="text-5xl mb-4">👤</div>
       <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-2">{t('profile.notFound')}</h2>
       <p className="text-gray-400 dark:text-gray-500 text-sm mb-6">{error}</p>
-      <Link to="/" className="px-5 py-2.5 bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition-colors text-sm font-medium">
+      <Link to="/" className="px-5 py-2.5 bg-gold-400 text-ink-900 rounded-xl hover:bg-gold-500 transition-colors text-sm font-medium">
         {t('profile.backHome')}
       </Link>
     </div>
@@ -332,7 +332,7 @@ export default function UserProfile() {
             className="w-16 h-16 rounded-full object-cover bg-gray-100 dark:bg-gray-700"
           />
         ) : (
-          <div className="w-16 h-16 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-2xl font-bold flex items-center justify-center">
+          <div className="w-16 h-16 rounded-full bg-gold-100 dark:bg-gold-900/30 text-gold-500 dark:text-gold-400 text-2xl font-bold flex items-center justify-center">
             {profile.pseudo[0].toUpperCase()}
           </div>
         )}
@@ -342,7 +342,7 @@ export default function UserProfile() {
             {isOwnProfile ? (
               <button
                 onClick={() => setEditOpen(true)}
-                className="px-3 py-1 text-xs border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 rounded-full hover:border-amber-300 dark:hover:border-amber-500 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
+                className="px-3 py-1 text-xs border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 rounded-full hover:border-gold-300 dark:hover:border-gold-500 hover:text-gold-400 dark:hover:text-gold-300 transition-colors"
               >
                 {t('profile.editButton')}
               </button>
@@ -368,7 +368,7 @@ export default function UserProfile() {
             onClick={() => setActiveTab(tab.key)}
             className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
               activeTab === tab.key
-                ? 'border-amber-500 text-amber-600 dark:text-amber-400'
+                ? 'border-gold-400 text-gold-500 dark:text-gold-400'
                 : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
             }`}
           >
@@ -403,7 +403,7 @@ export default function UserProfile() {
                 <button
                   onClick={() => setPage((p) => p - 1)}
                   disabled={page <= 1}
-                  className="px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 text-sm font-medium text-gray-600 dark:text-gray-400 hover:border-amber-300 dark:hover:border-amber-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 text-sm font-medium text-gray-600 dark:text-gray-400 hover:border-gold-300 dark:hover:border-gold-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
                   {t('common.prev')}
                 </button>
@@ -413,7 +413,7 @@ export default function UserProfile() {
                 <button
                   onClick={() => setPage((p) => p + 1)}
                   disabled={page >= totalPages}
-                  className="px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 text-sm font-medium text-gray-600 dark:text-gray-400 hover:border-amber-300 dark:hover:border-amber-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 text-sm font-medium text-gray-600 dark:text-gray-400 hover:border-gold-300 dark:hover:border-gold-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
                   {t('common.next')}
                 </button>
@@ -475,7 +475,7 @@ export default function UserProfile() {
               <Link
                 key={col.id}
                 to={`/collections/${col.id}`}
-                className="flex gap-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md hover:border-amber-300 dark:hover:border-amber-500 transition-all"
+                className="flex gap-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md hover:border-gold-300 dark:hover:border-gold-500 transition-all"
               >
                 {/* Image de prévisualisation */}
                 {col.previewImage ? (

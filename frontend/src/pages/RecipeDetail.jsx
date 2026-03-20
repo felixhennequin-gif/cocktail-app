@@ -50,7 +50,7 @@ function PortionSelector({ value, onChange }) {
       <button
         type="button"
         onClick={() => onChange(Math.max(1, value - 1))}
-        className="w-7 h-7 rounded-full border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 text-sm font-bold flex items-center justify-center hover:border-amber-400 hover:text-amber-600 transition-colors"
+        className="w-7 h-7 rounded-full border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 text-sm font-bold flex items-center justify-center hover:border-gold-400 hover:text-gold-500 transition-colors"
       >
         −
       </button>
@@ -62,12 +62,12 @@ function PortionSelector({ value, onChange }) {
           const v = parseInt(e.target.value)
           if (v >= 1) onChange(v)
         }}
-        className="w-12 text-center border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg py-1 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-amber-400"
+        className="w-12 text-center border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg py-1 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-gold-400"
       />
       <button
         type="button"
         onClick={() => onChange(value + 1)}
-        className="w-7 h-7 rounded-full border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 text-sm font-bold flex items-center justify-center hover:border-amber-400 hover:text-amber-600 transition-colors"
+        className="w-7 h-7 rounded-full border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 text-sm font-bold flex items-center justify-center hover:border-gold-400 hover:text-gold-500 transition-colors"
       >
         +
       </button>
@@ -244,7 +244,7 @@ export default function RecipeDetail() {
       <div className="text-5xl mb-4">🍹</div>
       <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-2">{t('recipes.notFound')}</h2>
       <p className="text-gray-400 dark:text-gray-500 text-sm mb-6">{error}</p>
-      <Link to="/" className="px-5 py-2.5 bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition-colors text-sm font-medium">
+      <Link to="/" className="px-5 py-2.5 bg-gold-400 text-white rounded-xl hover:bg-gold-500 transition-colors text-sm font-medium">
         {t('recipes.backToHome')}
       </Link>
     </div>
@@ -280,7 +280,7 @@ export default function RecipeDetail() {
         onClose={() => setCollectionModalOpen(false)}
         recipeId={id}
       />
-      <Link to="/" className="text-sm text-amber-600 dark:text-amber-400 hover:underline mb-6 inline-block">
+      <Link to="/" className="text-sm text-gold-500 dark:text-gold-400 hover:underline mb-6 inline-block">
         {t('recipes.backToList')}
       </Link>
 
@@ -302,7 +302,7 @@ export default function RecipeDetail() {
           className="w-full h-56 object-cover rounded-xl mb-6 bg-gray-100 dark:bg-gray-700"
         />
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-3">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">{recipe.name}</h1>
+          <h1 className="text-2xl sm:text-3xl font-serif font-medium text-gray-900 dark:text-gray-100">{recipe.name}</h1>
           <div className="flex items-center gap-2 shrink-0">
             <span className={`text-sm font-medium px-3 py-1 rounded-full ${difficultyColor[recipe.difficulty]}`}>
               {t(`recipes.difficulty.${recipe.difficulty}`)}
@@ -319,7 +319,7 @@ export default function RecipeDetail() {
             {user && (
               <button
                 onClick={() => setCollectionModalOpen(true)}
-                className="text-xl leading-none text-gray-300 dark:text-gray-600 hover:text-amber-500 transition-colors"
+                className="text-xl leading-none text-gray-300 dark:text-gray-600 hover:text-gold-400 transition-colors"
                 title={t('collections.addRecipe')}
               >
                 +
@@ -334,7 +334,7 @@ export default function RecipeDetail() {
           {recipe.author && (
             <Link
               to={`/users/${recipe.author.id}`}
-              className="text-amber-600 dark:text-amber-400 hover:underline"
+              className="text-gold-500 dark:text-gold-400 hover:underline"
             >
               {t('common.by')} {recipe.author.pseudo}
             </Link>
@@ -364,7 +364,7 @@ export default function RecipeDetail() {
               <Link
                 key={tag.id}
                 to={`/?tags=${tag.id}`}
-                className="text-xs px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors"
+                className="text-xs px-2.5 py-1 rounded-full bg-gold-50 dark:bg-gold-900/20 text-gold-600 dark:text-gold-400 border border-gold-200 dark:border-gold-700 hover:bg-gold-100 dark:hover:bg-gold-900/40 transition-colors"
               >
                 {tag.name}
               </Link>
@@ -383,7 +383,7 @@ export default function RecipeDetail() {
         )}
 
         {recipe.status === 'PENDING' && (
-          <div className="mt-3 px-3 py-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg text-sm text-amber-700 dark:text-amber-400">
+          <div className="mt-3 px-3 py-2 bg-gold-50 dark:bg-gold-900/20 border border-gold-200 dark:border-gold-700 rounded-lg text-sm text-gold-700 dark:text-gold-400">
             {t('recipes.pending')}
           </div>
         )}
@@ -417,7 +417,7 @@ export default function RecipeDetail() {
           <ol className="space-y-4">
             {recipe.steps.map((step) => (
               <li key={step.id} className="flex gap-4">
-                <span className="shrink-0 w-7 h-7 rounded-full bg-amber-500 text-white text-sm font-bold flex items-center justify-center">
+                <span className="shrink-0 w-7 h-7 rounded-full bg-gold-400 text-white text-sm font-bold flex items-center justify-center">
                   {step.order}
                 </span>
                 <div className="flex-1 pt-0.5">
@@ -445,7 +445,7 @@ export default function RecipeDetail() {
               <Link
                 key={v.id}
                 to={`/recipes/${v.id}`}
-                className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md hover:border-amber-300 dark:hover:border-amber-500 transition-all"
+                className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md hover:border-gold-300 dark:hover:border-gold-500 transition-all"
               >
                 <img
                   src={getImageUrl(v.imageUrl)}
@@ -492,7 +492,7 @@ export default function RecipeDetail() {
         ) : user ? (
           <form onSubmit={handleSubmitComment} className="mb-6 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-4">
             {myComment && (
-              <p className="text-xs text-amber-600 dark:text-amber-400 font-medium mb-3">
+              <p className="text-xs text-gold-500 dark:text-gold-400 font-medium mb-3">
                 {t('recipes.editMode')}
               </p>
             )}
@@ -510,7 +510,7 @@ export default function RecipeDetail() {
               onBlur={() => setCommentTouched(true)}
               placeholder={t('recipes.commentPlaceholder')}
               rows={3}
-              className={`w-full px-3 py-2 border rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none mb-1 ${
+              className={`w-full px-3 py-2 border rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gold-400 resize-none mb-1 ${
                 commentTouched && !commentText.trim() ? 'border-red-400' : 'border-gray-200 dark:border-gray-600'
               }`}
             />
@@ -520,14 +520,14 @@ export default function RecipeDetail() {
             <button
               type="submit"
               disabled={submittingComment || !commentText.trim() || (!myComment && !commentScore)}
-              className="px-4 py-2 bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-600 disabled:opacity-60 transition-colors"
+              className="px-4 py-2 bg-gold-400 text-white text-sm font-medium rounded-lg hover:bg-gold-500 disabled:opacity-60 transition-colors"
             >
               {submittingComment ? t('recipes.sendingComment') : myComment ? t('recipes.editComment') : t('recipes.submitComment')}
             </button>
           </form>
         ) : (
           <p className="text-sm text-gray-400 dark:text-gray-500 mb-6">
-            <Link to="/login" className="text-amber-600 dark:text-amber-400 hover:underline">{t('recipes.loginToCommentLink')}</Link> {t('recipes.loginToComment')}
+            <Link to="/login" className="text-gold-500 dark:text-gold-400 hover:underline">{t('recipes.loginToCommentLink')}</Link> {t('recipes.loginToComment')}
           </p>
         )}
 
@@ -538,7 +538,7 @@ export default function RecipeDetail() {
             {comments.map((c) => (
               <li key={c.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3">
                 <div className="flex items-center justify-between mb-1">
-                  <Link to={`/users/${c.user.id}`} className="text-sm font-medium text-amber-600 dark:text-amber-400 hover:underline">
+                  <Link to={`/users/${c.user.id}`} className="text-sm font-medium text-gold-500 dark:text-gold-400 hover:underline">
                     {c.user.pseudo}
                   </Link>
                   <div className="flex items-center gap-2">
@@ -548,7 +548,7 @@ export default function RecipeDetail() {
                     {user?.id === c.userId && (
                       <button
                         onClick={handleEditClick}
-                        className="text-xs text-amber-400 hover:text-amber-600 transition-colors"
+                        className="text-xs text-gold-400 hover:text-gold-500 transition-colors"
                       >
                         {t('recipes.modifyComment')}
                       </button>

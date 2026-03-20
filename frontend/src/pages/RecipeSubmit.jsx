@@ -149,7 +149,7 @@ export default function RecipeSubmit() {
 
   const isAdmin = user?.role === 'ADMIN'
 
-  const inputClass = 'w-full px-3 py-2 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400'
+  const inputClass = 'w-full px-3 py-2 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold-400'
 
   return (
     <div className="max-w-2xl mx-auto p-8 bg-white dark:bg-gray-800 rounded-xl shadow-sm">
@@ -238,7 +238,7 @@ export default function RecipeSubmit() {
               placeholder={t('submit.fields.imageUrlPlaceholder')}
               className={`${inputClass} mb-2`}
             />
-            <label className="inline-flex items-center gap-2 cursor-pointer text-sm text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 font-medium">
+            <label className="inline-flex items-center gap-2 cursor-pointer text-sm text-gold-500 dark:text-gold-400 hover:text-gold-600 dark:hover:text-gold-300 font-medium">
               <input type="file" accept="image/*" onChange={handleImageFile} className="hidden" />
               {uploading ? t('submit.fields.uploading') : t('submit.fields.chooseImage')}
             </label>
@@ -254,7 +254,7 @@ export default function RecipeSubmit() {
               {selectedTags.map((tag, i) => (
                 <span
                   key={tag.id || `new-${i}`}
-                  className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-700"
+                  className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-gold-50 dark:bg-gold-900/20 text-gold-600 dark:text-gold-400 border border-gold-200 dark:border-gold-700"
                 >
                   {tag.name}
                   <button type="button" onClick={() => setSelectedTags((t) => t.filter((_, j) => j !== i))} className="hover:text-red-500">✕</button>
@@ -288,7 +288,7 @@ export default function RecipeSubmit() {
                         key={tag.id}
                         type="button"
                         onClick={() => { setSelectedTags((prev) => [...prev, tag]); setTagInput('') }}
-                        className="w-full text-left px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+                        className="w-full text-left px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gold-50 dark:hover:bg-gold-900/20"
                       >
                         {tag.name}
                       </button>
@@ -328,7 +328,7 @@ export default function RecipeSubmit() {
               </div>
             ))}
           </div>
-          <button type="button" onClick={addIngredient} className="mt-3 text-sm text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 font-medium">
+          <button type="button" onClick={addIngredient} className="mt-3 text-sm text-gold-500 dark:text-gold-400 hover:text-gold-600 dark:hover:text-gold-300 font-medium">
             {t('submit.fields.addIngredient')}
           </button>
         </section>
@@ -339,7 +339,7 @@ export default function RecipeSubmit() {
           <div className="space-y-2">
             {steps.map((step, i) => (
               <div key={i} className="flex gap-3 items-start">
-                <span className="shrink-0 w-6 h-6 mt-2 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-xs font-bold flex items-center justify-center">
+                <span className="shrink-0 w-6 h-6 mt-2 rounded-full bg-gold-100 dark:bg-gold-900/30 text-gold-700 dark:text-gold-400 text-xs font-bold flex items-center justify-center">
                   {i + 1}
                 </span>
                 <textarea
@@ -355,7 +355,7 @@ export default function RecipeSubmit() {
               </div>
             ))}
           </div>
-          <button type="button" onClick={addStep} className="mt-3 text-sm text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 font-medium">
+          <button type="button" onClick={addStep} className="mt-3 text-sm text-gold-500 dark:text-gold-400 hover:text-gold-600 dark:hover:text-gold-300 font-medium">
             {t('submit.fields.addStep')}
           </button>
         </section>
@@ -363,7 +363,7 @@ export default function RecipeSubmit() {
         <div className="flex gap-3">
           <button
             type="submit" disabled={saving || uploading}
-            className="px-6 py-2.5 bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-600 disabled:opacity-60 transition-colors"
+            className="px-6 py-2.5 bg-gold-400 text-ink-900 text-sm font-medium rounded-lg hover:bg-gold-500 disabled:opacity-60 transition-colors"
           >
             {saving ? t('submit.sending') : isAdmin ? t('submit.publish') : t('submit.submit')}
           </button>

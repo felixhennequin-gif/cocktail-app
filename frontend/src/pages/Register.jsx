@@ -51,7 +51,7 @@ export default function Register() {
   }
 
   const fieldClass = (name) =>
-    `w-full px-3 py-2 border rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-amber-400 ${
+    `w-full px-3 py-2 border rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-gold-400 ${
       touched[name] && errors[name]
         ? 'border-red-400 bg-red-50 dark:bg-red-900/20'
         : 'border-gray-200 dark:border-gray-600'
@@ -116,7 +116,7 @@ export default function Register() {
         </div>
         <button
           type="submit" disabled={loading}
-          className="w-full py-2.5 bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-600 disabled:opacity-60 transition-colors"
+          className="w-full py-2.5 bg-gold-400 text-ink-900 text-sm font-medium rounded-lg hover:bg-gold-500 disabled:opacity-60 transition-colors"
         >
           {loading ? t('auth.registerLoading') : t('auth.registerButton')}
         </button>
@@ -124,7 +124,7 @@ export default function Register() {
 
       <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-4">
         {t('auth.alreadyAccount')}{' '}
-        <Link to="/login" className="text-amber-600 dark:text-amber-400 hover:underline font-medium">
+        <Link to="/login" className="text-gold-500 dark:text-gold-400 hover:underline font-medium">
           {t('auth.signInLink')}
         </Link>
       </p>

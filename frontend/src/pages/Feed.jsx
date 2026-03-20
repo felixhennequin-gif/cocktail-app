@@ -85,7 +85,7 @@ export default function Feed() {
           <p className="text-gray-400 dark:text-gray-500 text-sm mb-6">{t('feed.emptyHint')}</p>
           <Link
             to="/"
-            className="inline-block px-5 py-2.5 bg-amber-500 text-white rounded-lg text-sm font-medium hover:bg-amber-600 transition-colors"
+            className="inline-block px-5 py-2.5 bg-gold-400 text-ink-900 rounded-lg text-sm font-medium hover:bg-gold-500 transition-colors"
           >
             {t('feed.discover')}
           </Link>
@@ -108,7 +108,7 @@ export default function Feed() {
               <button
                 onClick={loadMore}
                 disabled={loadingMore}
-                className="px-6 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 text-sm font-medium text-gray-600 dark:text-gray-400 hover:border-amber-300 dark:hover:border-amber-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="px-6 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 text-sm font-medium text-gray-600 dark:text-gray-400 hover:border-gold-300 dark:hover:border-gold-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 {loadingMore ? t('feed.loading') : t('feed.loadMore')}
               </button>

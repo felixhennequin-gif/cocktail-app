@@ -17,7 +17,7 @@ export default function NotFound() {
       </p>
       <Link
         to="/"
-        className="px-6 py-3 bg-amber-500 text-white font-medium rounded-xl hover:bg-amber-600 transition-colors"
+        className="px-6 py-3 bg-gold-400 text-ink-900 font-medium rounded-xl hover:bg-gold-500 transition-colors"
       >
         {t('common.backHome')}
       </Link>

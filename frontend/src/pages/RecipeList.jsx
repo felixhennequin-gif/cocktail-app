@@ -231,7 +231,7 @@ export default function RecipeList() {
       {dailyRecipe && (
         <Link
           to={`/recipes/${dailyRecipe.id}`}
-          className="block mb-8 rounded-2xl overflow-hidden bg-gradient-to-r from-amber-100 to-amber-50 dark:from-amber-900/40 dark:to-amber-800/20 border border-amber-200 dark:border-amber-700/50 hover:shadow-lg transition-shadow"
+          className="block mb-8 rounded-2xl overflow-hidden bg-gradient-to-r from-gold-100 to-gold-50 dark:from-ink-800 dark:to-ink-900 border border-gold-200 dark:border-gold-700/30 hover:shadow-lg transition-shadow"
         >
           <div className="flex flex-col sm:flex-row">
             {dailyRecipe.imageUrl && (
@@ -244,10 +244,10 @@ export default function RecipeList() {
               </div>
             )}
             <div className="flex-1 p-5 sm:p-6 flex flex-col justify-center">
-              <span className="inline-block text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400 mb-2">
+              <span className="inline-block text-xs font-semibold uppercase tracking-wider text-gold-600 dark:text-gold-400 mb-2">
                 {t('recipes.dailyCocktail')}
               </span>
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+              <h2 className="text-xl sm:text-2xl font-serif font-medium text-gray-900 dark:text-gray-100 mb-2">
                 {dailyRecipe.name}
               </h2>
               {dailyRecipe.description && (
@@ -271,7 +271,7 @@ export default function RecipeList() {
                   {dailyRecipe.difficulty}
                 </span>
               </div>
-              <span className="inline-flex items-center text-sm font-medium text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300">
+              <span className="inline-flex items-center text-sm font-medium text-gold-500 dark:text-gold-400 hover:text-gold-600 dark:hover:text-gold-300">
                 {t('recipes.discover')} &rarr;
               </span>
             </div>
@@ -279,7 +279,7 @@ export default function RecipeList() {
         </Link>
       )}
 
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">{t('recipes.allTitle')}</h1>
+      <h1 className="text-3xl font-serif font-medium text-gray-900 dark:text-gray-100 mb-6">{t('recipes.allTitle')}</h1>
 
       {/* Barre de recherche */}
       <div className="mb-4">
@@ -288,7 +288,7 @@ export default function RecipeList() {
           value={inputValue}
           onChange={handleSearchChange}
           placeholder={t('recipes.searchPlaceholder')}
-          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent"
+          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gold-400 focus:border-transparent"
         />
       </div>
 
@@ -298,8 +298,8 @@ export default function RecipeList() {
           onClick={() => setParam('categoryId', null)}
           className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
             categoryId === null
-              ? 'bg-amber-500 text-white'
-              : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-amber-300 dark:hover:border-amber-500'
+              ? 'bg-gold-400 text-ink-900'
+              : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-gold-300 dark:hover:border-gold-500'
           }`}
         >
           {t('recipes.allCategories')}
@@ -310,8 +310,8 @@ export default function RecipeList() {
             onClick={() => setParam('categoryId', cat.id)}
             className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
               categoryId === cat.id
-                ? 'bg-amber-500 text-white'
-                : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-amber-300 dark:hover:border-amber-500'
+                ? 'bg-gold-400 text-ink-900'
+                : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-gold-300 dark:hover:border-gold-500'
             }`}
           >
             {cat.name}
@@ -330,8 +330,8 @@ export default function RecipeList() {
                 onClick={() => toggleTag(tag.id)}
                 className={`text-xs px-2.5 py-1 rounded-full font-medium transition-colors ${
                   tagIds.includes(tag.id)
-                    ? 'bg-amber-500 text-white'
-                    : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-amber-300 dark:hover:border-amber-500'
+                    ? 'bg-gold-400 text-ink-900'
+                    : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-gold-300 dark:hover:border-gold-500'
                 }`}
               >
                 {tag.name}
@@ -350,7 +350,7 @@ export default function RecipeList() {
           <select
             value={currentSortIndex === -1 ? 0 : currentSortIndex}
             onChange={handleSortChange}
-            className="text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 px-2 py-1 focus:outline-none focus:ring-2 focus:ring-amber-400"
+            className="text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 px-2 py-1 focus:outline-none focus:ring-2 focus:ring-gold-400"
           >
             {SORT_OPTIONS.map((o, i) => (
               <option key={i} value={i}>{o.label}</option>
@@ -367,8 +367,8 @@ export default function RecipeList() {
                 onClick={() => setParam('minRating', n === 0 ? null : n)}
                 className={`w-7 h-7 rounded-lg text-xs font-medium transition-colors ${
                   (minRating ? parseInt(minRating) : 0) === n
-                    ? 'bg-amber-500 text-white'
-                    : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-amber-300 dark:hover:border-amber-500'
+                    ? 'bg-gold-400 text-ink-900'
+                    : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-gold-300 dark:hover:border-gold-500'
                 }`}
               >
                 {n === 0 ? '–' : `${n}★`}
@@ -386,7 +386,7 @@ export default function RecipeList() {
             value={maxTimeInput}
             onChange={handleMaxTimeChange}
             placeholder={t('recipes.maxTimeUnit')}
-            className="w-20 px-2 py-1 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent"
+            className="w-20 px-2 py-1 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-gold-400 focus:border-transparent"
           />
           <span className="text-xs text-gray-400 dark:text-gray-500">{t('recipes.maxTimeUnit')}</span>
         </div>

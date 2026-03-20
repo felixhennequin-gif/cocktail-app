@@ -8,7 +8,7 @@ import ConfirmModal from '../../components/ConfirmModal'
 const statusBadge = {
   PUBLISHED: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
   DRAFT:     'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400',
-  PENDING:   'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+  PENDING:   'bg-gold-100 text-gold-700 dark:bg-gold-900/30 dark:text-gold-400',
 }
 
 export default function AdminRecipeList() {
@@ -75,13 +75,13 @@ export default function AdminRecipeList() {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('admin.recipesTitle')}</h1>
-          <Link to="/admin/pending" className="text-sm text-amber-600 dark:text-amber-400 hover:underline font-medium">
+          <Link to="/admin/pending" className="text-sm text-gold-500 dark:text-gold-400 hover:underline font-medium">
             {t('admin.pendingLink')}
           </Link>
         </div>
         <Link
           to="/admin/recipes/new"
-          className="px-4 py-2 bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-600 transition-colors"
+          className="px-4 py-2 bg-gold-400 text-ink-900 text-sm font-medium rounded-lg hover:bg-gold-500 transition-colors"
         >
           {t('admin.newRecipe')}
         </Link>
@@ -95,7 +95,7 @@ export default function AdminRecipeList() {
             onClick={() => setStatusFilter(key)}
             className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
               statusFilter === key
-                ? 'bg-amber-500 text-white'
+                ? 'bg-gold-400 text-ink-900'
                 : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-500'
             }`}
           >

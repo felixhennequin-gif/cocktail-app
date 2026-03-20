@@ -35,13 +35,13 @@ function Header() {
   const closeMenu = () => setMenuOpen(false)
 
   return (
-    <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 md:px-6 py-4 relative">
+    <header className="bg-white dark:bg-ink-900 border-b border-gray-200 dark:border-gray-700 px-4 md:px-6 py-4 relative">
       {/* Ligne principale */}
       <div className="flex items-center gap-4">
         <Link
           to="/"
           onClick={closeMenu}
-          className="text-xl font-bold text-gray-900 dark:text-gray-100 hover:text-amber-600 dark:hover:text-amber-400 transition-colors shrink-0"
+          className="text-2xl font-serif font-medium text-gray-900 dark:text-gold-400 hover:text-gold-400 dark:hover:text-gold-300 transition-colors shrink-0 tracking-wide"
         >
           {t('nav.brand')}
         </Link>
@@ -59,7 +59,7 @@ function Header() {
               <Link to="/recipes/new" className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 transition-colors">{t('nav.propose')}</Link>
               <Link to="/favorites"   className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 transition-colors">{t('nav.favorites')}</Link>
               <NotificationBell />
-              <Link to={`/users/${user.id}`} className="font-medium text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 transition-colors">
+              <Link to={`/users/${user.id}`} className="font-medium text-gold-400 dark:text-gold-300 hover:text-gold-400 dark:hover:text-gold-300 transition-colors">
                 {user.pseudo}
               </Link>
               {user.role === 'ADMIN' && (
@@ -72,7 +72,7 @@ function Header() {
           ) : (
             <>
               <Link to="/login"    className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 transition-colors">{t('nav.login')}</Link>
-              <Link to="/register" className="px-3 py-1.5 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors font-medium">
+              <Link to="/register" className="px-3 py-1.5 bg-gold-400 text-ink-900 rounded-lg hover:bg-gold-300 transition-colors font-medium">
                 {t('nav.register')}
               </Link>
             </>
@@ -106,17 +106,17 @@ function Header() {
 
       {/* Menu déroulant mobile */}
       {menuOpen && (
-        <nav className="md:hidden absolute top-full left-0 right-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 shadow-lg z-50 px-4 py-3 flex flex-col gap-3 text-sm">
+        <nav className="md:hidden absolute top-full left-0 right-0 bg-white dark:bg-ink-900 border-b border-gray-200 dark:border-gray-700 shadow-lg z-50 px-4 py-3 flex flex-col gap-3 text-sm">
           {user ? (
             <>
-              <Link to="/feed"        onClick={closeMenu} className="text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 py-1">{t('nav.feedFull')}</Link>
-              <Link to="/recipes/new" onClick={closeMenu} className="text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 py-1">{t('nav.proposeFull')}</Link>
-              <Link to="/favorites"   onClick={closeMenu} className="text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 py-1">{t('nav.favoritesFull')}</Link>
-              <Link to={`/users/${user.id}`} onClick={closeMenu} className="font-medium text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 py-1">
+              <Link to="/feed"        onClick={closeMenu} className="text-gray-700 dark:text-gray-300 hover:text-gold-400 dark:hover:text-gold-300 py-1">{t('nav.feedFull')}</Link>
+              <Link to="/recipes/new" onClick={closeMenu} className="text-gray-700 dark:text-gray-300 hover:text-gold-400 dark:hover:text-gold-300 py-1">{t('nav.proposeFull')}</Link>
+              <Link to="/favorites"   onClick={closeMenu} className="text-gray-700 dark:text-gray-300 hover:text-gold-400 dark:hover:text-gold-300 py-1">{t('nav.favoritesFull')}</Link>
+              <Link to={`/users/${user.id}`} onClick={closeMenu} className="font-medium text-gold-400 dark:text-gold-300 hover:text-gold-400 dark:hover:text-gold-300 py-1">
                 {t('nav.myProfile', { pseudo: user.pseudo })}
               </Link>
               {user.role === 'ADMIN' && (
-                <Link to="/admin" onClick={closeMenu} className="text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 py-1">{t('nav.administration')}</Link>
+                <Link to="/admin" onClick={closeMenu} className="text-gray-700 dark:text-gray-300 hover:text-gold-400 dark:hover:text-gold-300 py-1">{t('nav.administration')}</Link>
               )}
               <button onClick={handleLogout} className="text-left text-red-400 hover:text-red-600 py-1">
                 {t('nav.logout')}
@@ -124,8 +124,8 @@ function Header() {
             </>
           ) : (
             <>
-              <Link to="/login"    onClick={closeMenu} className="text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 py-1">{t('nav.login')}</Link>
-              <Link to="/register" onClick={closeMenu} className="text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 py-1 font-medium">{t('nav.register')}</Link>
+              <Link to="/login"    onClick={closeMenu} className="text-gray-700 dark:text-gray-300 hover:text-gold-400 dark:hover:text-gold-300 py-1">{t('nav.login')}</Link>
+              <Link to="/register" onClick={closeMenu} className="text-gray-700 dark:text-gray-300 hover:text-gold-400 dark:hover:text-gold-300 py-1 font-medium">{t('nav.register')}</Link>
             </>
           )}
           <div className="pt-1 border-t border-gray-100 dark:border-gray-700 flex items-center gap-3">
@@ -144,7 +144,7 @@ export default function App() {
   if (loading) return null
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
+    <div className="min-h-screen bg-gray-50 dark:bg-ink-950 transition-colors">
       <Header />
 
       <main className="max-w-5xl mx-auto px-4 py-6 md:py-8">

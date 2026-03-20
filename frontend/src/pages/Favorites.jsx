@@ -48,7 +48,7 @@ export default function Favorites() {
       {recipes.length === 0 ? (
         <div className="text-center py-16">
           <p className="text-gray-400 dark:text-gray-500 mb-4">{t('favorites.empty')}</p>
-          <Link to="/" className="text-amber-600 dark:text-amber-400 hover:underline text-sm">
+          <Link to="/" className="text-gold-500 dark:text-gold-400 hover:underline text-sm">
             {t('favorites.browseLink')}
           </Link>
         </div>

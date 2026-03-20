@@ -199,7 +199,7 @@ export default function AdminRecipeForm() {
 
   if (loading) return <p className="text-center text-gray-400 dark:text-gray-500 py-16">{t('admin.loading')}</p>
 
-  const inputClass = 'w-full px-3 py-2 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400'
+  const inputClass = 'w-full px-3 py-2 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold-400'
 
   return (
     <div className="max-w-2xl mx-auto p-8 bg-white dark:bg-gray-800 rounded-xl shadow-sm">
@@ -292,7 +292,7 @@ export default function AdminRecipeForm() {
               placeholder={t('submit.fields.imageUrlPlaceholder')}
               className={`${inputClass} mb-2`}
             />
-            <label className="inline-flex items-center gap-2 cursor-pointer text-sm text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 font-medium">
+            <label className="inline-flex items-center gap-2 cursor-pointer text-sm text-gold-500 dark:text-gold-400 hover:text-gold-600 dark:hover:text-gold-300 font-medium">
               <input type="file" accept="image/*" onChange={handleImageFile} className="hidden" />
               {uploading ? t('submit.fields.uploading') : t('submit.fields.chooseImage')}
             </label>
@@ -341,7 +341,7 @@ export default function AdminRecipeForm() {
 
           <button
             type="button" onClick={addIngredient}
-            className="mt-3 text-sm text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 font-medium"
+            className="mt-3 text-sm text-gold-500 dark:text-gold-400 hover:text-gold-600 dark:hover:text-gold-300 font-medium"
           >
             {t('submit.fields.addIngredient')}
           </button>
@@ -354,7 +354,7 @@ export default function AdminRecipeForm() {
           <div className="space-y-4">
             {steps.map((step, i) => (
               <div key={i} className="flex gap-3 items-start">
-                <span className="shrink-0 w-6 h-6 mt-2 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-xs font-bold flex items-center justify-center">
+                <span className="shrink-0 w-6 h-6 mt-2 rounded-full bg-gold-100 dark:bg-gold-900/30 text-gold-700 dark:text-gold-400 text-xs font-bold flex items-center justify-center">
                   {i + 1}
                 </span>
                 <div className="flex-1 space-y-2">
@@ -365,7 +365,7 @@ export default function AdminRecipeForm() {
                   />
                   {/* Image de l'étape */}
                   <div className="flex items-center gap-3">
-                    <label className="inline-flex items-center gap-1.5 cursor-pointer text-xs text-gray-400 dark:text-gray-500 hover:text-amber-600 dark:hover:text-amber-400 font-medium transition-colors">
+                    <label className="inline-flex items-center gap-1.5 cursor-pointer text-xs text-gray-400 dark:text-gray-500 hover:text-gold-400 dark:hover:text-gold-300 font-medium transition-colors">
                       <input
                         type="file" accept="image/*"
                         onChange={(e) => handleStepImageFile(i, e)}
@@ -404,7 +404,7 @@ export default function AdminRecipeForm() {
 
           <button
             type="button" onClick={addStep}
-            className="mt-3 text-sm text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 font-medium"
+            className="mt-3 text-sm text-gold-500 dark:text-gold-400 hover:text-gold-600 dark:hover:text-gold-300 font-medium"
           >
             {t('submit.fields.addStep')}
           </button>
@@ -451,7 +451,7 @@ export default function AdminRecipeForm() {
         <div className="flex gap-3">
           <button
             type="submit" disabled={saving || uploading || uploadingSteps.size > 0}
-            className="px-6 py-2.5 bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-600 disabled:opacity-60 transition-colors"
+            className="px-6 py-2.5 bg-gold-400 text-ink-900 text-sm font-medium rounded-lg hover:bg-gold-500 disabled:opacity-60 transition-colors"
           >
             {saving ? t('admin.saving') : t('admin.saveButton')}
           </button>

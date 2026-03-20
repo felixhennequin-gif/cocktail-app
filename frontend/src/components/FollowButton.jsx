@@ -48,7 +48,7 @@ export default function FollowButton({ targetUserId, initialIsFollowing }) {
           ? hovered
             ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800'
             : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600'
-          : 'bg-amber-500 text-white hover:bg-amber-600'
+          : 'bg-gold-400 text-ink-900 hover:bg-gold-500'
       }`}
     >
       {isFollowing ? (hovered ? t('follow.unfollow') : t('follow.following')) : t('follow.follow')}

@@ -45,7 +45,7 @@ export default function RecipeCard({ recipe, isFavorited, onToggleFavorite }) {
   return (
     <Link
       to={`/recipes/${recipe.id}`}
-      className="flex gap-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md hover:border-amber-300 dark:hover:border-amber-500 transition-all"
+      className="flex gap-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md hover:border-gold-300 dark:hover:border-gold-500 transition-all"
     >
       <img
         src={getImageUrl(recipe.imageUrl)}
@@ -55,7 +55,7 @@ export default function RecipeCard({ recipe, isFavorited, onToggleFavorite }) {
 
       <div className="flex flex-col justify-between min-w-0 flex-1">
         <div className="flex items-start justify-between gap-2">
-          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 truncate">{recipe.name}</h2>
+          <h2 className="text-base font-serif font-medium text-gray-900 dark:text-gray-100 truncate">{recipe.name}</h2>
           <div className="flex items-center gap-2 shrink-0">
             {recipe.parentRecipeId && (
               <span className="text-xs font-medium px-2 py-1 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400">
@@ -83,7 +83,7 @@ export default function RecipeCard({ recipe, isFavorited, onToggleFavorite }) {
             {recipe.tags.slice(0, 3).map((tag) => (
               <span
                 key={tag.id}
-                className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-700"
+                className="text-[10px] px-1.5 py-0.5 rounded-full bg-gold-50 dark:bg-gold-900/20 text-gold-600 dark:text-gold-400 border border-gold-200 dark:border-gold-700"
               >
                 {tag.name}
               </span>
@@ -103,7 +103,7 @@ export default function RecipeCard({ recipe, isFavorited, onToggleFavorite }) {
           {recipe.author && (
             <button
               onClick={handleAuthorClick}
-              className="text-amber-600 dark:text-amber-400 hover:underline ml-auto"
+              className="text-gold-500 dark:text-gold-400 hover:underline ml-auto"
             >
               {recipe.author.pseudo}
             </button>

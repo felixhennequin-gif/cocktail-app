@@ -146,7 +146,7 @@ export default function CollectionDetail() {
     <div className="flex flex-col items-center justify-center min-h-[50vh] text-center px-4">
       <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-2">{t('common.error')}</h2>
       <p className="text-gray-400 dark:text-gray-500 text-sm mb-6">{error}</p>
-      <Link to="/" className="px-5 py-2.5 bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition-colors text-sm font-medium">
+      <Link to="/" className="px-5 py-2.5 bg-gold-400 text-ink-900 rounded-xl hover:bg-gold-500 transition-colors text-sm font-medium">
         {t('recipes.backToHome')}
       </Link>
     </div>
@@ -184,7 +184,7 @@ export default function CollectionDetail() {
 
       {/* Lien retour */}
       {isOwner && (
-        <Link to={`/users/${user.id}`} className="text-sm text-amber-600 dark:text-amber-400 hover:underline mb-6 inline-block">
+        <Link to={`/users/${user.id}`} className="text-sm text-gold-500 dark:text-gold-400 hover:underline mb-6 inline-block">
           {t('recipes.backToList')}
         </Link>
       )}
@@ -197,7 +197,7 @@ export default function CollectionDetail() {
             <input
               value={editName}
               onChange={(e) => setEditName(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+              className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold-400"
               placeholder={t('collections.namePlaceholder')}
               required
             />
@@ -205,14 +205,14 @@ export default function CollectionDetail() {
               value={editDesc}
               onChange={(e) => setEditDesc(e.target.value)}
               rows={2}
-              className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none"
+              className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold-400 resize-none"
               placeholder={t('collections.descriptionPlaceholder')}
             />
             <div className="flex gap-2">
               <button
                 type="submit"
                 disabled={editSaving || !editName.trim()}
-                className="px-4 py-2 bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-600 disabled:opacity-60 transition-colors"
+                className="px-4 py-2 bg-gold-400 text-ink-900 text-sm font-medium rounded-lg hover:bg-gold-500 disabled:opacity-60 transition-colors"
               >
                 {editSaving ? t('collections.editSaving') : t('collections.editSave')}
               </button>
@@ -248,7 +248,7 @@ export default function CollectionDetail() {
                 {t('collections.by', { pseudo: '' })}
                 <Link
                   to={`/users/${collection.user.id}`}
-                  className="text-amber-600 dark:text-amber-400 hover:underline"
+                  className="text-gold-500 dark:text-gold-400 hover:underline"
                 >
                   {collection.user.pseudo}
                 </Link>
@@ -265,7 +265,7 @@ export default function CollectionDetail() {
               <div className="flex gap-2">
                 <button
                   onClick={() => setEditing(true)}
-                  className="px-3 py-1.5 text-xs border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 rounded-full hover:border-amber-300 dark:hover:border-amber-500 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
+                  className="px-3 py-1.5 text-xs border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 rounded-full hover:border-gold-300 dark:hover:border-gold-500 hover:text-gold-400 dark:hover:text-gold-300 transition-colors"
                 >
                   {t('collections.edit')}
                 </button>
@@ -285,7 +285,7 @@ export default function CollectionDetail() {
       {collection.recipes?.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-gray-400 dark:text-gray-500 text-sm mb-3">{t('collections.empty')}</p>
-          <Link to="/" className="text-sm text-amber-600 dark:text-amber-400 hover:underline">
+          <Link to="/" className="text-sm text-gold-500 dark:text-gold-400 hover:underline">
             {t('collections.browseLink')}
           </Link>
         </div>

@@ -154,12 +154,12 @@ export default function AddToCollectionModal({ isOpen, onClose, recipeId }) {
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             placeholder={t('collections.namePlaceholder')}
-            className="flex-1 px-3 py-2 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+            className="flex-1 px-3 py-2 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold-400"
           />
           <button
             type="submit"
             disabled={creating || !newName.trim()}
-            className="px-3 py-2 bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-600 disabled:opacity-60 transition-colors shrink-0"
+            className="px-3 py-2 bg-gold-400 text-ink-900 text-sm font-medium rounded-lg hover:bg-gold-500 disabled:opacity-60 transition-colors shrink-0"
           >
             {creating ? t('collections.saving') : t('collections.save')}
           </button>
@@ -180,8 +180,8 @@ export default function AddToCollectionModal({ isOpen, onClose, recipeId }) {
                   onClick={() => isIncluded ? handleRemove(col.id) : handleAdd(col.id)}
                   className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border text-left text-sm transition-colors ${
                     isIncluded
-                      ? 'border-amber-300 dark:border-amber-600 bg-amber-50 dark:bg-amber-900/20'
-                      : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-amber-300 dark:hover:border-amber-500'
+                      ? 'border-gold-300 dark:border-gold-600 bg-gold-50 dark:bg-gold-900/20'
+                      : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gold-300 dark:hover:border-gold-500'
                   }`}
                 >
                   <div className="min-w-0">
@@ -191,7 +191,7 @@ export default function AddToCollectionModal({ isOpen, onClose, recipeId }) {
                     </p>
                   </div>
                   {isIncluded && (
-                    <span className="text-amber-500 text-lg shrink-0 ml-2">✓</span>
+                    <span className="text-gold-400 text-lg shrink-0 ml-2">✓</span>
                   )}
                 </button>
               )

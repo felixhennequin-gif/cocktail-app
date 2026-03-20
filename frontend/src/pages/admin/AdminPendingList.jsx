@@ -64,7 +64,7 @@ export default function AdminPendingList() {
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
           {t('admin.pendingTitle')}{' '}
           {recipes.length > 0 && (
-            <span className="text-sm font-normal text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-full">
+            <span className="text-sm font-normal text-gold-500 dark:text-gold-400 bg-gold-50 dark:bg-gold-900/20 px-2 py-0.5 rounded-full">
               {recipes.length}
             </span>
           )}
@@ -83,12 +83,12 @@ export default function AdminPendingList() {
           {recipes.map((recipe) => (
             <div
               key={recipe.id}
-              className="bg-white dark:bg-gray-800 rounded-xl border border-amber-200 dark:border-amber-700 p-5 flex items-start justify-between gap-4"
+              className="bg-white dark:bg-gray-800 rounded-xl border border-gold-200 dark:border-gold-700 p-5 flex items-start justify-between gap-4"
             >
               <div className="min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <h2 className="font-semibold text-gray-900 dark:text-gray-100">{recipe.name}</h2>
-                  <span className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-full">{t('admin.filters.pending')}</span>
+                  <span className="text-xs text-gold-500 dark:text-gold-400 bg-gold-50 dark:bg-gold-900/20 px-2 py-0.5 rounded-full">{t('admin.filters.pending')}</span>
                 </div>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
                   {recipe.category?.name} · {recipe.prepTime} min
@@ -96,7 +96,7 @@ export default function AdminPendingList() {
                 {recipe.author && (
                   <p className="text-xs text-gray-400 dark:text-gray-500">
                     {t('admin.proposedBy')}{' '}
-                    <Link to={`/users/${recipe.author.id}`} className="text-amber-600 dark:text-amber-400 hover:underline">
+                    <Link to={`/users/${recipe.author.id}`} className="text-gold-500 dark:text-gold-400 hover:underline">
                       {recipe.author.pseudo}
                     </Link>
                   </p>
