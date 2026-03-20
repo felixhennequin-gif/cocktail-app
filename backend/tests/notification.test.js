@@ -16,13 +16,13 @@ beforeEach(async () => {
 const createTestNotification = (userId, type = 'COMMENT_ON_RECIPE', data = {}) =>
   prisma.notification.create({ data: { userId, type, data } });
 
-describe('GET /notifications', () => {
+describe('GET /api/notifications', () => {
   it('retourne les notifications de l\'utilisateur connecté', async () => {
     await createTestNotification(alice.id, 'COMMENT_ON_RECIPE', { recipeId: 1, commentPreview: 'Super !' });
     await createTestNotification(alice.id, 'NEW_RECIPE', { recipeId: 2 });
 
     const res = await request(app)
-      .get('/notifications')
+      .get('/api/notifications')
       .set(getAuthHeader(aliceToken));
 
     expect(res.status).toBe(200);
@@ -32,7 +32,7 @@ describe('GET /notifications', () => {
 
   it('retourne une liste vide si aucune notification', async () => {
     const res = await request(app)
-      .get('/notifications')
+      .get('/api/notifications')
       .set(getAuthHeader(aliceToken));
 
     expect(res.status).toBe(200);
@@ -41,7 +41,7 @@ describe('GET /notifications', () => {
   });
 
   it('retourne 401 sans token', async () => {
-    const res = await request(app).get('/notifications');
+    const res = await request(app).get('/api/notifications');
     expect(res.status).toBe(401);
   });
 
@@ -50,7 +50,7 @@ describe('GET /notifications', () => {
     await createTestNotification(alice.id);
 
     const resBob = await request(app)
-      .get('/notifications')
+      .get('/api/notifications')
       .set(getAuthHeader(bobToken));
 
     expect(resBob.status).toBe(200);
@@ -58,19 +58,19 @@ describe('GET /notifications', () => {
   });
 });
 
-describe('PUT /notifications/:id/read', () => {
+describe('PUT /api/notifications/:id/read', () => {
   it('marque une notification comme lue', async () => {
     const notif = await createTestNotification(alice.id);
 
     const res = await request(app)
-      .put(`/notifications/${notif.id}/read`)
+      .put(`/api/notifications/${notif.id}/read`)
       .set(getAuthHeader(aliceToken));
 
     expect(res.status).toBe(200);
     expect(res.body.ok).toBe(true);
 
     // Vérifier que unreadCount est bien à 0
-    const check = await request(app).get('/notifications').set(getAuthHeader(aliceToken));
+    const check = await request(app).get('/api/notifications').set(getAuthHeader(aliceToken));
     expect(check.body.unreadCount).toBe(0);
   });
 
@@ -78,7 +78,7 @@ describe('PUT /notifications/:id/read', () => {
     const notif = await createTestNotification(alice.id);
 
     const res = await request(app)
-      .put(`/notifications/${notif.id}/read`)
+      .put(`/api/notifications/${notif.id}/read`)
       .set(getAuthHeader(bobToken));
 
     expect(res.status).toBe(403);
@@ -86,7 +86,7 @@ describe('PUT /notifications/:id/read', () => {
 
   it('retourne 404 si la notification n\'existe pas', async () => {
     const res = await request(app)
-      .put('/notifications/999999/read')
+      .put('/api/notifications/999999/read')
       .set(getAuthHeader(aliceToken));
 
     expect(res.status).toBe(404);
@@ -94,25 +94,25 @@ describe('PUT /notifications/:id/read', () => {
 
   it('retourne 401 sans token', async () => {
     const notif = await createTestNotification(alice.id);
-    const res = await request(app).put(`/notifications/${notif.id}/read`);
+    const res = await request(app).put(`/api/notifications/${notif.id}/read`);
     expect(res.status).toBe(401);
   });
 });
 
-describe('PUT /notifications/read-all', () => {
+describe('PUT /api/notifications/read-all', () => {
   it('marque toutes les notifications de l\'utilisateur comme lues', async () => {
     await createTestNotification(alice.id);
     await createTestNotification(alice.id);
     await createTestNotification(alice.id);
 
     const res = await request(app)
-      .put('/notifications/read-all')
+      .put('/api/notifications/read-all')
       .set(getAuthHeader(aliceToken));
 
     expect(res.status).toBe(200);
     expect(res.body.updated).toBe(3);
 
-    const check = await request(app).get('/notifications').set(getAuthHeader(aliceToken));
+    const check = await request(app).get('/api/notifications').set(getAuthHeader(aliceToken));
     expect(check.body.unreadCount).toBe(0);
   });
 
@@ -121,17 +121,17 @@ describe('PUT /notifications/read-all', () => {
     await createTestNotification(bob.id);
 
     await request(app)
-      .put('/notifications/read-all')
+      .put('/api/notifications/read-all')
       .set(getAuthHeader(aliceToken));
 
     // La notification de Bob doit rester non lue
-    const resBob = await request(app).get('/notifications').set(getAuthHeader(bobToken));
+    const resBob = await request(app).get('/api/notifications').set(getAuthHeader(bobToken));
     expect(resBob.body.unreadCount).toBe(1);
   });
 
   it('retourne { updated: 0 } si aucune notification non lue', async () => {
     const res = await request(app)
-      .put('/notifications/read-all')
+      .put('/api/notifications/read-all')
       .set(getAuthHeader(aliceToken));
 
     expect(res.status).toBe(200);
@@ -139,7 +139,7 @@ describe('PUT /notifications/read-all', () => {
   });
 
   it('retourne 401 sans token', async () => {
-    const res = await request(app).put('/notifications/read-all');
+    const res = await request(app).put('/api/notifications/read-all');
     expect(res.status).toBe(401);
   });
 });
@@ -151,7 +151,7 @@ describe('Création automatique de notifications', () => {
     const recipe = await createTestRecipe({ authorId: alice.id, categoryId: category.id });
 
     await request(app)
-      .post(`/comments/${recipe.id}`)
+      .post(`/api/comments/${recipe.id}`)
       .set(getAuthHeader(bobToken))
       .send({ content: 'Très bonne recette !', score: 5 });
 
@@ -159,7 +159,7 @@ describe('Création automatique de notifications', () => {
     await new Promise((r) => setTimeout(r, 100));
 
     const res = await request(app)
-      .get('/notifications')
+      .get('/api/notifications')
       .set(getAuthHeader(aliceToken));
 
     expect(res.status).toBe(200);
@@ -172,14 +172,14 @@ describe('Création automatique de notifications', () => {
   it('crée une notification NEW_FOLLOWER lors d\'un follow', async () => {
     // Bob suit Alice → Alice doit recevoir une notification
     await request(app)
-      .post(`/users/${alice.id}/follow`)
+      .post(`/api/users/${alice.id}/follow`)
       .set(getAuthHeader(bobToken));
 
     // Petite attente pour le fire-and-forget
     await new Promise((r) => setTimeout(r, 100));
 
     const res = await request(app)
-      .get('/notifications')
+      .get('/api/notifications')
       .set(getAuthHeader(aliceToken));
 
     expect(res.status).toBe(200);
@@ -191,13 +191,13 @@ describe('Création automatique de notifications', () => {
 
   it('ne crée PAS de notification en double si déjà suivi (idempotent)', async () => {
     // Bob suit Alice deux fois
-    await request(app).post(`/users/${alice.id}/follow`).set(getAuthHeader(bobToken));
-    await request(app).post(`/users/${alice.id}/follow`).set(getAuthHeader(bobToken));
+    await request(app).post(`/api/users/${alice.id}/follow`).set(getAuthHeader(bobToken));
+    await request(app).post(`/api/users/${alice.id}/follow`).set(getAuthHeader(bobToken));
 
     await new Promise((r) => setTimeout(r, 100));
 
     const res = await request(app)
-      .get('/notifications')
+      .get('/api/notifications')
       .set(getAuthHeader(aliceToken));
 
     const followNotifs = res.body.data.filter((n) => n.type === 'NEW_FOLLOWER');

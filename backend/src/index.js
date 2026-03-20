@@ -27,15 +27,6 @@ app.use(cors());
 app.use(express.json());
 app.use(generalLimiter);
 
-// Compatibilité frontend production : /api/... → /...
-// Le proxy Vite retire /api en dev — Express le fait ici en prod
-app.use((req, res, next) => {
-  if (req.path.startsWith('/api/')) {
-    req.url = req.url.slice(4);
-  }
-  next();
-});
-
 // Static uploads
 const uploadsDir = path.join(__dirname, '..', 'uploads');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
@@ -71,32 +62,36 @@ const stepStorage = multer.diskStorage({
 });
 const uploadStep = multer({ storage: stepStorage, limits: { fileSize: 5 * 1024 * 1024 }, fileFilter: imageFilter });
 
-// Routes
-app.get('/health', (req, res) => res.json({ status: 'ok' }));
-app.post('/upload', upload.single('image'), (req, res) => {
+// Router API — toutes les routes data sous /api
+const apiRouter = express.Router();
+
+apiRouter.get('/health', (req, res) => res.json({ status: 'ok' }));
+apiRouter.post('/upload', upload.single('image'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Aucun fichier reçu' });
   res.json({ url: `/uploads/${req.file.filename}` });
 });
 // Upload image d'étape — stockée dans uploads/recipes/{recipeId}/steps/
-app.post('/upload/step/:recipeId', requireAuth, uploadStep.single('image'), (req, res) => {
+apiRouter.post('/upload/step/:recipeId', requireAuth, uploadStep.single('image'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Aucun fichier reçu' });
   const recipeId = req.params.recipeId;
   const rel = `/uploads/recipes/${recipeId}/steps/${req.file.filename}`;
   res.json({ url: rel });
 });
-app.use('/auth/login',    authLimiter);
-app.use('/auth/register', authLimiter);
-app.use('/auth',          authRoutes);
-app.use('/recipes',    recipeRoutes);
-app.use('/categories', categoryRoutes);
-app.use('/favorites',  favoriteRoutes);
-app.use('/ratings',    ratingRoutes);
-app.use('/comments',   commentRoutes);
-app.use('/users',      userRoutes);
-app.use('/tags',       tagRoutes);
-app.use('/collections', collectionRoutes);
-app.use('/feed',           feedRoutes);
-app.use('/notifications',  notificationRoutes);
+apiRouter.use('/auth/login',    authLimiter);
+apiRouter.use('/auth/register', authLimiter);
+apiRouter.use('/auth',          authRoutes);
+apiRouter.use('/recipes',       recipeRoutes);
+apiRouter.use('/categories',    categoryRoutes);
+apiRouter.use('/favorites',     favoriteRoutes);
+apiRouter.use('/ratings',       ratingRoutes);
+apiRouter.use('/comments',      commentRoutes);
+apiRouter.use('/users',         userRoutes);
+apiRouter.use('/tags',          tagRoutes);
+apiRouter.use('/collections',   collectionRoutes);
+apiRouter.use('/feed',          feedRoutes);
+apiRouter.use('/notifications', notificationRoutes);
+
+app.use('/api', apiRouter);
 
 // Frontend production — sert le build React si le dossier dist existe
 const frontendDist = path.join(__dirname, '..', '..', 'frontend', 'dist');

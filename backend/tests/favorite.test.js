@@ -13,12 +13,12 @@ beforeEach(async () => {
   ({ user: bob,   token: bobToken   } = await createTestUser({ pseudo: 'bob',   email: 'bob@test.com'   }));
 });
 
-describe('POST /favorites/:recipeId', () => {
+describe('POST /api/favorites/:recipeId', () => {
   it('ajoute un favori et retourne { favorited: true }', async () => {
     const recipe = await createTestRecipe({ authorId: bob.id, categoryId: category.id });
 
     const res = await request(app)
-      .post(`/favorites/${recipe.id}`)
+      .post(`/api/favorites/${recipe.id}`)
       .set(getAuthHeader(aliceToken));
 
     expect(res.status).toBe(200);
@@ -30,12 +30,12 @@ describe('POST /favorites/:recipeId', () => {
 
     // Premier appel — ajoute
     await request(app)
-      .post(`/favorites/${recipe.id}`)
+      .post(`/api/favorites/${recipe.id}`)
       .set(getAuthHeader(aliceToken));
 
     // Second appel — retire
     const res = await request(app)
-      .post(`/favorites/${recipe.id}`)
+      .post(`/api/favorites/${recipe.id}`)
       .set(getAuthHeader(aliceToken));
 
     expect(res.status).toBe(200);
@@ -45,9 +45,9 @@ describe('POST /favorites/:recipeId', () => {
   it('re-ajoute après avoir retiré (toggle idempotent)', async () => {
     const recipe = await createTestRecipe({ authorId: bob.id, categoryId: category.id });
 
-    await request(app).post(`/favorites/${recipe.id}`).set(getAuthHeader(aliceToken)); // add
-    await request(app).post(`/favorites/${recipe.id}`).set(getAuthHeader(aliceToken)); // remove
-    const res = await request(app).post(`/favorites/${recipe.id}`).set(getAuthHeader(aliceToken)); // add again
+    await request(app).post(`/api/favorites/${recipe.id}`).set(getAuthHeader(aliceToken)); // add
+    await request(app).post(`/api/favorites/${recipe.id}`).set(getAuthHeader(aliceToken)); // remove
+    const res = await request(app).post(`/api/favorites/${recipe.id}`).set(getAuthHeader(aliceToken)); // add again
 
     expect(res.status).toBe(200);
     expect(res.body.favorited).toBe(true);
@@ -56,30 +56,30 @@ describe('POST /favorites/:recipeId', () => {
   it('retourne 401 sans token', async () => {
     const recipe = await createTestRecipe({ authorId: bob.id, categoryId: category.id });
 
-    const res = await request(app).post(`/favorites/${recipe.id}`);
+    const res = await request(app).post(`/api/favorites/${recipe.id}`);
 
     expect(res.status).toBe(401);
   });
 
   it('retourne 404 si la recette n\'existe pas', async () => {
     const res = await request(app)
-      .post('/favorites/999999')
+      .post('/api/favorites/999999')
       .set(getAuthHeader(aliceToken));
 
     expect(res.status).toBe(404);
   });
 });
 
-describe('GET /favorites', () => {
+describe('GET /api/favorites', () => {
   it('retourne la liste des recettes favorites de l\'utilisateur', async () => {
     const recipe1 = await createTestRecipe({ authorId: bob.id, categoryId: category.id, name: 'Mojito' });
     const recipe2 = await createTestRecipe({ authorId: bob.id, categoryId: category.id, name: 'Daiquiri' });
 
-    await request(app).post(`/favorites/${recipe1.id}`).set(getAuthHeader(aliceToken));
-    await request(app).post(`/favorites/${recipe2.id}`).set(getAuthHeader(aliceToken));
+    await request(app).post(`/api/favorites/${recipe1.id}`).set(getAuthHeader(aliceToken));
+    await request(app).post(`/api/favorites/${recipe2.id}`).set(getAuthHeader(aliceToken));
 
     const res = await request(app)
-      .get('/favorites')
+      .get('/api/favorites')
       .set(getAuthHeader(aliceToken));
 
     expect(res.status).toBe(200);
@@ -91,7 +91,7 @@ describe('GET /favorites', () => {
 
   it('retourne une liste vide si aucun favori', async () => {
     const res = await request(app)
-      .get('/favorites')
+      .get('/api/favorites')
       .set(getAuthHeader(aliceToken));
 
     expect(res.status).toBe(200);
@@ -100,10 +100,10 @@ describe('GET /favorites', () => {
 
   it('chaque recette favorite contient avgRating et ratingsCount', async () => {
     const recipe = await createTestRecipe({ authorId: bob.id, categoryId: category.id });
-    await request(app).post(`/favorites/${recipe.id}`).set(getAuthHeader(aliceToken));
+    await request(app).post(`/api/favorites/${recipe.id}`).set(getAuthHeader(aliceToken));
 
     const res = await request(app)
-      .get('/favorites')
+      .get('/api/favorites')
       .set(getAuthHeader(aliceToken));
 
     expect(res.status).toBe(200);
@@ -115,10 +115,10 @@ describe('GET /favorites', () => {
     const recipe = await createTestRecipe({ authorId: bob.id, categoryId: category.id });
 
     // Alice ajoute le favori, Bob non
-    await request(app).post(`/favorites/${recipe.id}`).set(getAuthHeader(aliceToken));
+    await request(app).post(`/api/favorites/${recipe.id}`).set(getAuthHeader(aliceToken));
 
     const resBob = await request(app)
-      .get('/favorites')
+      .get('/api/favorites')
       .set(getAuthHeader(bobToken));
 
     expect(resBob.status).toBe(200);
@@ -126,7 +126,7 @@ describe('GET /favorites', () => {
   });
 
   it('retourne 401 sans token', async () => {
-    const res = await request(app).get('/favorites');
+    const res = await request(app).get('/api/favorites');
     expect(res.status).toBe(401);
   });
 });

@@ -14,9 +14,9 @@ beforeEach(async () => {
   await createTestRecipe({ authorId: user.id, categoryId: category.id, name: 'Pina Colada Ananas' });
 });
 
-describe('GET /recipes/search', () => {
+describe('GET /api/recipes/search', () => {
   it('retourne des résultats pertinents', async () => {
-    const res = await request(app).get('/recipes/search?q=Mojito');
+    const res = await request(app).get('/api/recipes/search?q=Mojito');
 
     expect(res.status).toBe(200);
     expect(res.body.data.length).toBeGreaterThanOrEqual(1);
@@ -27,7 +27,7 @@ describe('GET /recipes/search', () => {
     const { user } = await createTestUser({ pseudo: 'chef2', email: 'chef2@test.com' });
     await createTestRecipe({ authorId: user.id, categoryId: category.id, name: 'Mojito Menthe' });
 
-    const res = await request(app).get('/recipes/search?q=Mojito');
+    const res = await request(app).get('/api/recipes/search?q=Mojito');
 
     expect(res.status).toBe(200);
     expect(res.body.data.length).toBeGreaterThanOrEqual(2);
@@ -35,7 +35,7 @@ describe('GET /recipes/search', () => {
   });
 
   it('retourne un tableau vide si aucun match', async () => {
-    const res = await request(app).get('/recipes/search?q=inexistantxyz');
+    const res = await request(app).get('/api/recipes/search?q=inexistantxyz');
 
     expect(res.status).toBe(200);
     expect(res.body.data).toHaveLength(0);
@@ -43,17 +43,17 @@ describe('GET /recipes/search', () => {
   });
 
   it('400 si q est absent', async () => {
-    const res = await request(app).get('/recipes/search');
+    const res = await request(app).get('/api/recipes/search');
     expect(res.status).toBe(400);
   });
 
   it('400 si q fait moins de 2 caractères', async () => {
-    const res = await request(app).get('/recipes/search?q=a');
+    const res = await request(app).get('/api/recipes/search?q=a');
     expect(res.status).toBe(400);
   });
 
   it('retourne les champs avgRating et ratingsCount', async () => {
-    const res = await request(app).get('/recipes/search?q=Daiquiri');
+    const res = await request(app).get('/api/recipes/search?q=Daiquiri');
 
     expect(res.status).toBe(200);
     expect(res.body.data[0]).toHaveProperty('avgRating');

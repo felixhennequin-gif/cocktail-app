@@ -15,16 +15,16 @@ beforeEach(async () => {
   ({ user: carol, token: carolToken } = await createTestUser({ pseudo: 'carol', email: 'carol@test.com' }));
 });
 
-describe('GET /feed', () => {
+describe('GET /api/feed', () => {
   it('retourne uniquement les recettes des utilisateurs suivis', async () => {
     // Alice suit Bob, pas Carol
-    await request(app).post(`/users/${bob.id}/follow`).set(getAuthHeader(aliceToken));
+    await request(app).post(`/api/users/${bob.id}/follow`).set(getAuthHeader(aliceToken));
 
     await createTestRecipe({ authorId: bob.id,   categoryId: category.id, name: 'Recette Bob' });
     await createTestRecipe({ authorId: carol.id, categoryId: category.id, name: 'Recette Carol' });
 
     const res = await request(app)
-      .get('/feed')
+      .get('/api/feed')
       .set(getAuthHeader(aliceToken));
 
     expect(res.status).toBe(200);
@@ -37,7 +37,7 @@ describe('GET /feed', () => {
     await createTestRecipe({ authorId: bob.id, categoryId: category.id });
 
     const res = await request(app)
-      .get('/feed')
+      .get('/api/feed')
       .set(getAuthHeader(aliceToken));
 
     expect(res.status).toBe(200);
@@ -46,14 +46,14 @@ describe('GET /feed', () => {
   });
 
   it('ne retourne que les recettes PUBLISHED', async () => {
-    await request(app).post(`/users/${bob.id}/follow`).set(getAuthHeader(aliceToken));
+    await request(app).post(`/api/users/${bob.id}/follow`).set(getAuthHeader(aliceToken));
 
     await createTestRecipe({ authorId: bob.id, categoryId: category.id, name: 'Publiée',   status: 'PUBLISHED' });
     await createTestRecipe({ authorId: bob.id, categoryId: category.id, name: 'En attente', status: 'PENDING'   });
     await createTestRecipe({ authorId: bob.id, categoryId: category.id, name: 'Brouillon',  status: 'DRAFT'     });
 
     const res = await request(app)
-      .get('/feed')
+      .get('/api/feed')
       .set(getAuthHeader(aliceToken));
 
     expect(res.status).toBe(200);
@@ -64,7 +64,7 @@ describe('GET /feed', () => {
   });
 
   it('pagination par curseur — limit fonctionne', async () => {
-    await request(app).post(`/users/${bob.id}/follow`).set(getAuthHeader(aliceToken));
+    await request(app).post(`/api/users/${bob.id}/follow`).set(getAuthHeader(aliceToken));
 
     // Créer 5 recettes
     for (let i = 1; i <= 5; i++) {
@@ -72,7 +72,7 @@ describe('GET /feed', () => {
     }
 
     const res = await request(app)
-      .get('/feed?limit=2')
+      .get('/api/feed?limit=2')
       .set(getAuthHeader(aliceToken));
 
     expect(res.status).toBe(200);
@@ -81,7 +81,7 @@ describe('GET /feed', () => {
   });
 
   it('pagination par curseur — deuxième page via cursor', async () => {
-    await request(app).post(`/users/${bob.id}/follow`).set(getAuthHeader(aliceToken));
+    await request(app).post(`/api/users/${bob.id}/follow`).set(getAuthHeader(aliceToken));
 
     for (let i = 1; i <= 4; i++) {
       await createTestRecipe({ authorId: bob.id, categoryId: category.id, name: `Recette ${i}` });
@@ -89,7 +89,7 @@ describe('GET /feed', () => {
 
     // Première page
     const page1 = await request(app)
-      .get('/feed?limit=2')
+      .get('/api/feed?limit=2')
       .set(getAuthHeader(aliceToken));
 
     const cursor = page1.body.nextCursor;
@@ -97,7 +97,7 @@ describe('GET /feed', () => {
 
     // Deuxième page
     const page2 = await request(app)
-      .get(`/feed?limit=2&cursor=${cursor}`)
+      .get(`/api/feed?limit=2&cursor=${cursor}`)
       .set(getAuthHeader(aliceToken));
 
     expect(page2.status).toBe(200);
@@ -109,11 +109,11 @@ describe('GET /feed', () => {
   });
 
   it('nextCursor est null quand on est sur la dernière page', async () => {
-    await request(app).post(`/users/${bob.id}/follow`).set(getAuthHeader(aliceToken));
+    await request(app).post(`/api/users/${bob.id}/follow`).set(getAuthHeader(aliceToken));
     await createTestRecipe({ authorId: bob.id, categoryId: category.id });
 
     const res = await request(app)
-      .get('/feed?limit=20')
+      .get('/api/feed?limit=20')
       .set(getAuthHeader(aliceToken));
 
     expect(res.status).toBe(200);
@@ -121,7 +121,7 @@ describe('GET /feed', () => {
   });
 
   it('retourne 401 sans token', async () => {
-    const res = await request(app).get('/feed');
+    const res = await request(app).get('/api/feed');
     expect(res.status).toBe(401);
   });
 });
