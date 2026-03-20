@@ -1,13 +1,11 @@
-const CACHE_NAME = 'cocktails-v1'
+const CACHE_NAME = 'cocktails-v2'
 const OFFLINE_URL = '/offline.html'
 
-// Ressources statiques à pré-cacher à l'installation
 const PRECACHE_URLS = [
-  '/',
   '/offline.html',
 ]
 
-// Installation : pré-cache les ressources essentielles
+// Installation : pré-cache uniquement la page offline
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_URLS))
@@ -15,7 +13,7 @@ self.addEventListener('install', (event) => {
   self.skipWaiting()
 })
 
-// Activation : supprime les anciens caches
+// Activation : supprime TOUS les anciens caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
@@ -30,33 +28,18 @@ self.addEventListener('fetch', (event) => {
   const { request } = event
   const url = new URL(request.url)
 
-  // Ignorer les requêtes non-GET et les extensions de navigateur
   if (request.method !== 'GET') return
   if (!url.protocol.startsWith('http')) return
 
-  // Network-first pour les appels API
-  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/uploads/')) {
+  // Network-first pour : API, uploads, navigations HTML (dont index.html)
+  if (
+    url.pathname.startsWith('/api/') ||
+    url.pathname.startsWith('/uploads/') ||
+    request.destination === 'document' ||
+    request.mode === 'navigate'
+  ) {
     event.respondWith(
       fetch(request)
-        .then((response) => {
-          // Mettre en cache les réponses API réussies
-          if (response.ok) {
-            const clone = response.clone()
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone))
-          }
-          return response
-        })
-        .catch(() => caches.match(request))
-    )
-    return
-  }
-
-  // Cache-first pour les ressources statiques (JS, CSS, images, fonts)
-  event.respondWith(
-    caches.match(request).then((cached) => {
-      if (cached) return cached
-
-      return fetch(request)
         .then((response) => {
           if (response.ok) {
             const clone = response.clone()
@@ -65,11 +48,45 @@ self.addEventListener('fetch', (event) => {
           return response
         })
         .catch(() => {
-          // Fallback page offline pour les navigations HTML
-          if (request.destination === 'document') {
-            return caches.match(OFFLINE_URL)
-          }
+          return caches.match(request).then((cached) => {
+            if (cached) return cached
+            if (request.destination === 'document' || request.mode === 'navigate') {
+              return caches.match(OFFLINE_URL)
+            }
+          })
         })
-    })
+    )
+    return
+  }
+
+  // Cache-first UNIQUEMENT pour les assets avec hash (/assets/*)
+  // Ces fichiers changent de nom à chaque build, donc le cache est safe
+  if (url.pathname.startsWith('/assets/')) {
+    event.respondWith(
+      caches.match(request).then((cached) => {
+        if (cached) return cached
+        return fetch(request).then((response) => {
+          if (response.ok) {
+            const clone = response.clone()
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone))
+          }
+          return response
+        })
+      })
+    )
+    return
+  }
+
+  // Network-first pour tout le reste (manifest.json, sw.js, fonts, etc.)
+  event.respondWith(
+    fetch(request)
+      .then((response) => {
+        if (response.ok) {
+          const clone = response.clone()
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone))
+        }
+        return response
+      })
+      .catch(() => caches.match(request))
   )
 })
