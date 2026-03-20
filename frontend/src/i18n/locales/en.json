@@ -127,7 +127,11 @@
     "proposeVariant": "Propose a variant",
     "variantOfRecipe": "You are proposing a variant of {{name}}",
     "dailyCocktail": "Cocktail of the day",
-    "discover": "Discover"
+    "discover": "Discover",
+    "heroTitle": "The right cocktail for every occasion",
+    "heroSubtitle": "Explore our handcrafted recipes. Filter by ingredient, difficulty, or mood.",
+    "heroCta": "Explore recipes",
+    "heroCtaSecondary": "Create an account"
   },
   "favorites": {
     "title": "My favorites",

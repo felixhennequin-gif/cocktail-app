@@ -4,8 +4,8 @@
   "description": "Découvrez, créez et partagez des recettes de cocktails.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#f59e0b",
+  "background_color": "#0f1419",
+  "theme_color": "#D4A047",
   "lang": "fr",
   "icons": [
     {

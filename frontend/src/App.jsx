@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Routes, Route, Link, useNavigate } from 'react-router-dom'
+import Logo from './components/Logo'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from './contexts/AuthContext'
 import SearchBar        from './components/SearchBar'
@@ -41,9 +42,9 @@ function Header() {
         <Link
           to="/"
           onClick={closeMenu}
-          className="text-2xl font-serif font-medium text-gray-900 dark:text-gold-400 hover:text-gold-400 dark:hover:text-gold-300 transition-colors shrink-0 tracking-wide"
+          className="shrink-0 text-gray-900 dark:text-gold-400 hover:text-gold-500 dark:hover:text-gold-300 transition-colors"
         >
-          {t('nav.brand')}
+          <Logo className="h-6" />
         </Link>
 
         {/* SearchBar — cachée sur très petit mobile */}

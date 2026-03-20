@@ -3,6 +3,7 @@ import { useSearchParams, Link } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { useTranslation } from 'react-i18next'
 import RecipeCard from '../components/RecipeCard'
+import DifficultyBadge from '../components/DifficultyBadge'
 import { SkeletonCard } from '../components/Skeleton'
 import { useAuth } from '../contexts/AuthContext'
 
@@ -227,6 +228,38 @@ export default function RecipeList() {
         <meta property="og:description" content="Explorez des centaines de recettes de cocktails." />
         <meta property="og:type" content="website" />
       </Helmet>
+      {/* Hero section */}
+      {!q && !categoryId && !minRating && !maxTime && tagIds.length === 0 && (
+        <div className="mb-10 text-center py-10 sm:py-14">
+          <h1 className="text-4xl sm:text-5xl font-serif font-normal text-gray-900 dark:text-gray-100 leading-tight mb-4">
+            {t('recipes.heroTitle').split(' ').map((word, i) =>
+              word === 'occasion' || word === 'every'
+                ? <em key={i} className="text-gold-400 dark:text-gold-400 not-italic">{word} </em>
+                : word + ' '
+            )}
+          </h1>
+          <p className="text-base sm:text-lg text-gray-500 dark:text-gray-400 max-w-lg mx-auto mb-8">
+            {t('recipes.heroSubtitle')}
+          </p>
+          <div className="flex justify-center gap-3">
+            <a
+              href="#recipes"
+              className="px-6 py-2.5 bg-gold-400 text-ink-900 rounded-xl font-medium text-sm hover:bg-gold-300 transition-colors"
+            >
+              {t('recipes.heroCta')}
+            </a>
+            {!user && (
+              <Link
+                to="/register"
+                className="px-6 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 rounded-xl font-medium text-sm hover:border-gold-400 dark:hover:border-gold-400 hover:text-gold-500 dark:hover:text-gold-400 transition-colors"
+              >
+                {t('recipes.heroCtaSecondary')}
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Cocktail du jour — hero section */}
       {dailyRecipe && (
         <Link
@@ -235,12 +268,13 @@ export default function RecipeList() {
         >
           <div className="flex flex-col sm:flex-row">
             {dailyRecipe.imageUrl && (
-              <div className="sm:w-56 h-48 sm:h-auto flex-shrink-0">
+              <div className="sm:w-56 h-48 sm:h-auto flex-shrink-0 relative">
                 <img
                   src={dailyRecipe.imageUrl}
                   alt={dailyRecipe.name}
                   className="w-full h-full object-cover"
                 />
+                <div className="absolute inset-0 bg-gradient-to-r from-black/10 to-transparent sm:bg-gradient-to-l" />
               </div>
             )}
             <div className="flex-1 p-5 sm:p-6 flex flex-col justify-center">
@@ -263,13 +297,7 @@ export default function RecipeList() {
                   </span>
                 )}
                 <span>{dailyRecipe.prepTime} min</span>
-                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                  dailyRecipe.difficulty === 'EASY'   ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400' :
-                  dailyRecipe.difficulty === 'MEDIUM' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400' :
-                  'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400'
-                }`}>
-                  {dailyRecipe.difficulty}
-                </span>
+                <DifficultyBadge difficulty={dailyRecipe.difficulty} />
               </div>
               <span className="inline-flex items-center text-sm font-medium text-gold-500 dark:text-gold-400 hover:text-gold-600 dark:hover:text-gold-300">
                 {t('recipes.discover')} &rarr;
@@ -279,7 +307,7 @@ export default function RecipeList() {
         </Link>
       )}
 
-      <h1 className="text-3xl font-serif font-medium text-gray-900 dark:text-gray-100 mb-6">{t('recipes.allTitle')}</h1>
+      <h1 id="recipes" className="text-3xl font-serif font-medium text-gray-900 dark:text-gray-100 mb-6">{t('recipes.allTitle')}</h1>
 
       {/* Barre de recherche */}
       <div className="mb-4">

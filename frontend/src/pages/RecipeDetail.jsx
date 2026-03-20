@@ -7,12 +7,7 @@ import { useToast } from '../contexts/ToastContext'
 import { getImageUrl } from '../utils/image'
 import ConfirmModal from '../components/ConfirmModal'
 import AddToCollectionModal from '../components/AddToCollectionModal'
-
-const difficultyColor = {
-  EASY:   'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-  MEDIUM: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-  HARD:   'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-}
+import DifficultyBadge from '../components/DifficultyBadge'
 
 // Unités discrètes où on affiche des fractions plutôt que des décimales
 const DISCRETE_UNITS = new Set([
@@ -304,9 +299,7 @@ export default function RecipeDetail() {
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-3">
           <h1 className="text-2xl sm:text-3xl font-serif font-medium text-gray-900 dark:text-gray-100">{recipe.name}</h1>
           <div className="flex items-center gap-2 shrink-0">
-            <span className={`text-sm font-medium px-3 py-1 rounded-full ${difficultyColor[recipe.difficulty]}`}>
-              {t(`recipes.difficulty.${recipe.difficulty}`)}
-            </span>
+            <DifficultyBadge difficulty={recipe.difficulty} size="md" />
             {user && (
               <button
                 onClick={handleToggleFavorite}
@@ -455,9 +448,7 @@ export default function RecipeDetail() {
                 <div className="p-2.5">
                   <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{v.name}</h3>
                   <div className="flex items-center gap-2 mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    <span className={`font-medium px-1.5 py-0.5 rounded-full ${difficultyColor[v.difficulty]}`}>
-                      {t(`recipes.difficulty.${v.difficulty}`)}
-                    </span>
+                    <DifficultyBadge difficulty={v.difficulty} />
                     <span>{v.prepTime} min</span>
                   </div>
                 </div>
