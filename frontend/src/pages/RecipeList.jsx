@@ -3,8 +3,9 @@ import { useSearchParams, Link } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { useTranslation } from 'react-i18next'
 import RecipeCard from '../components/RecipeCard'
+import RecipeCardGrid from '../components/RecipeCardGrid'
 import DifficultyBadge from '../components/DifficultyBadge'
-import { SkeletonCard } from '../components/Skeleton'
+import { SkeletonCard, SkeletonCardGrid } from '../components/Skeleton'
 import { useAuth } from '../contexts/AuthContext'
 
 const LIMIT = 12
@@ -38,6 +39,7 @@ export default function RecipeList() {
   const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError]             = useState(null)
   const [favoriteIds, setFavoriteIds] = useState(new Set())
+  const [viewMode, setViewMode] = useState('grid')
 
   const debounceRef = useRef(null)
   const maxTimeDebounceRef = useRef(null)
@@ -423,17 +425,45 @@ export default function RecipeList() {
         {hasActiveFilters && (
           <button
             onClick={resetFilters}
-            className="text-xs text-gray-400 hover:text-red-500 transition-colors ml-auto"
+            className="text-xs text-gray-400 hover:text-red-500 transition-colors"
           >
             {t('recipes.resetFilters')}
           </button>
         )}
+
+        {/* Toggle vue liste/grille */}
+        <div className="flex items-center gap-1 ml-auto">
+          <button
+            onClick={() => setViewMode('list')}
+            className={`p-1.5 rounded transition-colors ${viewMode === 'list' ? 'text-gold-500 bg-gold-50 dark:bg-gold-900/20' : 'text-gray-400 dark:text-gray-500 hover:text-gray-600'}`}
+            title="Liste"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          <button
+            onClick={() => setViewMode('grid')}
+            className={`p-1.5 rounded transition-colors ${viewMode === 'grid' ? 'text-gold-500 bg-gold-50 dark:bg-gold-900/20' : 'text-gray-400 dark:text-gray-500 hover:text-gray-600'}`}
+            title="Grille"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeWidth={2} d="M4 5h6v6H4zM14 5h6v6h-6zM4 15h6v6H4zM14 15h6v6h-6z" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* Liste des recettes */}
       {loading ? (
-        <div className="flex flex-col gap-3">
-          {[1, 2, 3, 4, 5].map((i) => <SkeletonCard key={i} />)}
+        <div className={
+          viewMode === 'grid'
+            ? 'grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'
+            : 'flex flex-col gap-3'
+        }>
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+            viewMode === 'grid' ? <SkeletonCardGrid key={i} /> : <SkeletonCard key={i} />
+          ))}
         </div>
       ) : error ? (
         <p className="text-center text-red-500 py-16">{error}</p>
@@ -441,21 +471,40 @@ export default function RecipeList() {
         <p className="text-center text-gray-400 dark:text-gray-500 py-16">{t('recipes.noResults')}</p>
       ) : (
         <>
-          <div className="flex flex-col gap-3">
-            {recipes.map((recipe) => (
-              <RecipeCard
-                key={recipe.id}
-                recipe={recipe}
-                isFavorited={favoriteIds.has(recipe.id)}
-                onToggleFavorite={handleToggleFavorite}
-              />
-            ))}
+          <div className={
+            viewMode === 'grid'
+              ? 'grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'
+              : 'flex flex-col gap-3'
+          }>
+            {recipes.map((recipe) =>
+              viewMode === 'grid' ? (
+                <RecipeCardGrid
+                  key={recipe.id}
+                  recipe={recipe}
+                  isFavorited={favoriteIds.has(recipe.id)}
+                  onToggleFavorite={handleToggleFavorite}
+                />
+              ) : (
+                <RecipeCard
+                  key={recipe.id}
+                  recipe={recipe}
+                  isFavorited={favoriteIds.has(recipe.id)}
+                  onToggleFavorite={handleToggleFavorite}
+                />
+              )
+            )}
           </div>
 
           {/* Skeletons pendant le chargement supplémentaire */}
           {loadingMore && (
-            <div className="flex flex-col gap-3 mt-3">
-              {[1, 2, 3].map((i) => <SkeletonCard key={i} />)}
+            <div className={
+              viewMode === 'grid'
+                ? 'grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-4'
+                : 'flex flex-col gap-3 mt-3'
+            }>
+              {[1, 2, 3].map((i) => (
+                viewMode === 'grid' ? <SkeletonCardGrid key={i} /> : <SkeletonCard key={i} />
+              ))}
             </div>
           )}
 

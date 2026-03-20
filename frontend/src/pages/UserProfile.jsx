@@ -302,7 +302,7 @@ export default function UserProfile() {
   const isOwnProfile = user?.id === parseInt(id)
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-4xl mx-auto">
       <Helmet>
         <title>{t('profile.title', { pseudo: profile.pseudo })}</title>
         <meta name="description" content={profile.bio || `Profil de ${profile.pseudo} — ${profile.followersCount} abonné(s), ${profile.recipes?.length ?? 0} recette(s) publiée(s).`} />

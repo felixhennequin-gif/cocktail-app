@@ -28,7 +28,7 @@ export function SkeletonCard() {
 // Même layout que l'en-tête de UserProfile
 export function SkeletonProfile() {
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-4xl mx-auto">
       <div className="flex items-center gap-5 mb-6 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
         <Pulse className="w-16 h-16 rounded-full shrink-0" />
         <div className="flex-1 space-y-2">
@@ -43,6 +43,19 @@ export function SkeletonProfile() {
       </div>
       <div className="flex flex-col gap-3">
         {[1, 2, 3].map((i) => <SkeletonCard key={i} />)}
+      </div>
+    </div>
+  )
+}
+
+// Même layout que RecipeCardGrid (image au-dessus)
+export function SkeletonCardGrid() {
+  return (
+    <div className="flex flex-col bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <Pulse className="w-full h-40 sm:h-44" />
+      <div className="p-3 space-y-2">
+        <Pulse className="h-4 w-3/4" />
+        <Pulse className="h-3 w-1/2" />
       </div>
     </div>
   )

@@ -251,7 +251,7 @@ export default function RecipeDetail() {
     || `${recipe.name} — ${t(`recipes.difficulty.${recipe.difficulty}`)}, ${recipe.prepTime} min.`
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-5xl mx-auto">
       <Helmet>
         <title>{recipe.name} — Cocktails</title>
         <meta name="description" content={metaDescription} />
@@ -289,186 +289,279 @@ export default function RecipeDetail() {
         </div>
       )}
 
-      {/* En-tête */}
-      <div className="mb-8">
-        <img
-          src={getImageUrl(recipe.imageUrl)}
-          alt={recipe.name}
-          className="w-full h-56 object-cover rounded-xl mb-6 bg-gray-100 dark:bg-gray-700"
-        />
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-3">
-          <h1 className="text-2xl sm:text-3xl font-serif font-medium text-gray-900 dark:text-gray-100">{recipe.name}</h1>
-          <div className="flex items-center gap-2 shrink-0">
-            <DifficultyBadge difficulty={recipe.difficulty} size="md" />
-            {user && (
-              <button
-                onClick={handleToggleFavorite}
-                className={`text-2xl leading-none transition-colors ${isFavorited ? 'text-red-500' : 'text-gray-300 dark:text-gray-600 hover:text-red-400'}`}
-                title={isFavorited ? t('recipes.removeFavorite') : t('recipes.addFavorite')}
-              >
-                ♥
-              </button>
-            )}
-            {user && (
-              <button
-                onClick={() => setCollectionModalOpen(true)}
-                className="text-xl leading-none text-gray-300 dark:text-gray-600 hover:text-gold-400 transition-colors"
-                title={t('collections.addRecipe')}
-              >
-                +
-              </button>
-            )}
+      {/* Layout 2 colonnes sur desktop */}
+      <div className="lg:flex lg:gap-8">
+        {/* Colonne gauche : image + ingrédients (sidebar) */}
+        <div className="lg:w-2/5 lg:shrink-0">
+          {/* Image */}
+          <div className="relative rounded-xl overflow-hidden mb-6 bg-gray-100 dark:bg-gray-700">
+            <img
+              src={getImageUrl(recipe.imageUrl)}
+              alt={recipe.name}
+              className="w-full h-56 lg:h-72 object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
           </div>
-        </div>
 
-        <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 mb-2">
-          <span>⏱ {recipe.prepTime} min</span>
-          {recipe.category && <span>📂 {recipe.category.name}</span>}
-          {recipe.author && (
-            <Link
-              to={`/users/${recipe.author.id}`}
-              className="text-gold-500 dark:text-gold-400 hover:underline"
-            >
-              {t('common.by')} {recipe.author.pseudo}
-            </Link>
-          )}
-        </div>
-
-        {/* Note moyenne */}
-        <div className="flex items-center gap-3 mb-4">
-          {avgRating !== null ? (
-            <span className="text-sm text-gray-500 dark:text-gray-400">
-              ★ <span className="font-medium text-gray-800 dark:text-gray-200">{t('recipes.avgRating', { value: avgRating })}</span>
-              <span className="text-gray-400 dark:text-gray-500 ml-1">{t('recipes.ratingsCount', { count: ratingsCount })}</span>
-            </span>
-          ) : (
-            <span className="text-sm text-gray-400 dark:text-gray-500">{t('recipes.notRated')}</span>
-          )}
-        </div>
-
-        {recipe.description && (
-          <p className="text-gray-600 dark:text-gray-400 leading-relaxed">{recipe.description}</p>
-        )}
-
-        {/* Tags */}
-        {recipe.tags?.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mt-3">
-            {recipe.tags.map((tag) => (
-              <Link
-                key={tag.id}
-                to={`/?tags=${tag.id}`}
-                className="text-xs px-2.5 py-1 rounded-full bg-gold-50 dark:bg-gold-900/20 text-gold-600 dark:text-gold-400 border border-gold-200 dark:border-gold-700 hover:bg-gold-100 dark:hover:bg-gold-900/40 transition-colors"
-              >
-                {tag.name}
-              </Link>
-            ))}
-          </div>
-        )}
-
-        {recipe.servings && (
-          <div className="flex items-center gap-3 mt-4">
-            <span className="text-sm text-gray-500 dark:text-gray-400">{t('recipes.for')}</span>
-            <PortionSelector value={portionCount} onChange={setPortionCount} />
-            <span className="text-sm text-gray-500 dark:text-gray-400">
-              {t('recipes.glasses', { count: portionCount })}
-            </span>
-          </div>
-        )}
-
-        {recipe.status === 'PENDING' && (
-          <div className="mt-3 px-3 py-2 bg-gold-50 dark:bg-gold-900/20 border border-gold-200 dark:border-gold-700 rounded-lg text-sm text-gold-700 dark:text-gold-400">
-            {t('recipes.pending')}
-          </div>
-        )}
-      </div>
-
-      {/* Ingrédients */}
-      {recipe.ingredients?.length > 0 && (
-        <section className="mb-8">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">{t('recipes.ingredients')}</h2>
-          <ul className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700">
-            {recipe.ingredients.map((ri) => {
-              const baseServings = recipe.servings ?? 1
-              const displayQty   = ri.quantity * (portionCount / baseServings)
-              return (
-                <li key={ri.id} className="flex justify-between items-center px-4 py-3 text-sm">
-                  <span className="text-gray-800 dark:text-gray-200">{ri.ingredient.name}</span>
-                  <span className="text-gray-500 dark:text-gray-400 font-medium">
-                    {formatQty(displayQty, ri.unit)} {ri.unit}
-                  </span>
-                </li>
-              )
-            })}
-          </ul>
-        </section>
-      )}
-
-      {/* Étapes */}
-      {recipe.steps?.length > 0 && (
-        <section className="mb-8">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">{t('recipes.preparation')}</h2>
-          <ol className="space-y-4">
-            {recipe.steps.map((step) => (
-              <li key={step.id} className="flex gap-4">
-                <span className="shrink-0 w-7 h-7 rounded-full bg-gold-400 text-white text-sm font-bold flex items-center justify-center">
-                  {step.order}
+          {/* Titre + meta (mobile uniquement) */}
+          <div className="lg:hidden mb-8">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-3">
+              <h1 className="text-2xl sm:text-3xl font-serif font-medium text-gray-900 dark:text-gray-100">{recipe.name}</h1>
+              <div className="flex items-center gap-2 shrink-0">
+                <DifficultyBadge difficulty={recipe.difficulty} size="md" />
+                {user && (
+                  <button
+                    onClick={handleToggleFavorite}
+                    className={`text-2xl leading-none transition-colors ${isFavorited ? 'text-red-500' : 'text-gray-300 dark:text-gray-600 hover:text-red-400'}`}
+                    title={isFavorited ? t('recipes.removeFavorite') : t('recipes.addFavorite')}
+                  >
+                    ♥
+                  </button>
+                )}
+                {user && (
+                  <button
+                    onClick={() => setCollectionModalOpen(true)}
+                    className="text-xl leading-none text-gray-300 dark:text-gray-600 hover:text-gold-400 transition-colors"
+                    title={t('collections.addRecipe')}
+                  >
+                    +
+                  </button>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 mb-2">
+              <span>⏱ {recipe.prepTime} min</span>
+              {recipe.category && <span>📂 {recipe.category.name}</span>}
+              {recipe.author && (
+                <Link to={`/users/${recipe.author.id}`} className="text-gold-500 dark:text-gold-400 hover:underline">
+                  {t('common.by')} {recipe.author.pseudo}
+                </Link>
+              )}
+            </div>
+            <div className="flex items-center gap-3 mb-4">
+              {avgRating !== null ? (
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  ★ <span className="font-medium text-gray-800 dark:text-gray-200">{t('recipes.avgRating', { value: avgRating })}</span>
+                  <span className="text-gray-400 dark:text-gray-500 ml-1">{t('recipes.ratingsCount', { count: ratingsCount })}</span>
                 </span>
-                <div className="flex-1 pt-0.5">
-                  {step.imageUrl && (
-                    <img
-                      src={getImageUrl(step.imageUrl)}
-                      alt={t('recipes.stepAlt', { order: step.order })}
-                      className="w-full max-w-sm rounded-lg mb-2 border border-gray-100 dark:border-gray-700"
-                    />
-                  )}
-                  <p className="text-gray-700 dark:text-gray-300 leading-relaxed">{step.description}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
-        </section>
-      )}
-
-      {/* Variantes */}
-      {recipe.variants?.length > 0 && (
-        <section className="mb-8">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">{t('recipes.variants')}</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {recipe.variants.map((v) => (
-              <Link
-                key={v.id}
-                to={`/recipes/${v.id}`}
-                className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md hover:border-gold-300 dark:hover:border-gold-500 transition-all"
-              >
-                <img
-                  src={getImageUrl(v.imageUrl)}
-                  alt={v.name}
-                  className="w-full h-24 object-cover bg-gray-100 dark:bg-gray-700"
-                />
-                <div className="p-2.5">
-                  <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{v.name}</h3>
-                  <div className="flex items-center gap-2 mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    <DifficultyBadge difficulty={v.difficulty} />
-                    <span>{v.prepTime} min</span>
-                  </div>
-                </div>
-              </Link>
-            ))}
+              ) : (
+                <span className="text-sm text-gray-400 dark:text-gray-500">{t('recipes.notRated')}</span>
+              )}
+            </div>
+            {recipe.description && (
+              <p className="text-gray-600 dark:text-gray-400 leading-relaxed">{recipe.description}</p>
+            )}
+            {recipe.tags?.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-3">
+                {recipe.tags.map((tag) => (
+                  <Link key={tag.id} to={`/?tags=${tag.id}`} className="text-xs px-2.5 py-1 rounded-full bg-gold-50 dark:bg-gold-900/20 text-gold-600 dark:text-gold-400 border border-gold-200 dark:border-gold-700 hover:bg-gold-100 dark:hover:bg-gold-900/40 transition-colors">
+                    {tag.name}
+                  </Link>
+                ))}
+              </div>
+            )}
+            {recipe.servings && (
+              <div className="flex items-center gap-3 mt-4">
+                <span className="text-sm text-gray-500 dark:text-gray-400">{t('recipes.for')}</span>
+                <PortionSelector value={portionCount} onChange={setPortionCount} />
+                <span className="text-sm text-gray-500 dark:text-gray-400">{t('recipes.glasses', { count: portionCount })}</span>
+              </div>
+            )}
+            {recipe.status === 'PENDING' && (
+              <div className="mt-3 px-3 py-2 bg-gold-50 dark:bg-gold-900/20 border border-gold-200 dark:border-gold-700 rounded-lg text-sm text-gold-700 dark:text-gold-400">
+                {t('recipes.pending')}
+              </div>
+            )}
           </div>
-        </section>
-      )}
 
-      {/* Bouton proposer une variante — seulement si connecté et recette non-variante */}
-      {user && !recipe.parentRecipeId && (
-        <div className="mb-8">
-          <Link
-            to={`/recipes/new?variantOf=${recipe.id}`}
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-700 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
-          >
-            {t('recipes.proposeVariant')}
-          </Link>
+          {/* Ingrédients (sidebar sticky sur desktop) */}
+          <div className="hidden lg:block lg:sticky lg:top-24">
+            {recipe.ingredients?.length > 0 && (
+              <section className="mb-8">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">{t('recipes.ingredients')}</h2>
+                <ul className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700">
+                  {recipe.ingredients.map((ri) => {
+                    const baseServings = recipe.servings ?? 1
+                    const displayQty   = ri.quantity * (portionCount / baseServings)
+                    return (
+                      <li key={ri.id} className="flex justify-between items-center px-4 py-3 text-sm">
+                        <span className="text-gray-800 dark:text-gray-200">{ri.ingredient.name}</span>
+                        <span className="text-gray-500 dark:text-gray-400 font-medium">
+                          {formatQty(displayQty, ri.unit)} {ri.unit}
+                        </span>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </section>
+            )}
+          </div>
         </div>
-      )}
+
+        {/* Colonne droite : titre (desktop) + ingrédients (mobile) + étapes + variantes */}
+        <div className="lg:flex-1 min-w-0">
+          {/* Titre + meta (desktop uniquement) */}
+          <div className="hidden lg:block mb-6">
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <h1 className="text-2xl sm:text-3xl font-serif font-medium text-gray-900 dark:text-gray-100">{recipe.name}</h1>
+              <div className="flex items-center gap-2 shrink-0">
+                <DifficultyBadge difficulty={recipe.difficulty} size="md" />
+                {user && (
+                  <button
+                    onClick={handleToggleFavorite}
+                    className={`text-2xl leading-none transition-colors ${isFavorited ? 'text-red-500' : 'text-gray-300 dark:text-gray-600 hover:text-red-400'}`}
+                    title={isFavorited ? t('recipes.removeFavorite') : t('recipes.addFavorite')}
+                  >
+                    ♥
+                  </button>
+                )}
+                {user && (
+                  <button
+                    onClick={() => setCollectionModalOpen(true)}
+                    className="text-xl leading-none text-gray-300 dark:text-gray-600 hover:text-gold-400 transition-colors"
+                    title={t('collections.addRecipe')}
+                  >
+                    +
+                  </button>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 mb-2">
+              <span>⏱ {recipe.prepTime} min</span>
+              {recipe.category && <span>📂 {recipe.category.name}</span>}
+              {recipe.author && (
+                <Link to={`/users/${recipe.author.id}`} className="text-gold-500 dark:text-gold-400 hover:underline">
+                  {t('common.by')} {recipe.author.pseudo}
+                </Link>
+              )}
+            </div>
+            <div className="flex items-center gap-3 mb-4">
+              {avgRating !== null ? (
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  ★ <span className="font-medium text-gray-800 dark:text-gray-200">{t('recipes.avgRating', { value: avgRating })}</span>
+                  <span className="text-gray-400 dark:text-gray-500 ml-1">{t('recipes.ratingsCount', { count: ratingsCount })}</span>
+                </span>
+              ) : (
+                <span className="text-sm text-gray-400 dark:text-gray-500">{t('recipes.notRated')}</span>
+              )}
+            </div>
+            {recipe.description && (
+              <p className="text-gray-600 dark:text-gray-400 leading-relaxed">{recipe.description}</p>
+            )}
+            {recipe.tags?.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-3">
+                {recipe.tags.map((tag) => (
+                  <Link key={tag.id} to={`/?tags=${tag.id}`} className="text-xs px-2.5 py-1 rounded-full bg-gold-50 dark:bg-gold-900/20 text-gold-600 dark:text-gold-400 border border-gold-200 dark:border-gold-700 hover:bg-gold-100 dark:hover:bg-gold-900/40 transition-colors">
+                    {tag.name}
+                  </Link>
+                ))}
+              </div>
+            )}
+            {recipe.servings && (
+              <div className="flex items-center gap-3 mt-4">
+                <span className="text-sm text-gray-500 dark:text-gray-400">{t('recipes.for')}</span>
+                <PortionSelector value={portionCount} onChange={setPortionCount} />
+                <span className="text-sm text-gray-500 dark:text-gray-400">{t('recipes.glasses', { count: portionCount })}</span>
+              </div>
+            )}
+            {recipe.status === 'PENDING' && (
+              <div className="mt-3 px-3 py-2 bg-gold-50 dark:bg-gold-900/20 border border-gold-200 dark:border-gold-700 rounded-lg text-sm text-gold-700 dark:text-gold-400">
+                {t('recipes.pending')}
+              </div>
+            )}
+          </div>
+
+          {/* Ingrédients (mobile uniquement) */}
+          <div className="lg:hidden">
+            {recipe.ingredients?.length > 0 && (
+              <section className="mb-8">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">{t('recipes.ingredients')}</h2>
+                <ul className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700">
+                  {recipe.ingredients.map((ri) => {
+                    const baseServings = recipe.servings ?? 1
+                    const displayQty   = ri.quantity * (portionCount / baseServings)
+                    return (
+                      <li key={ri.id} className="flex justify-between items-center px-4 py-3 text-sm">
+                        <span className="text-gray-800 dark:text-gray-200">{ri.ingredient.name}</span>
+                        <span className="text-gray-500 dark:text-gray-400 font-medium">
+                          {formatQty(displayQty, ri.unit)} {ri.unit}
+                        </span>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </section>
+            )}
+          </div>
+
+          {/* Étapes */}
+          {recipe.steps?.length > 0 && (
+            <section className="mb-8">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">{t('recipes.preparation')}</h2>
+              <ol className="space-y-4">
+                {recipe.steps.map((step) => (
+                  <li key={step.id} className="flex gap-4">
+                    <span className="shrink-0 w-7 h-7 rounded-full bg-gold-400 text-white text-sm font-bold flex items-center justify-center">
+                      {step.order}
+                    </span>
+                    <div className="flex-1 pt-0.5">
+                      {step.imageUrl && (
+                        <img
+                          src={getImageUrl(step.imageUrl)}
+                          alt={t('recipes.stepAlt', { order: step.order })}
+                          className="w-full max-w-sm rounded-lg mb-2 border border-gray-100 dark:border-gray-700"
+                        />
+                      )}
+                      <p className="text-gray-700 dark:text-gray-300 leading-relaxed">{step.description}</p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </section>
+          )}
+
+          {/* Variantes */}
+          {recipe.variants?.length > 0 && (
+            <section className="mb-8">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">{t('recipes.variants')}</h2>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {recipe.variants.map((v) => (
+                  <Link
+                    key={v.id}
+                    to={`/recipes/${v.id}`}
+                    className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md hover:border-gold-300 dark:hover:border-gold-500 transition-all"
+                  >
+                    <img
+                      src={getImageUrl(v.imageUrl)}
+                      alt={v.name}
+                      className="w-full h-24 object-cover bg-gray-100 dark:bg-gray-700"
+                    />
+                    <div className="p-2.5">
+                      <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{v.name}</h3>
+                      <div className="flex items-center gap-2 mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        <DifficultyBadge difficulty={v.difficulty} />
+                        <span>{v.prepTime} min</span>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Bouton proposer une variante */}
+          {user && !recipe.parentRecipeId && (
+            <div className="mb-8">
+              <Link
+                to={`/recipes/new?variantOf=${recipe.id}`}
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-700 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
+              >
+                {t('recipes.proposeVariant')}
+              </Link>
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Commentaires */}
       <section>
