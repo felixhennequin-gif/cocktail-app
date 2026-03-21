@@ -1,7 +1,9 @@
 const prisma = require('../prisma');
+const { parseId } = require('../helpers');
 
 const MAX_COLLECTIONS_PER_USER = 20;
 const MAX_RECIPES_PER_COLLECTION = 100;
+const MAX_DESCRIPTION_LENGTH = 500;
 
 // POST /collections
 const createCollection = async (req, res) => {
@@ -13,6 +15,9 @@ const createCollection = async (req, res) => {
   }
   if (name.trim().length > 100) {
     return res.status(400).json({ error: 'Le nom ne doit pas dépasser 100 caractères' });
+  }
+  if (description && description.trim().length > MAX_DESCRIPTION_LENGTH) {
+    return res.status(400).json({ error: `La description ne doit pas dépasser ${MAX_DESCRIPTION_LENGTH} caractères` });
   }
 
   // Vérifier la limite
@@ -61,7 +66,8 @@ const getMyCollections = async (req, res) => {
 
 // GET /collections/:id
 const getCollectionById = async (req, res) => {
-  const id = parseInt(req.params.id);
+  const id = parseId(req.params.id);
+  if (!id) return res.status(400).json({ error: 'id invalide' });
 
   const collection = await prisma.collection.findUnique({
     where: { id },
@@ -106,7 +112,9 @@ const getCollectionById = async (req, res) => {
 
 // PUT /collections/:id
 const updateCollection = async (req, res) => {
-  const id = parseInt(req.params.id);
+  const id = parseId(req.params.id);
+  if (!id) return res.status(400).json({ error: 'id invalide' });
+
   const { name, description, isPublic } = req.body;
 
   const collection = await prisma.collection.findUnique({ where: { id } });
@@ -118,6 +126,9 @@ const updateCollection = async (req, res) => {
   }
   if (name !== undefined && name.trim().length > 100) {
     return res.status(400).json({ error: 'Le nom ne doit pas dépasser 100 caractères' });
+  }
+  if (description !== undefined && description && description.trim().length > MAX_DESCRIPTION_LENGTH) {
+    return res.status(400).json({ error: `La description ne doit pas dépasser ${MAX_DESCRIPTION_LENGTH} caractères` });
   }
 
   const updated = await prisma.collection.update({
@@ -134,7 +145,8 @@ const updateCollection = async (req, res) => {
 
 // DELETE /collections/:id
 const deleteCollection = async (req, res) => {
-  const id = parseInt(req.params.id);
+  const id = parseId(req.params.id);
+  if (!id) return res.status(400).json({ error: 'id invalide' });
 
   const collection = await prisma.collection.findUnique({ where: { id } });
   if (!collection) return res.status(404).json({ error: 'Collection introuvable' });
@@ -146,8 +158,11 @@ const deleteCollection = async (req, res) => {
 
 // POST /collections/:id/recipes
 const addRecipeToCollection = async (req, res) => {
-  const collectionId = parseInt(req.params.id);
-  const { recipeId } = req.body;
+  const collectionId = parseId(req.params.id);
+  if (!collectionId) return res.status(400).json({ error: 'id invalide' });
+
+  const recipeId = parseId(req.body.recipeId);
+  if (!recipeId) return res.status(400).json({ error: 'recipeId invalide' });
 
   const collection = await prisma.collection.findUnique({
     where: { id: collectionId },
@@ -161,12 +176,12 @@ const addRecipeToCollection = async (req, res) => {
   }
 
   // Vérifier que la recette existe
-  const recipe = await prisma.recipe.findUnique({ where: { id: parseInt(recipeId) } });
+  const recipe = await prisma.recipe.findUnique({ where: { id: recipeId } });
   if (!recipe) return res.status(404).json({ error: 'Recette introuvable' });
 
   try {
     await prisma.collectionRecipe.create({
-      data: { collectionId, recipeId: parseInt(recipeId) },
+      data: { collectionId, recipeId },
     });
     res.status(201).json({ added: true });
   } catch (err) {
@@ -179,8 +194,11 @@ const addRecipeToCollection = async (req, res) => {
 
 // DELETE /collections/:id/recipes/:recipeId
 const removeRecipeFromCollection = async (req, res) => {
-  const collectionId = parseInt(req.params.id);
-  const recipeId = parseInt(req.params.recipeId);
+  const collectionId = parseId(req.params.id);
+  if (!collectionId) return res.status(400).json({ error: 'id invalide' });
+
+  const recipeId = parseId(req.params.recipeId);
+  if (!recipeId) return res.status(400).json({ error: 'recipeId invalide' });
 
   const collection = await prisma.collection.findUnique({ where: { id: collectionId } });
   if (!collection) return res.status(404).json({ error: 'Collection introuvable' });

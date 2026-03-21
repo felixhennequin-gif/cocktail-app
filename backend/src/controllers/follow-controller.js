@@ -1,10 +1,13 @@
 const prisma = require('../prisma');
 const { createNotification } = require('../services/notification-service');
+const { parseId } = require('../helpers');
 
 // POST /users/:id/follow — JWT requis
 const followUser = async (req, res) => {
-  const targetId = parseInt(req.params.id);
-  const userId   = req.user.id;
+  const targetId = parseId(req.params.id);
+  if (!targetId) return res.status(400).json({ error: 'id invalide' });
+
+  const userId = req.user.id;
 
   if (userId === targetId) {
     return res.status(400).json({ error: 'Vous ne pouvez pas vous suivre vous-même' });
@@ -42,8 +45,10 @@ const followUser = async (req, res) => {
 
 // DELETE /users/:id/follow — JWT requis
 const unfollowUser = async (req, res) => {
-  const targetId = parseInt(req.params.id);
-  const userId   = req.user.id;
+  const targetId = parseId(req.params.id);
+  if (!targetId) return res.status(400).json({ error: 'id invalide' });
+
+  const userId = req.user.id;
 
   // Silencieux si la relation n'existe pas
   await prisma.follow.deleteMany({
@@ -65,7 +70,9 @@ const getMyFollowingIds = async (currentUserId) => {
 
 // GET /users/:id/followers?page=1&limit=20
 const getFollowers = async (req, res) => {
-  const id    = parseInt(req.params.id);
+  const id = parseId(req.params.id);
+  if (!id) return res.status(400).json({ error: 'id invalide' });
+
   const page  = Math.max(1, parseInt(req.query.page)  || 1);
   const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 20));
 
@@ -91,7 +98,9 @@ const getFollowers = async (req, res) => {
 
 // GET /users/:id/following?page=1&limit=20
 const getFollowing = async (req, res) => {
-  const id    = parseInt(req.params.id);
+  const id = parseId(req.params.id);
+  if (!id) return res.status(400).json({ error: 'id invalide' });
+
   const page  = Math.max(1, parseInt(req.query.page)  || 1);
   const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 20));
 

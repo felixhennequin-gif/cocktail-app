@@ -1,10 +1,13 @@
 const prisma = require('../prisma');
+const { parseId } = require('../helpers');
 
 // POST /ratings/:recipeId — upsert (crée ou met à jour la note de l'user)
 const upsertRating = async (req, res) => {
   const userId   = req.user.id;
-  const recipeId = parseInt(req.params.recipeId);
-  const score    = parseInt(req.body.score);
+  const recipeId = parseId(req.params.recipeId);
+  if (!recipeId) return res.status(400).json({ error: 'recipeId invalide' });
+
+  const score = parseInt(req.body.score);
 
   if (!score || score < 1 || score > 5) {
     return res.status(400).json({ error: 'Le score doit être entre 1 et 5' });
@@ -32,7 +35,8 @@ const upsertRating = async (req, res) => {
 // GET /ratings/:recipeId/me — note de l'utilisateur connecté pour cette recette
 const getMyRating = async (req, res) => {
   const userId   = req.user.id;
-  const recipeId = parseInt(req.params.recipeId);
+  const recipeId = parseId(req.params.recipeId);
+  if (!recipeId) return res.status(400).json({ error: 'recipeId invalide' });
 
   const rating = await prisma.rating.findUnique({
     where: { userId_recipeId: { userId, recipeId } },

@@ -1,4 +1,7 @@
 const prisma = require('../prisma');
+const { parseId } = require('../helpers');
+
+const MAX_BIO_LENGTH = 500;
 
 // PUT /users/me — met à jour le profil de l'utilisateur connecté
 const updateMyProfile = async (req, res) => {
@@ -8,6 +11,9 @@ const updateMyProfile = async (req, res) => {
   // Validation basique
   if (pseudo !== undefined && (!pseudo || pseudo.trim().length < 2)) {
     return res.status(400).json({ error: 'Le pseudo doit faire au moins 2 caractères' });
+  }
+  if (bio !== undefined && bio && bio.trim().length > MAX_BIO_LENGTH) {
+    return res.status(400).json({ error: `La bio ne doit pas dépasser ${MAX_BIO_LENGTH} caractères` });
   }
 
   try {
@@ -33,7 +39,9 @@ const updateMyProfile = async (req, res) => {
 
 // GET /users/:id — profil public (optionalAuth pour isFollowing)
 const getUserProfile = async (req, res) => {
-  const id            = parseInt(req.params.id);
+  const id = parseId(req.params.id);
+  if (!id) return res.status(400).json({ error: 'id invalide' });
+
   const currentUserId = req.user?.id ?? null;
 
   const [user, followersCount, followingCount, followRow] = await Promise.all([
@@ -76,7 +84,9 @@ const getUserProfile = async (req, res) => {
 
 // GET /users/:id/recipes?page=1&limit=20
 const getUserRecipes = async (req, res) => {
-  const id    = parseInt(req.params.id);
+  const id = parseId(req.params.id);
+  if (!id) return res.status(400).json({ error: 'id invalide' });
+
   const page  = Math.max(1, parseInt(req.query.page)  || 1);
   const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 20));
 

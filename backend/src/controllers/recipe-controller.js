@@ -4,6 +4,7 @@ const prisma = require('../prisma');
 const { createNotification, notifyFollowers } = require('../services/notification-service');
 const { invalidateCacheByPattern, redis } = require('../cache');
 const { resolveTagNames } = require('./tag-controller');
+const { parseId } = require('../helpers');
 
 // Invalide toutes les entrées de cache liées aux recettes
 const bustRecipeCache = () => invalidateCacheByPattern('/recipes*').catch(() => {});
@@ -309,7 +310,8 @@ const getAllRecipes = async (req, res) => {
 
 // GET /recipes/:id
 const getRecipeById = async (req, res) => {
-  const id = parseInt(req.params.id);
+  const id = parseId(req.params.id);
+  if (!id) return res.status(400).json({ error: 'id invalide' });
 
   const [recipe, ratingAgg] = await Promise.all([
     prisma.recipe.findUnique({
@@ -367,6 +369,25 @@ const getRecipeById = async (req, res) => {
 // steps       : [{ order, description }]
 const createRecipe = async (req, res) => {
   const { name, description, imageUrl, difficulty, prepTime, servings, categoryId, ingredients = [], steps = [], tagIds, tagNames, parentRecipeId, status: requestedStatus } = req.body;
+
+  if (!name || !name.trim()) {
+    return res.status(400).json({ error: 'Le nom est requis' });
+  }
+  if (name.trim().length > 200) {
+    return res.status(400).json({ error: 'Le nom ne doit pas dépasser 200 caractères' });
+  }
+  if (description && description.length > 5000) {
+    return res.status(400).json({ error: 'La description ne doit pas dépasser 5000 caractères' });
+  }
+  if (!difficulty || !['EASY', 'MEDIUM', 'HARD'].includes(difficulty)) {
+    return res.status(400).json({ error: 'La difficulté doit être EASY, MEDIUM ou HARD' });
+  }
+  if (!prepTime || isNaN(parseInt(prepTime)) || parseInt(prepTime) <= 0) {
+    return res.status(400).json({ error: 'Le temps de préparation doit être un nombre positif' });
+  }
+  if (!categoryId || isNaN(parseInt(categoryId))) {
+    return res.status(400).json({ error: 'categoryId est requis' });
+  }
 
   // Calcul du statut final selon le rôle
   let status;
@@ -456,7 +477,8 @@ const createRecipe = async (req, res) => {
 
 // PUT /recipes/:id — auth requise (auteur ou admin)
 const updateRecipe = async (req, res) => {
-  const id = parseInt(req.params.id);
+  const id = parseId(req.params.id);
+  if (!id) return res.status(400).json({ error: 'id invalide' });
   const { name, description, imageUrl, difficulty, prepTime, servings, categoryId, ingredients, steps, tagIds, tagNames, status: requestedStatus } = req.body;
 
   const exists = await prisma.recipe.findUnique({ where: { id } });
@@ -550,7 +572,8 @@ const updateRecipe = async (req, res) => {
 
 // DELETE /recipes/:id — auth requise (auteur ou admin)
 const deleteRecipe = async (req, res) => {
-  const id = parseInt(req.params.id);
+  const id = parseId(req.params.id);
+  if (!id) return res.status(400).json({ error: 'id invalide' });
 
   const exists = await prisma.recipe.findUnique({ where: { id } });
   if (!exists) {
@@ -580,7 +603,8 @@ const deleteRecipe = async (req, res) => {
 
 // PATCH /recipes/:id/publish — admin seulement
 const publishRecipe = async (req, res) => {
-  const id = parseInt(req.params.id);
+  const id = parseId(req.params.id);
+  if (!id) return res.status(400).json({ error: 'id invalide' });
 
   const recipe = await prisma.recipe.findUnique({ where: { id } });
   if (!recipe) return res.status(404).json({ error: 'Recette introuvable' });
@@ -619,7 +643,8 @@ const publishRecipe = async (req, res) => {
 
 // PATCH /recipes/:id/unpublish — auteur ou admin
 const unpublishRecipe = async (req, res) => {
-  const id = parseInt(req.params.id);
+  const id = parseId(req.params.id);
+  if (!id) return res.status(400).json({ error: 'id invalide' });
 
   const recipe = await prisma.recipe.findUnique({ where: { id } });
   if (!recipe) return res.status(404).json({ error: 'Recette introuvable' });

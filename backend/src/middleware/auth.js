@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const prisma = require('../prisma');
 
 if (!process.env.JWT_SECRET) {
   throw new Error('La variable d\'environnement JWT_SECRET est requise');
@@ -21,12 +22,20 @@ const requireAuth = (req, res, next) => {
   }
 };
 
-// Middleware admin — requiert requireAuth au préalable
-const requireAdmin = (req, res, next) => {
-  if (req.user?.role !== 'ADMIN') {
-    return res.status(403).json({ error: 'Accès réservé aux administrateurs' });
+// Middleware admin — re-vérifie le rôle en BDD
+const requireAdmin = async (req, res, next) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: { role: true },
+    });
+    if (user?.role !== 'ADMIN') {
+      return res.status(403).json({ error: 'Accès réservé aux administrateurs' });
+    }
+    next();
+  } catch (err) {
+    next(err);
   }
-  next();
 };
 
 // Attache req.user si token présent (sans bloquer si absent)

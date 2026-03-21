@@ -1,9 +1,13 @@
 const prisma = require('../prisma');
 const { createNotification } = require('../services/notification-service');
+const { parseId } = require('../helpers');
+
+const MAX_COMMENT_LENGTH = 2000;
 
 // GET /comments/:recipeId — optionalAuth pour exposer myComment + avgRating
 const getComments = async (req, res) => {
-  const recipeId = parseInt(req.params.recipeId);
+  const recipeId = parseId(req.params.recipeId);
+  if (!recipeId) return res.status(400).json({ error: 'recipeId invalide' });
 
   const [comments, ratingAgg] = await Promise.all([
     prisma.comment.findMany({
@@ -36,11 +40,16 @@ const getComments = async (req, res) => {
 // body: { content, score (1-5, obligatoire) }
 const createComment = async (req, res) => {
   const userId   = req.user.id;
-  const recipeId = parseInt(req.params.recipeId);
+  const recipeId = parseId(req.params.recipeId);
+  if (!recipeId) return res.status(400).json({ error: 'recipeId invalide' });
+
   const { content, score } = req.body;
 
   if (!content || !content.trim()) {
     return res.status(400).json({ error: 'Le commentaire ne peut pas être vide' });
+  }
+  if (content.trim().length > MAX_COMMENT_LENGTH) {
+    return res.status(400).json({ error: `Le commentaire ne doit pas dépasser ${MAX_COMMENT_LENGTH} caractères` });
   }
 
   const scoreInt = parseInt(score);
@@ -101,11 +110,16 @@ const createComment = async (req, res) => {
 // PUT /comments/:id — auteur uniquement
 // body: { content, score? (1-5, optionnel) }
 const updateComment = async (req, res) => {
-  const id = parseInt(req.params.id);
+  const id = parseId(req.params.id);
+  if (!id) return res.status(400).json({ error: 'id invalide' });
+
   const { content, score } = req.body;
 
   if (!content || !content.trim()) {
     return res.status(400).json({ error: 'Le commentaire ne peut pas être vide' });
+  }
+  if (content.trim().length > MAX_COMMENT_LENGTH) {
+    return res.status(400).json({ error: `Le commentaire ne doit pas dépasser ${MAX_COMMENT_LENGTH} caractères` });
   }
 
   const comment = await prisma.comment.findUnique({ where: { id } });
@@ -146,7 +160,8 @@ const updateComment = async (req, res) => {
 
 // DELETE /comments/:id — auteur du commentaire, auteur de la recette ou admin
 const deleteComment = async (req, res) => {
-  const id = parseInt(req.params.id);
+  const id = parseId(req.params.id);
+  if (!id) return res.status(400).json({ error: 'id invalide' });
 
   const comment = await prisma.comment.findUnique({
     where: { id },

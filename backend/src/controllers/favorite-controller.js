@@ -1,9 +1,11 @@
 const prisma = require('../prisma');
+const { parseId } = require('../helpers');
 
 // POST /favorites/:recipeId — toggle (ajoute ou retire)
 const toggleFavorite = async (req, res) => {
   const userId   = req.user.id;
-  const recipeId = parseInt(req.params.recipeId);
+  const recipeId = parseId(req.params.recipeId);
+  if (!recipeId) return res.status(400).json({ error: 'recipeId invalide' });
 
   const existing = await prisma.favorite.findUnique({
     where: { userId_recipeId: { userId, recipeId } },
