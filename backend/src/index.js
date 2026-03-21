@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
@@ -23,7 +24,15 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middlewares
-app.use(cors());
+app.use(helmet());
+app.use(cors({
+  origin: [
+    'http://localhost:5173',
+    'http://192.168.1.85:5173',
+    'https://cocktail-app.fr',
+  ],
+  credentials: true,
+}));
 app.use(express.json());
 app.use(generalLimiter);
 
@@ -51,6 +60,10 @@ const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 }, fileFilt
 const stepStorage = multer.diskStorage({
   destination: (req, file, cb) => {
     const recipeId = req.params.recipeId;
+    // Validation : recipeId doit être un entier pour éviter le path traversal
+    if (!/^\d+$/.test(recipeId)) {
+      return cb(new Error('recipeId invalide'));
+    }
     const dir = path.join(uploadsDir, 'recipes', recipeId, 'steps');
     fs.mkdirSync(dir, { recursive: true });
     cb(null, dir);
@@ -66,7 +79,7 @@ const uploadStep = multer({ storage: stepStorage, limits: { fileSize: 5 * 1024 *
 const apiRouter = express.Router();
 
 apiRouter.get('/health', (req, res) => res.json({ status: 'ok' }));
-apiRouter.post('/upload', upload.single('image'), (req, res) => {
+apiRouter.post('/upload', requireAuth, upload.single('image'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Aucun fichier reçu' });
   res.json({ url: `/uploads/${req.file.filename}` });
 });

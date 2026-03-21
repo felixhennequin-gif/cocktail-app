@@ -1,6 +1,9 @@
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'change_me_in_production';
+if (!process.env.JWT_SECRET) {
+  throw new Error('La variable d\'environnement JWT_SECRET est requise');
+}
+const JWT_SECRET = process.env.JWT_SECRET;
 
 // Vérifie le token JWT et attache req.user
 const requireAuth = (req, res, next) => {
