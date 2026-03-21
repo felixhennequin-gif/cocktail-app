@@ -39,7 +39,7 @@ function Header() {
   const closeMenu = () => setMenuOpen(false)
 
   return (
-    <header role="banner" className="bg-white dark:bg-ink-900 border-b border-gray-200 dark:border-gray-700 px-4 md:px-6 py-4 relative">
+    <header role="banner" className="sticky top-0 z-40 bg-white/80 dark:bg-ink-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-700 px-4 md:px-6 py-4 transition-colors">
       {/* Ligne principale */}
       <div className="flex items-center gap-4">
         <Link
@@ -51,7 +51,7 @@ function Header() {
         </Link>
 
         {/* SearchBar — cachée sur très petit mobile */}
-        <div className="flex-1 hidden sm:block max-w-xs">
+        <div className="flex-1 hidden sm:block max-w-xs lg:max-w-sm">
           <SearchBar />
         </div>
 
@@ -149,10 +149,8 @@ export default function App() {
   if (loading) return null
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-ink-950 transition-colors">
-      <Helmet>
-        <title>Cocktails — Recettes &amp; Inspiration</title>
-      </Helmet>
+    <div className="min-h-screen bg-gold-50 dark:bg-ink-950 transition-colors">
+      <Helmet defaultTitle="Cocktails — Recettes &amp; Inspiration" />
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2 focus:bg-gold-400 focus:text-ink-900 focus:rounded-lg focus:text-sm focus:font-medium"

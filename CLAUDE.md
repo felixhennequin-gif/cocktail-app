@@ -27,7 +27,7 @@ cocktail-app/
 ├── backend/
 │   ├── prisma/
 │   │   ├── schema.prisma        # Schéma BDD complet
-│   │   ├── seed.js              # 10 cocktails + 9 tags de base
+│   │   ├── seed.js              # 10 cocktails + tags de base
 │   │   ├── seed-big.js          # Gros dataset
 │   │   ├── seed-realistic.js    # Données réalistes
 │   │   └── migrations/          # Migrations Prisma auto-générées
@@ -39,21 +39,24 @@ cocktail-app/
 │       ├── rateLimiter.js       # Rate limiting (auth strict, général souple)
 │       ├── middleware/
 │       │   └── auth.js          # requireAuth, requireAdmin, optionalAuth
-│       ├── routes/              # Un fichier par domaine
-│       ├── controllers/         # Logique métier, un fichier par domaine
+│       ├── routes/              # Un fichier par domaine (recipe, auth, category, tag, collection, favorite, rating, comment, user, feed, notification)
+│       ├── controllers/         # Logique métier, un fichier par domaine (idem)
 │       └── services/
 │           └── notification-service.js
 ├── frontend/
 │   └── src/
 │       ├── i18n/                    # Configuration i18n + locales fr.json / en.json
 │       ├── contexts/                # AuthContext (JWT), ToastContext
-│       ├── components/              # RecipeCard, SearchBar, FollowButton, NotificationBell, AddToCollectionModal, etc.
-│       └── pages/                   # 12 pages + admin/
-│           ├── RecipeList.jsx       # Catalogue + tags + cocktail du jour + infinite scroll
+│       ├── components/              # RecipeCard, RecipeCardGrid, SearchBar, Footer, Logo, FollowButton, NotificationBell, AddToCollectionModal, ThemeToggle, LanguageToggle, DifficultyBadge, Skeleton, ConfirmModal
+│       └── pages/                   # 13 pages + admin/
+│           ├── LandingPage.jsx      # "/" — hero + cocktail du jour + 8 recettes populaires + CTA
+│           ├── RecipeList.jsx       # "/recipes" — catalogue avec filtres, tri, tags, pagination
 │           ├── RecipeDetail.jsx     # Fiche + notes + commentaires + collections + variantes
 │           ├── RecipeSubmit.jsx     # Soumission recette (tags, variantes)
 │           ├── CollectionDetail.jsx # Détail collection utilisateur
 │           ├── UserProfile.jsx      # Profil + onglet collections
+│           ├── Feed.jsx             # Fil d'actualité (recettes des users suivis)
+│           ├── NotFound.jsx         # Page 404
 │           └── admin/               # AdminRecipeList, AdminRecipeForm, AdminPendingList
 ├── scripts/
 │   ├── deploy.sh                # Script déploiement auto (pm2)
@@ -206,7 +209,7 @@ cd frontend && npm run dev        # Frontend seul (vite, port 5173)
 # Base de données
 cd backend && npm run prisma:migrate   # Applique les migrations
 cd backend && npm run prisma:generate  # Régénère le client Prisma
-cd backend && npm run prisma:seed      # Seed de base (10 cocktails + 9 tags)
+cd backend && npm run prisma:seed      # Seed de base (10 cocktails + tags)
 cd backend && npm run seed:big         # Gros dataset
 cd backend && npm run seed:realistic   # Données réalistes
 
@@ -225,6 +228,7 @@ psql -h localhost -U cocktail_user -d cocktails_db
 
 ## Points d'attention
 
+- **Routing frontend** : `/` → `LandingPage` (hero + découverte), `/recipes` → `RecipeList` (catalogue complet avec filtres). La search bar du header redirige vers `/recipes?q=xxx` depuis la landing, filtre en temps réel sur le catalogue.
 - `GET /recipes` ne renvoie que `PUBLISHED` aux non-admins (filtre automatique dans le controller)
 - `deleteRecipe` supprime en cascade : collectionRecipes → recipeTag → comments → ratings → favorites → ingredients → steps → détache variantes → recipe
 - Images stockées dans `backend/uploads/`, exclues du git

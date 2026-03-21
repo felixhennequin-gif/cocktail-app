@@ -68,7 +68,7 @@ export default function SearchBar() {
   }
 
   return (
-    <div ref={containerRef} className="relative w-full sm:w-56 lg:w-72">
+    <div ref={containerRef} className="relative w-full">
       <label htmlFor="search-nav" className="sr-only">{t('recipes.searchNavPlaceholder')}</label>
       <input
         id="search-nav"
