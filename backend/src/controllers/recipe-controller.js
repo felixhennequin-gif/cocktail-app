@@ -1,10 +1,10 @@
-const crypto = require('crypto');
 const { z } = require('zod');
 const prisma = require('../prisma');
 const { createNotification, notifyFollowers } = require('../services/notification-service');
-const { invalidateCacheByPattern, redis } = require('../cache');
+const { invalidateCacheByPattern } = require('../cache');
 const { resolveTagNames } = require('./tag-controller');
 const { parseId } = require('../helpers');
+const { includeDetail, includeList, computeAvgRating, handlePrismaError } = require('../helpers/recipe-helpers');
 
 // Invalide toutes les entrées de cache liées aux recettes
 const bustRecipeCache = () => invalidateCacheByPattern('/recipes*').catch(() => {});
@@ -41,68 +41,6 @@ const recipeListSchema = z.object({
   sortBy:     z.enum(['createdAt', 'prepTime', 'avgRating', 'favoritesCount']).default('createdAt'),
   sortOrder:  z.enum(['asc', 'desc']).default('desc'),
 });
-
-// Inclusion des tags (réutilisable)
-const includeTags = { tags: { include: { tag: true } } };
-
-// Inclusions réutilisables
-const includeDetail = {
-  category: true,
-  author: {
-    select: { id: true, pseudo: true, avatar: true },
-  },
-  ingredients: {
-    include: { ingredient: true },
-  },
-  steps: {
-    orderBy: { order: 'asc' },
-  },
-  ratings: {
-    select: { score: true },
-  },
-  parentRecipe: {
-    select: { id: true, name: true },
-  },
-  variants: {
-    where: { status: 'PUBLISHED' },
-    select: { id: true, name: true, imageUrl: true, difficulty: true, prepTime: true },
-  },
-  ...includeTags,
-};
-
-// Inclusions pour les listes (plus légères)
-const includeList = {
-  category: true,
-  author: { select: { id: true, pseudo: true } },
-  ratings: { select: { score: true } },
-  ...includeTags,
-};
-
-// Calcule la moyenne des notes et aplatit les tags
-const computeAvgRating = (recipe) => {
-  const { ratings, tags, ...rest } = recipe;
-  const avgRating =
-    ratings.length > 0
-      ? Math.round((ratings.reduce((sum, r) => sum + r.score, 0) / ratings.length) * 10) / 10
-      : null;
-  return {
-    ...rest,
-    avgRating,
-    ratingsCount: ratings.length,
-    ...(tags ? { tags: tags.map((rt) => rt.tag) } : {}),
-  };
-};
-
-// Convertit les erreurs Prisma connues en réponses HTTP appropriées
-const handlePrismaError = (err, res) => {
-  if (err.code === 'P2003') {
-    return res.status(400).json({ error: 'Référence invalide : categoryId ou ingredientId inexistant' });
-  }
-  if (err.code === 'P2025') {
-    return res.status(404).json({ error: 'Recette introuvable' });
-  }
-  throw err;
-};
 
 // Résout les ingrédients : accepte { ingredientId } OU { name } (upsert)
 const resolveIngredients = async (ingredients) => {
@@ -719,108 +657,4 @@ const searchRecipes = async (req, res) => {
   res.json({ data: ranked.map(computeAvgRating), total, page, limit });
 };
 
-// GET /feed?cursor=123&limit=20 — JWT requis, pagination par curseur
-const getFeed = async (req, res) => {
-  const limit  = Math.min(20, Math.max(1, parseInt(req.query.limit) || 20));
-  const cursor = req.query.cursor ? parseInt(req.query.cursor) : null;
-
-  // IDs des utilisateurs suivis
-  const follows = await prisma.follow.findMany({
-    where:  { followerId: req.user.id },
-    select: { followingId: true },
-  });
-  const followingIds = follows.map((f) => f.followingId);
-
-  if (followingIds.length === 0) {
-    return res.json({ data: [], nextCursor: null });
-  }
-
-  const where = {
-    authorId: { in: followingIds },
-    status: 'PUBLISHED',
-    ...(cursor ? { id: { lt: cursor } } : {}),
-  };
-
-  // On prend limit+1 pour détecter s'il reste des résultats
-  const recipes = await prisma.recipe.findMany({
-    where,
-    include: includeList,
-    orderBy: { id: 'desc' },
-    take: limit + 1,
-  });
-
-  const hasMore    = recipes.length > limit;
-  const data       = hasMore ? recipes.slice(0, limit) : recipes;
-  const nextCursor = hasMore ? data[data.length - 1].id : null;
-
-  res.json({ data: data.map(computeAvgRating), nextCursor });
-};
-
-// GET /recipes/daily — cocktail du jour (déterministe par date)
-const getDailyRecipe = async (req, res) => {
-  try {
-    // Nombre de recettes publiées
-    const count = await prisma.recipe.count({ where: { status: 'PUBLISHED' } });
-    if (count === 0) {
-      return res.status(404).json({ error: 'Aucune recette publiée' });
-    }
-
-    // Hash déterministe de la date du jour → index stable pour la journée
-    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
-    const hash = crypto.createHash('sha256').update(today).digest();
-    const index = hash.readUInt32BE(0) % count;
-
-    const [recipe] = await prisma.recipe.findMany({
-      where: { status: 'PUBLISHED' },
-      orderBy: { id: 'asc' },
-      skip: index,
-      take: 1,
-      include: includeDetail,
-    });
-
-    if (!recipe) {
-      return res.status(404).json({ error: 'Recette introuvable' });
-    }
-
-    // Données spécifiques à l'utilisateur connecté
-    let userFields = {};
-    if (req.user) {
-      const [fav, userRating] = await Promise.all([
-        prisma.favorite.findUnique({
-          where: { userId_recipeId: { userId: req.user.id, recipeId: recipe.id } },
-        }),
-        prisma.rating.findUnique({
-          where: { userId_recipeId: { userId: req.user.id, recipeId: recipe.id } },
-        }),
-      ]);
-      userFields = { isFavorited: !!fav, userScore: userRating?.score ?? null };
-    }
-
-    // Mettre en cache Redis manuellement jusqu'à minuit
-    if (redis) {
-      const now = new Date();
-      const midnight = new Date(now);
-      midnight.setHours(24, 0, 0, 0);
-      const ttl = Math.max(1, Math.floor((midnight - now) / 1000));
-      const cacheKey = 'daily-recipe';
-      try {
-        await redis.setex(cacheKey, ttl, JSON.stringify(computeAvgRating(recipe)));
-      } catch {
-        // Cache non critique
-      }
-    }
-
-    const { tags: recipeTags, ratings, ...recipeRest } = recipe;
-    const flatTags = recipeTags ? recipeTags.map((rt) => rt.tag) : [];
-    const avgRating = ratings.length > 0
-      ? Math.round((ratings.reduce((sum, r) => sum + r.score, 0) / ratings.length) * 10) / 10
-      : null;
-
-    res.json({ ...recipeRest, tags: flatTags, avgRating, ratingsCount: ratings.length, ...userFields });
-  } catch (err) {
-    console.error('[daily] Erreur:', err.message);
-    res.status(500).json({ error: 'Erreur serveur' });
-  }
-};
-
-module.exports = { getAllRecipes, getRecipeById, createRecipe, updateRecipe, deleteRecipe, publishRecipe, unpublishRecipe, searchRecipes, getFeed, getDailyRecipe };
+module.exports = { getAllRecipes, getRecipeById, createRecipe, updateRecipe, deleteRecipe, publishRecipe, unpublishRecipe, searchRecipes };

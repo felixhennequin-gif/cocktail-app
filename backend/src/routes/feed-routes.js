@@ -1,5 +1,5 @@
 const { Router } = require('express');
-const { getFeed } = require('../controllers/recipe-controller');
+const { getFeed } = require('../controllers/feed-controller');
 const { requireAuth } = require('../middleware/auth');
 
 const router = Router();

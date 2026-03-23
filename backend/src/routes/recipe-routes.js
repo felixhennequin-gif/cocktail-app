@@ -1,5 +1,6 @@
 const { Router } = require('express');
-const { getAllRecipes, getRecipeById, createRecipe, updateRecipe, deleteRecipe, publishRecipe, unpublishRecipe, searchRecipes, getDailyRecipe } = require('../controllers/recipe-controller');
+const { getAllRecipes, getRecipeById, createRecipe, updateRecipe, deleteRecipe, publishRecipe, unpublishRecipe, searchRecipes } = require('../controllers/recipe-controller');
+const { getDailyRecipe } = require('../controllers/daily-controller');
 const { requireAuth, requireAdmin, optionalAuth } = require('../middleware/auth');
 const { cacheMiddleware } = require('../cache');
 
