@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, lazy, Suspense } from 'react'
 import { Routes, Route, Link, useNavigate } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import Logo from './components/Logo'
@@ -8,21 +8,25 @@ import SearchBar        from './components/SearchBar'
 import NotificationBell from './components/NotificationBell'
 import ThemeToggle      from './components/ThemeToggle'
 import LanguageToggle   from './components/LanguageToggle'
+import Footer           from './components/Footer'
+
+// Pages d'entrée courantes — import statique
 import LandingPage      from './pages/LandingPage'
 import RecipeList       from './pages/RecipeList'
-import RecipeDetail     from './pages/RecipeDetail'
 import Login            from './pages/Login'
 import Register         from './pages/Register'
-import Favorites        from './pages/Favorites'
-import Feed             from './pages/Feed'
-import UserProfile      from './pages/UserProfile'
-import RecipeSubmit     from './pages/RecipeSubmit'
-import AdminRecipeList  from './pages/admin/AdminRecipeList'
-import AdminRecipeForm  from './pages/admin/AdminRecipeForm'
-import AdminPendingList from './pages/admin/AdminPendingList'
-import CollectionDetail from './pages/CollectionDetail'
 import NotFound         from './pages/NotFound'
-import Footer           from './components/Footer'
+
+// Pages secondaires — lazy loading (code splitting)
+const RecipeDetail     = lazy(() => import('./pages/RecipeDetail'))
+const Favorites        = lazy(() => import('./pages/Favorites'))
+const Feed             = lazy(() => import('./pages/Feed'))
+const UserProfile      = lazy(() => import('./pages/UserProfile'))
+const RecipeSubmit     = lazy(() => import('./pages/RecipeSubmit'))
+const AdminRecipeList  = lazy(() => import('./pages/admin/AdminRecipeList'))
+const AdminRecipeForm  = lazy(() => import('./pages/admin/AdminRecipeForm'))
+const AdminPendingList = lazy(() => import('./pages/admin/AdminPendingList'))
+const CollectionDetail = lazy(() => import('./pages/CollectionDetail'))
 
 function Header() {
   const { user, logout } = useAuth()
@@ -160,6 +164,7 @@ export default function App() {
       <Header />
 
       <main id="main-content" role="main" className="max-w-5xl mx-auto px-4 py-6 md:py-8">
+        <Suspense fallback={<div className="flex justify-center py-16"><div className="w-6 h-6 border-2 border-gold-400 border-t-transparent rounded-full animate-spin" /></div>}>
         <Routes>
           <Route path="/"                        element={<LandingPage />} />
           <Route path="/recipes"                  element={<RecipeList />} />
@@ -177,6 +182,7 @@ export default function App() {
           <Route path="/admin/recipes/:id/edit"  element={<AdminRecipeForm />} />
           <Route path="*"                        element={<NotFound />} />
         </Routes>
+        </Suspense>
       </main>
       <Footer />
     </div>
