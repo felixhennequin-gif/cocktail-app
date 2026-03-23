@@ -5,6 +5,7 @@ const helmet = require('helmet');
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
+const FileType = require('file-type');
 const { generalLimiter, authLimiter } = require('./rateLimiter');
 const { requireAuth } = require('./middleware/auth');
 
@@ -42,11 +43,40 @@ app.use(generalLimiter);
 // Static uploads
 const uploadsDir = path.join(__dirname, '..', 'uploads');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
-app.use('/uploads', express.static(uploadsDir));
+app.use('/uploads', express.static(uploadsDir, {
+  setHeaders: (res) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+  },
+}));
+
+// Extensions et MIME types autorisés (pas de SVG — vecteur XSS)
+const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
+const ALLOWED_EXTENSIONS  = new Set(['.jpg', '.jpeg', '.png', '.webp', '.gif']);
 
 const imageFilter = (req, file, cb) => {
-  if (file.mimetype.startsWith('image/')) cb(null, true);
-  else cb(new Error('Fichier non autorisé : images uniquement'));
+  const ext = path.extname(file.originalname).toLowerCase();
+  if (ALLOWED_IMAGE_TYPES.has(file.mimetype) && ALLOWED_EXTENSIONS.has(ext)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Fichier non autorisé : seuls JPEG, PNG, WebP et GIF sont acceptés'));
+  }
+};
+
+// Middleware post-upload : valide les magic bytes du fichier
+const validateImageMagicBytes = async (req, res, next) => {
+  if (!req.file) return next();
+  try {
+    const type = await FileType.fromFile(req.file.path);
+    if (!type || !ALLOWED_IMAGE_TYPES.has(type.mime)) {
+      // Supprimer le fichier rejeté
+      fs.unlink(req.file.path, () => {});
+      return res.status(400).json({ error: 'Fichier rejeté : le contenu ne correspond pas à une image valide (JPEG, PNG, WebP, GIF)' });
+    }
+    next();
+  } catch {
+    fs.unlink(req.file.path, () => {});
+    return res.status(400).json({ error: 'Impossible de valider le fichier uploadé' });
+  }
 };
 
 // Multer config — upload recette principale
@@ -82,12 +112,12 @@ const uploadStep = multer({ storage: stepStorage, limits: { fileSize: 5 * 1024 *
 const apiRouter = express.Router();
 
 apiRouter.get('/health', (req, res) => res.json({ status: 'ok' }));
-apiRouter.post('/upload', requireAuth, upload.single('image'), (req, res) => {
+apiRouter.post('/upload', requireAuth, upload.single('image'), validateImageMagicBytes, (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Aucun fichier reçu' });
   res.json({ url: `/uploads/${req.file.filename}` });
 });
 // Upload image d'étape — stockée dans uploads/recipes/{recipeId}/steps/
-apiRouter.post('/upload/step/:recipeId', requireAuth, uploadStep.single('image'), (req, res) => {
+apiRouter.post('/upload/step/:recipeId', requireAuth, uploadStep.single('image'), validateImageMagicBytes, (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Aucun fichier reçu' });
   const recipeId = req.params.recipeId;
   const rel = `/uploads/recipes/${recipeId}/steps/${req.file.filename}`;
