@@ -44,12 +44,12 @@ const updateRecipeSchema = createRecipeSchema.partial().omit({ ingredients: true
 // --- Commentaires ---
 
 const createCommentSchema = z.object({
-  content: z.string().min(1, 'Le commentaire ne peut pas être vide').max(2000, 'Le commentaire ne doit pas dépasser 2000 caractères').transform(s => s.trim()),
+  content: z.string().max(2000, 'Le commentaire ne doit pas dépasser 2000 caractères').transform(s => s.trim()).pipe(z.string().min(1, 'Le commentaire ne peut pas être vide')),
   score:   z.coerce.number().int().min(1, 'Une note entre 1 et 5 est obligatoire').max(5, 'Une note entre 1 et 5 est obligatoire'),
 });
 
 const updateCommentSchema = z.object({
-  content: z.string().min(1, 'Le commentaire ne peut pas être vide').max(2000, 'Le commentaire ne doit pas dépasser 2000 caractères').transform(s => s.trim()),
+  content: z.string().max(2000, 'Le commentaire ne doit pas dépasser 2000 caractères').transform(s => s.trim()).pipe(z.string().min(1, 'Le commentaire ne peut pas être vide')),
   score:   z.coerce.number().int().min(1, 'Le score doit être compris entre 1 et 5').max(5, 'Le score doit être compris entre 1 et 5').optional().nullable(),
 });
 
