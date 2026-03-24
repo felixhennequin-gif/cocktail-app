@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { useTranslation } from 'react-i18next'
@@ -6,102 +6,17 @@ import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
 import useFavorites from '../hooks/useFavorites'
 import { getImageUrl } from '../utils/image'
-import ConfirmModal from '../components/ConfirmModal'
 import AddToCollectionModal from '../components/AddToCollectionModal'
 import DifficultyBadge from '../components/DifficultyBadge'
-
-// Unités discrètes où on affiche des fractions plutôt que des décimales
-const DISCRETE_UNITS = new Set([
-  'piece', 'pieces', 'pièce', 'pièces',
-  'slice', 'slices', 'tranche', 'tranches',
-  'leaf', 'leaves', 'feuille', 'feuilles',
-  'dash', 'dashes', 'drop', 'drops', 'goutte', 'gouttes',
-])
-
-// Fractions Unicode lisibles
-const FRACTIONS = [
-  [1 / 8, '⅛'], [1 / 4, '¼'], [1 / 3, '⅓'],
-  [1 / 2, '½'], [2 / 3, '⅔'], [3 / 4, '¾'],
-]
-
-const formatQty = (qty, unit) => {
-  if (!isFinite(qty) || qty <= 0) return '—'
-  const rounded = Math.round(qty * 100) / 100
-  if (DISCRETE_UNITS.has(unit?.toLowerCase())) {
-    const whole = Math.floor(rounded)
-    const frac  = rounded - whole
-    for (const [val, sym] of FRACTIONS) {
-      if (Math.abs(frac - val) < 0.06) {
-        return whole === 0 ? sym : `${whole} ${sym}`
-      }
-    }
-  }
-  // Supprime les zéros inutiles : 1.50 → 1.5, 2.00 → 2
-  return parseFloat(rounded.toFixed(2)).toString()
-}
-
-function PortionSelector({ value, onChange }) {
-  return (
-    <div className="flex items-center gap-2">
-      <button
-        type="button"
-        onClick={() => onChange(Math.max(1, value - 1))}
-        className="w-7 h-7 rounded-full border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 text-sm font-bold flex items-center justify-center hover:border-gold-400 hover:text-gold-500 transition-colors"
-      >
-        −
-      </button>
-      <input
-        type="number"
-        min="1"
-        value={value}
-        onChange={(e) => {
-          const v = parseInt(e.target.value)
-          if (v >= 1) onChange(v)
-        }}
-        className="w-12 text-center border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg py-1 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-gold-400"
-      />
-      <button
-        type="button"
-        onClick={() => onChange(value + 1)}
-        className="w-7 h-7 rounded-full border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 text-sm font-bold flex items-center justify-center hover:border-gold-400 hover:text-gold-500 transition-colors"
-      >
-        +
-      </button>
-    </div>
-  )
-}
-
-// Étoiles interactives (contrôlées par le parent via value/onChange)
-function RatingStars({ value, onChange }) {
-  const [hovered, setHovered] = useState(null)
-  const display = hovered ?? value ?? 0
-
-  return (
-    <div className="flex gap-0.5">
-      {[1, 2, 3, 4, 5].map((n) => (
-        <button
-          key={n}
-          type="button"
-          onClick={() => onChange(n)}
-          onMouseEnter={() => setHovered(n)}
-          onMouseLeave={() => setHovered(null)}
-          aria-label={`${n} / 5`}
-          className={`text-2xl leading-none transition-colors ${
-            n <= display ? 'text-amber-400' : 'text-gray-200 dark:text-gray-600'
-          } hover:text-amber-400`}
-        >
-          ★
-        </button>
-      ))}
-    </div>
-  )
-}
+import RecipeMeta from '../components/recipe/RecipeMeta'
+import RecipeIngredients from '../components/recipe/RecipeIngredients'
+import CommentSection from '../components/recipe/CommentSection'
 
 export default function RecipeDetail() {
   const { id }              = useParams()
   const { user, authFetch } = useAuth()
   const { showToast }       = useToast()
-  const { t, i18n }         = useTranslation()
+  const { t }               = useTranslation()
   const { isFavorited: isFavoritedFn, toggleFavorite } = useFavorites()
 
   const [recipe, setRecipe]           = useState(null)
@@ -111,16 +26,11 @@ export default function RecipeDetail() {
   const [ratingsCount, setRatingsCount] = useState(0)
   const [comments, setComments]         = useState([])
   const [myComment, setMyComment]       = useState(null)
-  const [commentText, setCommentText]   = useState('')
   const [commentScore, setCommentScore] = useState(null)
-  const [commentTouched, setCommentTouched] = useState(false)
-  const [submittingComment, setSubmittingComment] = useState(false)
-  const [deleteCommentId, setDeleteCommentId] = useState(null)
   const [portionCount, setPortionCount] = useState(1)
   const [collectionModalOpen, setCollectionModalOpen] = useState(false)
-  const commentInputRef = useRef(null)
 
-  // Chargement de la recette (isFavorited + userScore inclus si connecté) et des commentaires
+  // Chargement de la recette et des commentaires
   useEffect(() => {
     const controller = new AbortController()
     const signal = controller.signal
@@ -145,13 +55,11 @@ export default function RecipeDetail() {
       })
       .finally(() => setLoading(false))
 
-    // Commentaires (avec avgRating mis à jour)
     authFetch(`/api/comments/${id}`, { signal })
       .then((r) => r.ok ? r.json() : { comments: [], myComment: null })
       .then(({ comments: list, myComment: mine, avgRating: avg, ratingsCount: cnt }) => {
         setComments(list)
         setMyComment(mine)
-        if (mine) setCommentText(mine.content)
         if (avg !== undefined) { setAvgRating(avg); setRatingsCount(cnt ?? 0) }
       })
       .catch(() => {})
@@ -165,72 +73,6 @@ export default function RecipeDetail() {
     if (!user) return
     await toggleFavorite(parseInt(id))
     showToast(!isFavorited ? t('favorites.addToast') : t('favorites.removeToast'), 'success')
-  }
-
-  const handleSubmitComment = async (e) => {
-    e.preventDefault()
-    if (!commentText.trim()) return
-    const isEdit = Boolean(myComment)
-    // Score obligatoire pour un nouveau commentaire
-    if (!isEdit && !commentScore) return
-    setSubmittingComment(true)
-
-    const url    = isEdit ? `/api/comments/${myComment.id}` : `/api/comments/${id}`
-    const method = isEdit ? 'PUT' : 'POST'
-    const body   = { content: commentText }
-    if (commentScore) body.score = commentScore
-
-    const res = await authFetch(url, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    })
-    if (res.ok) {
-      const saved = await res.json()
-      if (isEdit) {
-        setComments((prev) => prev.map((c) => c.id === saved.id ? saved : c))
-      } else {
-        setComments((prev) => [saved, ...prev])
-      }
-      setMyComment(saved)
-      showToast(isEdit ? t('recipes.editComment') + ' !' : t('recipes.submitComment') + ' !', 'success')
-      // Rafraîchir la moyenne depuis le endpoint commentaires
-      fetch(`/api/comments/${id}`, {
-        headers: user ? { Authorization: `Bearer ${localStorage.getItem('token')}` } : {},
-      })
-        .then((r) => r.ok ? r.json() : null)
-        .then((data) => {
-          if (data?.avgRating !== undefined) {
-            setAvgRating(data.avgRating)
-            setRatingsCount(data.ratingsCount ?? 0)
-          }
-        })
-    }
-    setSubmittingComment(false)
-  }
-
-  const handleEditClick = () => {
-    commentInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    commentInputRef.current?.focus()
-  }
-
-  const handleDeleteComment = (commentId) => setDeleteCommentId(commentId)
-
-  const confirmDeleteComment = async () => {
-    const commentId = deleteCommentId
-    setDeleteCommentId(null)
-    const res = await authFetch(`/api/comments/${commentId}`, { method: 'DELETE' })
-    if (res.ok) {
-      setComments((prev) => prev.filter((c) => c.id !== commentId))
-      showToast(t('recipes.deleteComment'), 'info')
-      // Si l'utilisateur supprime son propre commentaire, réinitialiser le formulaire
-      if (myComment?.id === commentId) {
-        setMyComment(null)
-        setCommentText('')
-      }
-    } else {
-      showToast(t('common.error'), 'error')
-    }
   }
 
   if (loading) return <p className="text-center text-gray-400 dark:text-gray-500 py-16">{t('common.loading')}</p>
@@ -250,6 +92,13 @@ export default function RecipeDetail() {
   const metaDescription = recipe.description
     || `${recipe.name} — ${t(`recipes.difficulty.${recipe.difficulty}`)}, ${recipe.prepTime} min.`
 
+  const metaProps = {
+    recipe, avgRating, ratingsCount, isFavorited,
+    onToggleFavorite: handleToggleFavorite,
+    onAddToCollection: () => setCollectionModalOpen(true),
+    portionCount, onPortionChange: setPortionCount, user,
+  }
+
   return (
     <div className="max-w-5xl mx-auto">
       <Helmet>
@@ -260,21 +109,13 @@ export default function RecipeDetail() {
         <meta property="og:type" content="article" />
         {recipe.imageUrl && <meta property="og:image" content={getImageUrl(recipe.imageUrl)} />}
       </Helmet>
-      <ConfirmModal
-        isOpen={!!deleteCommentId}
-        title={t('recipes.deleteComment')}
-        message={t('recipes.deleteCommentMessage')}
-        confirmLabel={t('common.delete')}
-        variant="danger"
-        onConfirm={confirmDeleteComment}
-        onCancel={() => setDeleteCommentId(null)}
-      />
-      {/* Modale d'ajout à une collection */}
+
       <AddToCollectionModal
         isOpen={collectionModalOpen}
         onClose={() => setCollectionModalOpen(false)}
         recipeId={id}
       />
+
       <Link to="/recipes" className="text-sm text-gold-500 dark:text-gold-400 hover:underline mb-6 inline-block">
         {t('recipes.backToList')}
       </Link>
@@ -293,7 +134,6 @@ export default function RecipeDetail() {
       <div className="lg:flex lg:gap-8">
         {/* Colonne gauche : image + ingrédients (sidebar) */}
         <div className="lg:w-2/5 lg:shrink-0">
-          {/* Image */}
           <div className="relative rounded-xl overflow-hidden mb-6 bg-gray-100 dark:bg-gray-700">
             <img
               src={getImageUrl(recipe.imageUrl)}
@@ -305,97 +145,12 @@ export default function RecipeDetail() {
 
           {/* Titre + meta (mobile uniquement) */}
           <div className="lg:hidden mb-8">
-            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-3">
-              <h1 className="text-2xl sm:text-3xl font-serif font-medium text-gray-900 dark:text-gray-100">{recipe.name}</h1>
-              <div className="flex items-center gap-2 shrink-0">
-                <DifficultyBadge difficulty={recipe.difficulty} size="md" />
-                {user && (
-                  <button
-                    onClick={handleToggleFavorite}
-                    className={`text-2xl leading-none transition-colors ${isFavorited ? 'text-red-500' : 'text-gray-300 dark:text-gray-600 hover:text-red-400'}`}
-                    aria-label={isFavorited ? t('recipes.removeFavorite') : t('recipes.addFavorite')}
-                    title={isFavorited ? t('recipes.removeFavorite') : t('recipes.addFavorite')}
-                  >
-                    ♥
-                  </button>
-                )}
-                {user && (
-                  <button
-                    onClick={() => setCollectionModalOpen(true)}
-                    className="text-xl leading-none text-gray-300 dark:text-gray-600 hover:text-gold-400 transition-colors"
-                    title={t('collections.addRecipe')}
-                  >
-                    +
-                  </button>
-                )}
-              </div>
-            </div>
-            <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 mb-2">
-              <span>⏱ {recipe.prepTime} min</span>
-              {recipe.category && <span>📂 {recipe.category.name}</span>}
-              {recipe.author && (
-                <Link to={`/users/${recipe.author.id}`} className="text-gold-500 dark:text-gold-400 hover:underline">
-                  {t('common.by')} {recipe.author.pseudo}
-                </Link>
-              )}
-            </div>
-            <div className="flex items-center gap-3 mb-4">
-              {avgRating !== null ? (
-                <span className="text-sm text-gray-500 dark:text-gray-400">
-                  ★ <span className="font-medium text-gray-800 dark:text-gray-200">{t('recipes.avgRating', { value: avgRating })}</span>
-                  <span className="text-gray-400 dark:text-gray-500 ml-1">{t('recipes.ratingsCount', { count: ratingsCount })}</span>
-                </span>
-              ) : (
-                <span className="text-sm text-gray-400 dark:text-gray-500">{t('recipes.notRated')}</span>
-              )}
-            </div>
-            {recipe.description && (
-              <p className="text-gray-600 dark:text-gray-400 leading-relaxed">{recipe.description}</p>
-            )}
-            {recipe.tags?.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mt-3">
-                {recipe.tags.map((tag) => (
-                  <Link key={tag.id} to={`/recipes?tags=${tag.id}`} className="text-xs px-2.5 py-1 rounded-full bg-gold-50 dark:bg-gold-900/20 text-gold-600 dark:text-gold-400 border border-gold-200 dark:border-gold-700 hover:bg-gold-100 dark:hover:bg-gold-900/40 transition-colors">
-                    {tag.name}
-                  </Link>
-                ))}
-              </div>
-            )}
-            {recipe.servings && (
-              <div className="flex items-center gap-3 mt-4">
-                <span className="text-sm text-gray-500 dark:text-gray-400">{t('recipes.for')}</span>
-                <PortionSelector value={portionCount} onChange={setPortionCount} />
-                <span className="text-sm text-gray-500 dark:text-gray-400">{t('recipes.glasses', { count: portionCount })}</span>
-              </div>
-            )}
-            {recipe.status === 'PENDING' && (
-              <div className="mt-3 px-3 py-2 bg-gold-50 dark:bg-gold-900/20 border border-gold-200 dark:border-gold-700 rounded-lg text-sm text-gold-700 dark:text-gold-400">
-                {t('recipes.pending')}
-              </div>
-            )}
+            <RecipeMeta {...metaProps} />
           </div>
 
           {/* Ingrédients (sidebar sticky sur desktop) */}
           <div className="hidden lg:block lg:sticky lg:top-24">
-            {recipe.ingredients?.length > 0 && (
-              <section className="mb-8">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">{t('recipes.ingredients')}</h2>
-                <ul className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700">
-                  {recipe.ingredients.map((ri) => {
-                    const baseServings = recipe.servings ?? 1
-                    const displayQty   = ri.quantity * (portionCount / baseServings)
-                    return (
-                      <li key={ri.id} className="flex justify-between items-center px-4 py-3 text-sm">
-                        <span className="text-gray-800 dark:text-gray-200">{ri.ingredient.name}</span>
-                        <span className="text-gray-500 dark:text-gray-400 font-medium">
-                          {formatQty(displayQty, ri.unit)} {ri.unit}
-                        </span>
-                      </li>
-                    )
-                  })}
-                </ul>
-              </section>
-            )}
+            <RecipeIngredients ingredients={recipe.ingredients} servings={recipe.servings} portionCount={portionCount} />
           </div>
         </div>
 
@@ -403,97 +158,12 @@ export default function RecipeDetail() {
         <div className="lg:flex-1 min-w-0">
           {/* Titre + meta (desktop uniquement) */}
           <div className="hidden lg:block mb-6">
-            <div className="flex items-start justify-between gap-3 mb-3">
-              <h1 className="text-2xl sm:text-3xl font-serif font-medium text-gray-900 dark:text-gray-100">{recipe.name}</h1>
-              <div className="flex items-center gap-2 shrink-0">
-                <DifficultyBadge difficulty={recipe.difficulty} size="md" />
-                {user && (
-                  <button
-                    onClick={handleToggleFavorite}
-                    className={`text-2xl leading-none transition-colors ${isFavorited ? 'text-red-500' : 'text-gray-300 dark:text-gray-600 hover:text-red-400'}`}
-                    aria-label={isFavorited ? t('recipes.removeFavorite') : t('recipes.addFavorite')}
-                    title={isFavorited ? t('recipes.removeFavorite') : t('recipes.addFavorite')}
-                  >
-                    ♥
-                  </button>
-                )}
-                {user && (
-                  <button
-                    onClick={() => setCollectionModalOpen(true)}
-                    className="text-xl leading-none text-gray-300 dark:text-gray-600 hover:text-gold-400 transition-colors"
-                    title={t('collections.addRecipe')}
-                  >
-                    +
-                  </button>
-                )}
-              </div>
-            </div>
-            <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 mb-2">
-              <span>⏱ {recipe.prepTime} min</span>
-              {recipe.category && <span>📂 {recipe.category.name}</span>}
-              {recipe.author && (
-                <Link to={`/users/${recipe.author.id}`} className="text-gold-500 dark:text-gold-400 hover:underline">
-                  {t('common.by')} {recipe.author.pseudo}
-                </Link>
-              )}
-            </div>
-            <div className="flex items-center gap-3 mb-4">
-              {avgRating !== null ? (
-                <span className="text-sm text-gray-500 dark:text-gray-400">
-                  ★ <span className="font-medium text-gray-800 dark:text-gray-200">{t('recipes.avgRating', { value: avgRating })}</span>
-                  <span className="text-gray-400 dark:text-gray-500 ml-1">{t('recipes.ratingsCount', { count: ratingsCount })}</span>
-                </span>
-              ) : (
-                <span className="text-sm text-gray-400 dark:text-gray-500">{t('recipes.notRated')}</span>
-              )}
-            </div>
-            {recipe.description && (
-              <p className="text-gray-600 dark:text-gray-400 leading-relaxed">{recipe.description}</p>
-            )}
-            {recipe.tags?.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mt-3">
-                {recipe.tags.map((tag) => (
-                  <Link key={tag.id} to={`/recipes?tags=${tag.id}`} className="text-xs px-2.5 py-1 rounded-full bg-gold-50 dark:bg-gold-900/20 text-gold-600 dark:text-gold-400 border border-gold-200 dark:border-gold-700 hover:bg-gold-100 dark:hover:bg-gold-900/40 transition-colors">
-                    {tag.name}
-                  </Link>
-                ))}
-              </div>
-            )}
-            {recipe.servings && (
-              <div className="flex items-center gap-3 mt-4">
-                <span className="text-sm text-gray-500 dark:text-gray-400">{t('recipes.for')}</span>
-                <PortionSelector value={portionCount} onChange={setPortionCount} />
-                <span className="text-sm text-gray-500 dark:text-gray-400">{t('recipes.glasses', { count: portionCount })}</span>
-              </div>
-            )}
-            {recipe.status === 'PENDING' && (
-              <div className="mt-3 px-3 py-2 bg-gold-50 dark:bg-gold-900/20 border border-gold-200 dark:border-gold-700 rounded-lg text-sm text-gold-700 dark:text-gold-400">
-                {t('recipes.pending')}
-              </div>
-            )}
+            <RecipeMeta {...metaProps} />
           </div>
 
           {/* Ingrédients (mobile uniquement) */}
           <div className="lg:hidden">
-            {recipe.ingredients?.length > 0 && (
-              <section className="mb-8">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">{t('recipes.ingredients')}</h2>
-                <ul className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700">
-                  {recipe.ingredients.map((ri) => {
-                    const baseServings = recipe.servings ?? 1
-                    const displayQty   = ri.quantity * (portionCount / baseServings)
-                    return (
-                      <li key={ri.id} className="flex justify-between items-center px-4 py-3 text-sm">
-                        <span className="text-gray-800 dark:text-gray-200">{ri.ingredient.name}</span>
-                        <span className="text-gray-500 dark:text-gray-400 font-medium">
-                          {formatQty(displayQty, ri.unit)} {ri.unit}
-                        </span>
-                      </li>
-                    )
-                  })}
-                </ul>
-              </section>
-            )}
+            <RecipeIngredients ingredients={recipe.ingredients} servings={recipe.servings} portionCount={portionCount} />
           </div>
 
           {/* Étapes */}
@@ -566,95 +236,20 @@ export default function RecipeDetail() {
       </div>
 
       {/* Commentaires */}
-      <section>
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-          {t('recipes.commentsTitle')} {comments.length > 0 && <span className="text-gray-400 dark:text-gray-500 font-normal text-sm">{t('recipes.commentsCount', { count: comments.length })}</span>}
-        </h2>
-
-        {user && isOwnRecipe ? (
-          <p className="text-sm text-gray-400 dark:text-gray-500 mb-6 px-4 py-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700">
-            {t('recipes.ownRecipeComment')}
-          </p>
-        ) : user ? (
-          <form onSubmit={handleSubmitComment} className="mb-6 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-4">
-            {myComment && (
-              <p className="text-xs text-gold-500 dark:text-gold-400 font-medium mb-3">
-                {t('recipes.editMode')}
-              </p>
-            )}
-            {/* Note obligatoire */}
-            <div className="mb-3">
-              <span className="text-xs text-gray-500 dark:text-gray-400 font-medium mr-2">
-                {t('recipes.yourRating')} {!myComment && <span className="text-red-400">{t('recipes.required')}</span>}
-              </span>
-              <RatingStars value={commentScore} onChange={setCommentScore} />
-            </div>
-            <textarea
-              ref={commentInputRef}
-              value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-              onBlur={() => setCommentTouched(true)}
-              placeholder={t('recipes.commentPlaceholder')}
-              rows={3}
-              className={`w-full px-3 py-2 border rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gold-400 resize-none mb-1 ${
-                commentTouched && !commentText.trim() ? 'border-red-400' : 'border-gray-200 dark:border-gray-600'
-              }`}
-            />
-            {commentTouched && !commentText.trim() && (
-              <p className="text-xs text-red-500 mb-1">{t('recipes.commentEmpty')}</p>
-            )}
-            <button
-              type="submit"
-              disabled={submittingComment || !commentText.trim() || (!myComment && !commentScore)}
-              className="px-4 py-2 bg-gold-400 text-white text-sm font-medium rounded-lg hover:bg-gold-500 disabled:opacity-60 transition-colors"
-            >
-              {submittingComment ? t('recipes.sendingComment') : myComment ? t('recipes.editComment') : t('recipes.submitComment')}
-            </button>
-          </form>
-        ) : (
-          <p className="text-sm text-gray-400 dark:text-gray-500 mb-6">
-            <Link to="/login" className="text-gold-500 dark:text-gold-400 hover:underline">{t('recipes.loginToCommentLink')}</Link> {t('recipes.loginToComment')}
-          </p>
-        )}
-
-        {comments.length === 0 ? (
-          <p className="text-sm text-gray-400 dark:text-gray-500">{t('recipes.noComments')}</p>
-        ) : (
-          <ul className="space-y-4">
-            {comments.map((c) => (
-              <li key={c.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3">
-                <div className="flex items-center justify-between mb-1">
-                  <Link to={`/users/${c.user.id}`} className="text-sm font-medium text-gold-500 dark:text-gold-400 hover:underline">
-                    {c.user.pseudo}
-                  </Link>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-400 dark:text-gray-500">
-                      {new Date(c.createdAt).toLocaleDateString(i18n.language)}
-                    </span>
-                    {user?.id === c.userId && (
-                      <button
-                        onClick={handleEditClick}
-                        className="text-xs text-gold-400 hover:text-gold-500 transition-colors"
-                      >
-                        {t('recipes.modifyComment')}
-                      </button>
-                    )}
-                    {(user?.id === c.userId || user?.role === 'ADMIN' || isOwnRecipe) && (
-                      <button
-                        onClick={() => handleDeleteComment(c.id)}
-                        className="text-xs text-gray-300 dark:text-gray-600 hover:text-red-500 transition-colors"
-                      >
-                        {t('recipes.deleteComment')}
-                      </button>
-                    )}
-                  </div>
-                </div>
-                <p className="text-sm text-gray-700 dark:text-gray-300">{c.content}</p>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      <CommentSection
+        recipeId={id}
+        isOwnRecipe={isOwnRecipe}
+        comments={comments}
+        setComments={setComments}
+        myComment={myComment}
+        setMyComment={setMyComment}
+        commentScore={commentScore}
+        setCommentScore={setCommentScore}
+        avgRating={avgRating}
+        setAvgRating={setAvgRating}
+        ratingsCount={ratingsCount}
+        setRatingsCount={setRatingsCount}
+      />
     </div>
   )
 }
