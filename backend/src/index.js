@@ -27,7 +27,16 @@ const PORT = process.env.PORT || 3000;
 // Middlewares
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
-  contentSecurityPolicy: false,
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "https://placehold.co", "https://*.thecocktaildb.com"],
+      connectSrc: ["'self'"],
+    },
+  },
 }));
 app.use(cors({
   origin: [
