@@ -138,6 +138,8 @@ export default function RecipeDetail() {
             <img
               src={getImageUrl(recipe.imageUrl)}
               alt={recipe.name}
+              width="800"
+              height="450"
               className="w-full h-56 lg:h-72 object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
@@ -181,6 +183,8 @@ export default function RecipeDetail() {
                         <img
                           src={getImageUrl(step.imageUrl)}
                           alt={t('recipes.stepAlt', { order: step.order })}
+                          width="500"
+                          height="400"
                           className="w-full max-w-sm rounded-lg mb-2 border border-gray-100 dark:border-gray-700"
                         />
                       )}
@@ -206,6 +210,8 @@ export default function RecipeDetail() {
                     <img
                       src={getImageUrl(v.imageUrl)}
                       alt={v.name}
+                      width="200"
+                      height="96"
                       className="w-full h-24 object-cover bg-gray-100 dark:bg-gray-700"
                     />
                     <div className="p-2.5">

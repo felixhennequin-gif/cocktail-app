@@ -102,6 +102,8 @@ export default function LandingPage() {
                 <img
                   src={dailyRecipe.imageUrl}
                   alt={dailyRecipe.name}
+                  width="224"
+                  height="192"
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-r from-black/10 to-transparent sm:bg-gradient-to-l" />
