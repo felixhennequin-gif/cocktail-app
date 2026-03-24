@@ -24,6 +24,16 @@ model User {
   followers      Follow[]       @relation("Following")
   notifications  Notification[]
   collections    Collection[]
+  refreshTokens  RefreshToken[]
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    Int
+  token     String   @unique
+  expiresAt DateTime
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
 }
 
 model Recipe {

@@ -1,11 +1,18 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useContext, useState, useEffect, useRef } from 'react'
 
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
-  const [user, setUser]       = useState(null)
-  const [token, setToken]     = useState(() => localStorage.getItem('token'))
-  const [loading, setLoading] = useState(true)
+  const [user, setUser]               = useState(null)
+  const [token, setToken]             = useState(() => localStorage.getItem('token'))
+  const [refreshToken, setRefreshToken] = useState(() => localStorage.getItem('refreshToken'))
+  const [loading, setLoading]         = useState(true)
+
+  // Ref vers le refreshToken pour éviter les closures stale dans authFetch
+  const refreshTokenRef = useRef(refreshToken)
+  const tokenRef = useRef(token)
+  useEffect(() => { refreshTokenRef.current = refreshToken }, [refreshToken])
+  useEffect(() => { tokenRef.current = token }, [token])
 
   // Vérifie le token au démarrage
   useEffect(() => {
@@ -17,10 +24,17 @@ export function AuthProvider({ children }) {
           setUser(u)
         } else {
           localStorage.removeItem('token')
+          localStorage.removeItem('refreshToken')
           setToken(null)
+          setRefreshToken(null)
         }
       })
-      .catch(() => { localStorage.removeItem('token'); setToken(null) })
+      .catch(() => {
+        localStorage.removeItem('token')
+        localStorage.removeItem('refreshToken')
+        setToken(null)
+        setRefreshToken(null)
+      })
       .finally(() => setLoading(false))
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -36,7 +50,9 @@ export function AuthProvider({ children }) {
     }
     const data = await res.json()
     localStorage.setItem('token', data.token)
+    if (data.refreshToken) localStorage.setItem('refreshToken', data.refreshToken)
     setToken(data.token)
+    setRefreshToken(data.refreshToken || null)
     setUser(data.user)
     return data.user
   }
@@ -53,26 +69,71 @@ export function AuthProvider({ children }) {
     }
     const data = await res.json()
     localStorage.setItem('token', data.token)
+    if (data.refreshToken) localStorage.setItem('refreshToken', data.refreshToken)
     setToken(data.token)
+    setRefreshToken(data.refreshToken || null)
     setUser(data.user)
     return data.user
   }
 
-  const logout = () => {
+  const logout = async () => {
+    const currentRefreshToken = refreshTokenRef.current
+    // Invalide le refresh token côté serveur
+    if (currentRefreshToken) {
+      try {
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refreshToken: currentRefreshToken }),
+        })
+      } catch {
+        // Échec silencieux — on nettoie quand même le localStorage
+      }
+    }
     localStorage.removeItem('token')
+    localStorage.removeItem('refreshToken')
     setToken(null)
+    setRefreshToken(null)
     setUser(null)
   }
 
-  // fetch avec token JWT injecté automatiquement
-  const authFetch = (url, options = {}) =>
-    fetch(url, {
+  // fetch avec token JWT injecté automatiquement + refresh automatique sur 401
+  const authFetch = async (url, options = {}) => {
+    const currentToken = tokenRef.current
+    const res = await fetch(url, {
       ...options,
       headers: {
         ...options.headers,
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(currentToken ? { Authorization: `Bearer ${currentToken}` } : {}),
       },
     })
+
+    if (res.status === 401 && refreshTokenRef.current) {
+      // Tenter un refresh
+      const refreshRes = await fetch('/api/auth/refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken: refreshTokenRef.current }),
+      })
+      if (refreshRes.ok) {
+        const data = await refreshRes.json()
+        const newToken = data.token
+        localStorage.setItem('token', newToken)
+        setToken(newToken)
+        tokenRef.current = newToken
+        // Retry la requête originale avec le nouveau token
+        return fetch(url, {
+          ...options,
+          headers: { ...options.headers, Authorization: `Bearer ${newToken}` },
+        })
+      } else {
+        // Refresh échoué → déconnexion
+        await logout()
+        return res
+      }
+    }
+    return res
+  }
 
   return (
     <AuthContext.Provider value={{ user, token, loading, login, register, logout, authFetch }}>
