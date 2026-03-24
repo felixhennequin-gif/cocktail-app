@@ -542,13 +542,6 @@ const deleteRecipe = async (req, res) => {
   }
 
   await prisma.$transaction([
-    prisma.comment.deleteMany({ where: { recipeId: id } }),
-    prisma.rating.deleteMany({ where: { recipeId: id } }),
-    prisma.favorite.deleteMany({ where: { recipeId: id } }),
-    prisma.recipeTag.deleteMany({ where: { recipeId: id } }),
-    prisma.collectionRecipe.deleteMany({ where: { recipeId: id } }),
-    prisma.recipeIngredient.deleteMany({ where: { recipeId: id } }),
-    prisma.step.deleteMany({ where: { recipeId: id } }),
     // Détacher les variantes avant suppression
     prisma.recipe.updateMany({ where: { parentRecipeId: id }, data: { parentRecipeId: null } }),
     prisma.recipe.delete({ where: { id } }),
