@@ -6,17 +6,18 @@ import RecipeCardGrid from '../components/RecipeCardGrid'
 import DifficultyBadge from '../components/DifficultyBadge'
 import { SkeletonCardGrid } from '../components/Skeleton'
 import { useAuth } from '../contexts/AuthContext'
+import useFavorites from '../hooks/useFavorites'
 
 export default function LandingPage() {
-  const { user, authFetch } = useAuth()
+  const { user } = useAuth()
   const { t } = useTranslation()
+  const { favoriteIds, toggleFavorite } = useFavorites()
 
   const [dailyRecipe, setDailyRecipe] = useState(null)
   const [popularRecipes, setPopularRecipes] = useState([])
   const [totalRecipes, setTotalRecipes] = useState(0)
   const [categoryCount, setCategoryCount] = useState(0)
   const [loading, setLoading] = useState(true)
-  const [favoriteIds, setFavoriteIds] = useState(new Set())
 
   useEffect(() => {
     fetch('/api/recipes/daily')
@@ -38,25 +39,6 @@ export default function LandingPage() {
       .then((cats) => setCategoryCount(cats.length))
       .catch(() => {})
   }, [])
-
-  useEffect(() => {
-    if (!user) { setFavoriteIds(new Set()); return }
-    authFetch('/api/favorites')
-      .then((r) => r.ok ? r.json() : [])
-      .then((data) => setFavoriteIds(new Set(data.map((r) => r.id))))
-  }, [user]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  const handleToggleFavorite = async (recipeId) => {
-    if (!user) return
-    const res = await authFetch(`/api/favorites/${recipeId}`, { method: 'POST' })
-    if (!res.ok) return
-    const data = await res.json()
-    setFavoriteIds((prev) => {
-      const next = new Set(prev)
-      data.favorited ? next.add(recipeId) : next.delete(recipeId)
-      return next
-    })
-  }
 
   return (
     <div>
@@ -174,7 +156,7 @@ export default function LandingPage() {
                 key={recipe.id}
                 recipe={recipe}
                 isFavorited={favoriteIds.has(recipe.id)}
-                onToggleFavorite={handleToggleFavorite}
+                onToggleFavorite={toggleFavorite}
               />
             ))}
           </div>

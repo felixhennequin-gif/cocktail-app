@@ -6,12 +6,14 @@ import RecipeCard from '../components/RecipeCard'
 import RecipeCardGrid from '../components/RecipeCardGrid'
 import { SkeletonCard, SkeletonCardGrid } from '../components/Skeleton'
 import { useAuth } from '../contexts/AuthContext'
+import useFavorites from '../hooks/useFavorites'
 
 const LIMIT = 12
 
 export default function RecipeList() {
-  const { user, authFetch }               = useAuth()
+  const { user }                           = useAuth()
   const { t }                             = useTranslation()
+  const { favoriteIds, toggleFavorite }   = useFavorites()
   const [searchParams, setSearchParams]   = useSearchParams()
 
   // L'URL est la source de vérité pour les filtres
@@ -34,7 +36,6 @@ export default function RecipeList() {
   const [loading, setLoading]         = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError]             = useState(null)
-  const [favoriteIds, setFavoriteIds] = useState(new Set())
   const [viewMode, setViewMode] = useState('grid')
   const [showAllTags, setShowAllTags] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
@@ -72,14 +73,6 @@ export default function RecipeList() {
       .then((r) => r.ok ? r.json() : [])
       .then(setTags)
   }, [])
-
-  // Chargement des favoris si connecté
-  useEffect(() => {
-    if (!user) { setFavoriteIds(new Set()); return }
-    authFetch('/api/favorites')
-      .then((r) => r.ok ? r.json() : [])
-      .then((data) => setFavoriteIds(new Set(data.map((r) => r.id))))
-  }, [user]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Fonction de fetch d'une page de recettes
   const fetchPage = useCallback((page, append = false, signal = undefined) => {
@@ -153,18 +146,6 @@ export default function RecipeList() {
     setMaxTimeInput(val)
     clearTimeout(maxTimeDebounceRef.current)
     maxTimeDebounceRef.current = setTimeout(() => setParam('maxTime', val), 400)
-  }
-
-  const handleToggleFavorite = async (recipeId) => {
-    if (!user) return
-    const res = await authFetch(`/api/favorites/${recipeId}`, { method: 'POST' })
-    if (!res.ok) return
-    const data = await res.json()
-    setFavoriteIds((prev) => {
-      const next = new Set(prev)
-      data.favorited ? next.add(recipeId) : next.delete(recipeId)
-      return next
-    })
   }
 
   const SORT_OPTIONS = [
@@ -445,14 +426,14 @@ export default function RecipeList() {
                   key={recipe.id}
                   recipe={recipe}
                   isFavorited={favoriteIds.has(recipe.id)}
-                  onToggleFavorite={handleToggleFavorite}
+                  onToggleFavorite={toggleFavorite}
                 />
               ) : (
                 <RecipeCard
                   key={recipe.id}
                   recipe={recipe}
                   isFavorited={favoriteIds.has(recipe.id)}
-                  onToggleFavorite={handleToggleFavorite}
+                  onToggleFavorite={toggleFavorite}
                 />
               )
             )}

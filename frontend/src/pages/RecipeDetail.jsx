@@ -4,6 +4,7 @@ import { Helmet } from 'react-helmet-async'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
+import useFavorites from '../hooks/useFavorites'
 import { getImageUrl } from '../utils/image'
 import ConfirmModal from '../components/ConfirmModal'
 import AddToCollectionModal from '../components/AddToCollectionModal'
@@ -101,11 +102,11 @@ export default function RecipeDetail() {
   const { user, authFetch } = useAuth()
   const { showToast }       = useToast()
   const { t, i18n }         = useTranslation()
+  const { isFavorited: isFavoritedFn, toggleFavorite } = useFavorites()
 
   const [recipe, setRecipe]           = useState(null)
   const [loading, setLoading]         = useState(true)
   const [error, setError]             = useState(null)
-  const [isFavorited, setIsFavorited] = useState(false)
   const [avgRating, setAvgRating]     = useState(null)
   const [ratingsCount, setRatingsCount] = useState(0)
   const [comments, setComments]         = useState([])
@@ -137,7 +138,6 @@ export default function RecipeDetail() {
         setAvgRating(data.avgRating)
         setRatingsCount(data.ratingsCount)
         setPortionCount(data.servings ?? 1)
-        setIsFavorited(data.isFavorited ?? false)
         setCommentScore(data.userScore ?? null)
       })
       .catch((err) => {
@@ -159,13 +159,12 @@ export default function RecipeDetail() {
     return () => controller.abort()
   }, [id, user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  const isFavorited = recipe ? isFavoritedFn(recipe.id) : false
+
   const handleToggleFavorite = async () => {
     if (!user) return
-    const res = await authFetch(`/api/favorites/${id}`, { method: 'POST' })
-    if (!res.ok) { showToast(t('favorites.errorToast'), 'error'); return }
-    const data = await res.json()
-    setIsFavorited(data.favorited)
-    showToast(data.favorited ? t('favorites.addToast') : t('favorites.removeToast'), 'success')
+    await toggleFavorite(parseInt(id))
+    showToast(!isFavorited ? t('favorites.addToast') : t('favorites.removeToast'), 'success')
   }
 
   const handleSubmitComment = async (e) => {
