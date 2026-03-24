@@ -1,25 +1,22 @@
 const prisma = require('../prisma');
 const { parseId } = require('../helpers');
-
-const MAX_BIO_LENGTH = 500;
+const { updateProfileSchema, formatZodError } = require('../schemas');
 
 // PUT /users/me — met à jour le profil de l'utilisateur connecté
 const updateMyProfile = async (req, res) => {
   const userId = req.user.id;
-  const { pseudo, bio, avatar } = req.body;
 
-  // Validation basique
-  if (pseudo !== undefined && (!pseudo || pseudo.trim().length < 2)) {
-    return res.status(400).json({ error: 'Le pseudo doit faire au moins 2 caractères' });
+  const parsed = updateProfileSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: formatZodError(parsed.error) });
   }
-  if (bio !== undefined && bio && bio.trim().length > MAX_BIO_LENGTH) {
-    return res.status(400).json({ error: `La bio ne doit pas dépasser ${MAX_BIO_LENGTH} caractères` });
-  }
+
+  const { pseudo, bio, avatar } = parsed.data;
 
   try {
     const data = {};
-    if (pseudo  !== undefined) data.pseudo  = pseudo.trim();
-    if (bio     !== undefined) data.bio     = bio?.trim() || null;
+    if (pseudo  !== undefined) data.pseudo  = pseudo;
+    if (bio     !== undefined) data.bio     = bio;
     if (avatar  !== undefined) data.avatar  = avatar || null;
 
     const user = await prisma.user.update({

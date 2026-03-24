@@ -1,24 +1,20 @@
 const prisma = require('../prisma');
 const { parseId } = require('../helpers');
+const { createCollectionSchema, updateCollectionSchema, formatZodError } = require('../schemas');
 
 const MAX_COLLECTIONS_PER_USER = 20;
 const MAX_RECIPES_PER_COLLECTION = 100;
-const MAX_DESCRIPTION_LENGTH = 500;
 
 // POST /collections
 const createCollection = async (req, res) => {
   const userId = req.user.id;
-  const { name, description, isPublic } = req.body;
 
-  if (!name || name.trim().length === 0) {
-    return res.status(400).json({ error: 'Le nom est requis' });
+  const parsed = createCollectionSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: formatZodError(parsed.error) });
   }
-  if (name.trim().length > 100) {
-    return res.status(400).json({ error: 'Le nom ne doit pas dépasser 100 caractères' });
-  }
-  if (description && description.trim().length > MAX_DESCRIPTION_LENGTH) {
-    return res.status(400).json({ error: `La description ne doit pas dépasser ${MAX_DESCRIPTION_LENGTH} caractères` });
-  }
+
+  const { name, description, isPublic } = parsed.data;
 
   // Vérifier la limite
   const count = await prisma.collection.count({ where: { userId } });
@@ -27,12 +23,7 @@ const createCollection = async (req, res) => {
   }
 
   const collection = await prisma.collection.create({
-    data: {
-      name: name.trim(),
-      description: description?.trim() || null,
-      isPublic: isPublic !== undefined ? isPublic : true,
-      userId,
-    },
+    data: { name, description, isPublic, userId },
   });
 
   res.status(201).json(collection);
@@ -115,27 +106,22 @@ const updateCollection = async (req, res) => {
   const id = parseId(req.params.id);
   if (!id) return res.status(400).json({ error: 'id invalide' });
 
-  const { name, description, isPublic } = req.body;
+  const parsed = updateCollectionSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: formatZodError(parsed.error) });
+  }
+
+  const { name, description, isPublic } = parsed.data;
 
   const collection = await prisma.collection.findUnique({ where: { id } });
   if (!collection) return res.status(404).json({ error: 'Collection introuvable' });
   if (collection.userId !== req.user.id) return res.status(403).json({ error: 'Non autorisé' });
 
-  if (name !== undefined && name.trim().length === 0) {
-    return res.status(400).json({ error: 'Le nom est requis' });
-  }
-  if (name !== undefined && name.trim().length > 100) {
-    return res.status(400).json({ error: 'Le nom ne doit pas dépasser 100 caractères' });
-  }
-  if (description !== undefined && description && description.trim().length > MAX_DESCRIPTION_LENGTH) {
-    return res.status(400).json({ error: `La description ne doit pas dépasser ${MAX_DESCRIPTION_LENGTH} caractères` });
-  }
-
   const updated = await prisma.collection.update({
     where: { id },
     data: {
-      ...(name !== undefined && { name: name.trim() }),
-      ...(description !== undefined && { description: description?.trim() || null }),
+      ...(name !== undefined && { name }),
+      ...(description !== undefined && { description }),
       ...(isPublic !== undefined && { isPublic }),
     },
   });

@@ -1,5 +1,6 @@
 const prisma = require('../prisma');
 const { parseId } = require('../helpers');
+const { ratingSchema, formatZodError } = require('../schemas');
 
 // POST /ratings/:recipeId — upsert (crée ou met à jour la note de l'user)
 const upsertRating = async (req, res) => {
@@ -7,11 +8,12 @@ const upsertRating = async (req, res) => {
   const recipeId = parseId(req.params.recipeId);
   if (!recipeId) return res.status(400).json({ error: 'recipeId invalide' });
 
-  const score = parseInt(req.body.score);
-
-  if (!score || score < 1 || score > 5) {
-    return res.status(400).json({ error: 'Le score doit être entre 1 et 5' });
+  const parsed = ratingSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: formatZodError(parsed.error) });
   }
+
+  const { score } = parsed.data;
 
   const recipe = await prisma.recipe.findUnique({ where: { id: recipeId } });
   if (!recipe) return res.status(404).json({ error: 'Recette introuvable' });

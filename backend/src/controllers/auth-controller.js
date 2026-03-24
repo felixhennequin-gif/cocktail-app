@@ -2,26 +2,19 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const prisma = require('../prisma');
 const { JWT_SECRET } = require('../middleware/auth');
+const { registerSchema, loginSchema, formatZodError } = require('../schemas');
 
 const SALT_ROUNDS = 10;
 
 // POST /auth/register
 const register = async (req, res, next) => {
   try {
-    const { email, pseudo, password } = req.body;
+    const parsed = registerSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: formatZodError(parsed.error) });
+    }
 
-    if (!email || !pseudo || !password) {
-      return res.status(400).json({ error: 'email, pseudo et password sont requis' });
-    }
-    if (password.length < 8) {
-      return res.status(400).json({ error: 'Le mot de passe doit faire au moins 8 caractères' });
-    }
-    if (!/[a-zA-Z]/.test(password)) {
-      return res.status(400).json({ error: 'Le mot de passe doit contenir au moins une lettre' });
-    }
-    if (!/[0-9]/.test(password)) {
-      return res.status(400).json({ error: 'Le mot de passe doit contenir au moins un chiffre' });
-    }
+    const { email, pseudo, password } = parsed.data;
 
     const existing = await prisma.user.findFirst({
       where: { OR: [{ email }, { pseudo }] },
@@ -50,11 +43,12 @@ const register = async (req, res, next) => {
 // POST /auth/login
 const login = async (req, res, next) => {
   try {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({ error: 'email et password sont requis' });
+    const parsed = loginSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: formatZodError(parsed.error) });
     }
+
+    const { email, password } = parsed.data;
 
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {

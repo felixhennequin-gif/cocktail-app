@@ -1,8 +1,7 @@
 const prisma = require('../prisma');
 const { createNotification } = require('../services/notification-service');
 const { parseId } = require('../helpers');
-
-const MAX_COMMENT_LENGTH = 2000;
+const { createCommentSchema, updateCommentSchema, formatZodError } = require('../schemas');
 
 // GET /comments/:recipeId — optionalAuth pour exposer myComment + avgRating
 const getComments = async (req, res) => {
@@ -43,19 +42,12 @@ const createComment = async (req, res) => {
   const recipeId = parseId(req.params.recipeId);
   if (!recipeId) return res.status(400).json({ error: 'recipeId invalide' });
 
-  const { content, score } = req.body;
-
-  if (!content || !content.trim()) {
-    return res.status(400).json({ error: 'Le commentaire ne peut pas être vide' });
-  }
-  if (content.trim().length > MAX_COMMENT_LENGTH) {
-    return res.status(400).json({ error: `Le commentaire ne doit pas dépasser ${MAX_COMMENT_LENGTH} caractères` });
+  const parsed = createCommentSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: formatZodError(parsed.error) });
   }
 
-  const scoreInt = parseInt(score);
-  if (!score || isNaN(scoreInt) || scoreInt < 1 || scoreInt > 5) {
-    return res.status(400).json({ error: 'Une note entre 1 et 5 est obligatoire' });
-  }
+  const { content, score: scoreInt } = parsed.data;
 
   const recipe = await prisma.recipe.findUnique({ where: { id: recipeId } });
   if (!recipe) return res.status(404).json({ error: 'Recette introuvable' });
@@ -74,7 +66,7 @@ const createComment = async (req, res) => {
   // Créer le commentaire et upsert la note dans une transaction
   const comment = await prisma.$transaction(async (tx) => {
     const created = await tx.comment.create({
-      data: { content: content.trim(), userId, recipeId },
+      data: { content, userId, recipeId },
       include: {
         user: { select: { id: true, pseudo: true, avatar: true } },
       },
@@ -101,7 +93,7 @@ const createComment = async (req, res) => {
         recipeName:      recipe.name,
         commenterId:     userId,
         commenterPseudo: comment.user.pseudo,
-        commentPreview:  content.trim().slice(0, 50),
+        commentPreview:  content.slice(0, 50),
       },
     }).catch(console.error);
   }
@@ -113,14 +105,12 @@ const updateComment = async (req, res) => {
   const id = parseId(req.params.id);
   if (!id) return res.status(400).json({ error: 'id invalide' });
 
-  const { content, score } = req.body;
+  const parsed = updateCommentSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: formatZodError(parsed.error) });
+  }
 
-  if (!content || !content.trim()) {
-    return res.status(400).json({ error: 'Le commentaire ne peut pas être vide' });
-  }
-  if (content.trim().length > MAX_COMMENT_LENGTH) {
-    return res.status(400).json({ error: `Le commentaire ne doit pas dépasser ${MAX_COMMENT_LENGTH} caractères` });
-  }
+  const { content, score: scoreInt } = parsed.data;
 
   const comment = await prisma.comment.findUnique({ where: { id } });
   if (!comment) return res.status(404).json({ error: 'Commentaire introuvable' });
@@ -129,22 +119,14 @@ const updateComment = async (req, res) => {
     return res.status(403).json({ error: 'Non autorisé' });
   }
 
-  let scoreInt = null;
-  if (score !== undefined && score !== null && score !== '') {
-    scoreInt = parseInt(score);
-    if (isNaN(scoreInt) || scoreInt < 1 || scoreInt > 5) {
-      return res.status(400).json({ error: 'Le score doit être compris entre 1 et 5' });
-    }
-  }
-
   const updated = await prisma.$transaction(async (tx) => {
     const result = await tx.comment.update({
       where: { id },
-      data:  { content: content.trim() },
+      data:  { content },
       include: { user: { select: { id: true, pseudo: true, avatar: true } } },
     });
 
-    if (scoreInt !== null) {
+    if (scoreInt != null) {
       await tx.rating.upsert({
         where:  { userId_recipeId: { userId: comment.userId, recipeId: comment.recipeId } },
         create: { userId: comment.userId, recipeId: comment.recipeId, score: scoreInt },

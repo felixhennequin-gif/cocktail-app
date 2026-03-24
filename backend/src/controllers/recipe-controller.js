@@ -5,6 +5,7 @@ const { invalidateCacheByPattern } = require('../cache');
 const { resolveTagNames } = require('./tag-controller');
 const { parseId } = require('../helpers');
 const { includeDetail, includeList, computeAvgRating, handlePrismaError } = require('../helpers/recipe-helpers');
+const { createRecipeSchema, updateRecipeSchema, formatZodError } = require('../schemas');
 
 // Invalide toutes les entrées de cache liées aux recettes
 const bustRecipeCache = () => invalidateCacheByPattern('/recipes*').catch(() => {});
@@ -306,26 +307,12 @@ const getRecipeById = async (req, res) => {
 // ingredients : [{ ingredientId, quantity, unit }] OU [{ name, quantity, unit }]
 // steps       : [{ order, description }]
 const createRecipe = async (req, res) => {
-  const { name, description, imageUrl, difficulty, prepTime, servings, categoryId, ingredients = [], steps = [], tagIds, tagNames, parentRecipeId, status: requestedStatus } = req.body;
+  const parsed = createRecipeSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: formatZodError(parsed.error) });
+  }
 
-  if (!name || !name.trim()) {
-    return res.status(400).json({ error: 'Le nom est requis' });
-  }
-  if (name.trim().length > 200) {
-    return res.status(400).json({ error: 'Le nom ne doit pas dépasser 200 caractères' });
-  }
-  if (description && description.length > 5000) {
-    return res.status(400).json({ error: 'La description ne doit pas dépasser 5000 caractères' });
-  }
-  if (!difficulty || !['EASY', 'MEDIUM', 'HARD'].includes(difficulty)) {
-    return res.status(400).json({ error: 'La difficulté doit être EASY, MEDIUM ou HARD' });
-  }
-  if (!prepTime || isNaN(parseInt(prepTime)) || parseInt(prepTime) <= 0) {
-    return res.status(400).json({ error: 'Le temps de préparation doit être un nombre positif' });
-  }
-  if (!categoryId || isNaN(parseInt(categoryId))) {
-    return res.status(400).json({ error: 'categoryId est requis' });
-  }
+  const { name, description, imageUrl, difficulty, prepTime, servings, categoryId, ingredients, steps, tagIds, tagNames, parentRecipeId, status: requestedStatus } = parsed.data;
 
   // Calcul du statut final selon le rôle
   let status;
@@ -417,7 +404,13 @@ const createRecipe = async (req, res) => {
 const updateRecipe = async (req, res) => {
   const id = parseId(req.params.id);
   if (!id) return res.status(400).json({ error: 'id invalide' });
-  const { name, description, imageUrl, difficulty, prepTime, servings, categoryId, ingredients, steps, tagIds, tagNames, status: requestedStatus } = req.body;
+
+  const parsed = updateRecipeSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: formatZodError(parsed.error) });
+  }
+
+  const { name, description, imageUrl, difficulty, prepTime, servings, categoryId, ingredients, steps, tagIds, tagNames, status: requestedStatus } = parsed.data;
 
   const exists = await prisma.recipe.findUnique({ where: { id } });
   if (!exists) {
