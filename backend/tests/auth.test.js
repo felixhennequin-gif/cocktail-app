@@ -55,6 +55,14 @@ describe('POST /api/auth/register', () => {
 
     expect(res.status).toBe(400);
   });
+
+  it('refuse si email invalide (400)', async () => {
+    const res = await request(app)
+      .post('/api/auth/register')
+      .send({ pseudo: 'alice', email: 'notanemail', password: 'password123' });
+
+    expect(res.status).toBe(400);
+  });
 });
 
 describe('POST /api/auth/login', () => {
