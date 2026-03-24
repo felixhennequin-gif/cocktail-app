@@ -4,20 +4,24 @@ const prisma = require('../prisma');
 const normalizeTagName = (name) => name.trim().toLowerCase();
 
 // GET /tags — tous les tags avec le nombre de recettes associées
-const getAllTags = async (req, res) => {
-  const tags = await prisma.tag.findMany({
-    include: {
-      _count: { select: { recipes: true } },
-    },
-    orderBy: {
-      recipes: { _count: 'desc' },
-    },
-  });
+const getAllTags = async (req, res, next) => {
+  try {
+    const tags = await prisma.tag.findMany({
+      include: {
+        _count: { select: { recipes: true } },
+      },
+      orderBy: {
+        recipes: { _count: 'desc' },
+      },
+    });
 
-  res.json(tags.map(({ _count, ...tag }) => ({
-    ...tag,
-    recipesCount: _count.recipes,
-  })));
+    res.json(tags.map(({ _count, ...tag }) => ({
+      ...tag,
+      recipesCount: _count.recipes,
+    })));
+  } catch (err) {
+    next(err);
+  }
 };
 
 // Résout des tagNames en tagIds, crée les tags manquants

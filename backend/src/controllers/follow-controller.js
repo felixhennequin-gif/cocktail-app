@@ -3,59 +3,67 @@ const { createNotification } = require('../services/notification-service');
 const { parseId } = require('../helpers');
 
 // POST /users/:id/follow — JWT requis
-const followUser = async (req, res) => {
-  const targetId = parseId(req.params.id);
-  if (!targetId) return res.status(400).json({ error: 'id invalide' });
+const followUser = async (req, res, next) => {
+  try {
+    const targetId = parseId(req.params.id);
+    if (!targetId) return res.status(400).json({ error: 'id invalide' });
 
-  const userId = req.user.id;
+    const userId = req.user.id;
 
-  if (userId === targetId) {
-    return res.status(400).json({ error: 'Vous ne pouvez pas vous suivre vous-même' });
-  }
+    if (userId === targetId) {
+      return res.status(400).json({ error: 'Vous ne pouvez pas vous suivre vous-même' });
+    }
 
-  const target = await prisma.user.findUnique({ where: { id: targetId } });
-  if (!target) return res.status(404).json({ error: 'Utilisateur introuvable' });
+    const target = await prisma.user.findUnique({ where: { id: targetId } });
+    if (!target) return res.status(404).json({ error: 'Utilisateur introuvable' });
 
-  // Vérifier si la relation existait déjà (pour éviter une notif en double)
-  const alreadyFollowing = await prisma.follow.findUnique({
-    where: { followerId_followingId: { followerId: userId, followingId: targetId } },
-  });
+    // Vérifier si la relation existait déjà (pour éviter une notif en double)
+    const alreadyFollowing = await prisma.follow.findUnique({
+      where: { followerId_followingId: { followerId: userId, followingId: targetId } },
+    });
 
-  // Idempotent : pas d'erreur si déjà suivi
-  await prisma.follow.upsert({
-    where: { followerId_followingId: { followerId: userId, followingId: targetId } },
-    create: { followerId: userId, followingId: targetId },
-    update: {},
-  });
+    // Idempotent : pas d'erreur si déjà suivi
+    await prisma.follow.upsert({
+      where: { followerId_followingId: { followerId: userId, followingId: targetId } },
+      create: { followerId: userId, followingId: targetId },
+      update: {},
+    });
 
-  res.json({ following: true });
+    res.json({ following: true });
 
-  // Notifier l'utilisateur suivi — fire and forget, seulement si nouveau follow
-  if (!alreadyFollowing) {
-    createNotification({
-      userId: targetId,
-      type:   'NEW_FOLLOWER',
-      data: {
-        followerId:     userId,
-        followerPseudo: req.user.pseudo,
-      },
-    }).catch(console.error);
+    // Notifier l'utilisateur suivi — fire and forget, seulement si nouveau follow
+    if (!alreadyFollowing) {
+      createNotification({
+        userId: targetId,
+        type:   'NEW_FOLLOWER',
+        data: {
+          followerId:     userId,
+          followerPseudo: req.user.pseudo,
+        },
+      }).catch(console.error);
+    }
+  } catch (err) {
+    next(err);
   }
 };
 
 // DELETE /users/:id/follow — JWT requis
-const unfollowUser = async (req, res) => {
-  const targetId = parseId(req.params.id);
-  if (!targetId) return res.status(400).json({ error: 'id invalide' });
+const unfollowUser = async (req, res, next) => {
+  try {
+    const targetId = parseId(req.params.id);
+    if (!targetId) return res.status(400).json({ error: 'id invalide' });
 
-  const userId = req.user.id;
+    const userId = req.user.id;
 
-  // Silencieux si la relation n'existe pas
-  await prisma.follow.deleteMany({
-    where: { followerId: userId, followingId: targetId },
-  });
+    // Silencieux si la relation n'existe pas
+    await prisma.follow.deleteMany({
+      where: { followerId: userId, followingId: targetId },
+    });
 
-  res.json({ following: false });
+    res.json({ following: false });
+  } catch (err) {
+    next(err);
+  }
 };
 
 // Retourne les IDs que l'utilisateur connecté suit (pour le champ isFollowing)
@@ -69,59 +77,67 @@ const getMyFollowingIds = async (currentUserId) => {
 };
 
 // GET /users/:id/followers?page=1&limit=20
-const getFollowers = async (req, res) => {
-  const id = parseId(req.params.id);
-  if (!id) return res.status(400).json({ error: 'id invalide' });
+const getFollowers = async (req, res, next) => {
+  try {
+    const id = parseId(req.params.id);
+    if (!id) return res.status(400).json({ error: 'id invalide' });
 
-  const page  = Math.max(1, parseInt(req.query.page)  || 1);
-  const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 20));
+    const page  = Math.max(1, parseInt(req.query.page)  || 1);
+    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 20));
 
-  const [follows, total, myFollowingIds] = await Promise.all([
-    prisma.follow.findMany({
-      where: { followingId: id },
-      include: { follower: { select: { id: true, pseudo: true, avatar: true } } },
-      orderBy: { createdAt: 'desc' },
-      skip: (page - 1) * limit,
-      take: limit,
-    }),
-    prisma.follow.count({ where: { followingId: id } }),
-    getMyFollowingIds(req.user?.id),
-  ]);
+    const [follows, total, myFollowingIds] = await Promise.all([
+      prisma.follow.findMany({
+        where: { followingId: id },
+        include: { follower: { select: { id: true, pseudo: true, avatar: true } } },
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      prisma.follow.count({ where: { followingId: id } }),
+      getMyFollowingIds(req.user?.id),
+    ]);
 
-  const data = follows.map((f) => ({
-    ...f.follower,
-    isFollowing: myFollowingIds.has(f.follower.id),
-  }));
+    const data = follows.map((f) => ({
+      ...f.follower,
+      isFollowing: myFollowingIds.has(f.follower.id),
+    }));
 
-  res.json({ data, total, page, limit });
+    res.json({ data, total, page, limit });
+  } catch (err) {
+    next(err);
+  }
 };
 
 // GET /users/:id/following?page=1&limit=20
-const getFollowing = async (req, res) => {
-  const id = parseId(req.params.id);
-  if (!id) return res.status(400).json({ error: 'id invalide' });
+const getFollowing = async (req, res, next) => {
+  try {
+    const id = parseId(req.params.id);
+    if (!id) return res.status(400).json({ error: 'id invalide' });
 
-  const page  = Math.max(1, parseInt(req.query.page)  || 1);
-  const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 20));
+    const page  = Math.max(1, parseInt(req.query.page)  || 1);
+    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 20));
 
-  const [follows, total, myFollowingIds] = await Promise.all([
-    prisma.follow.findMany({
-      where: { followerId: id },
-      include: { following: { select: { id: true, pseudo: true, avatar: true } } },
-      orderBy: { createdAt: 'desc' },
-      skip: (page - 1) * limit,
-      take: limit,
-    }),
-    prisma.follow.count({ where: { followerId: id } }),
-    getMyFollowingIds(req.user?.id),
-  ]);
+    const [follows, total, myFollowingIds] = await Promise.all([
+      prisma.follow.findMany({
+        where: { followerId: id },
+        include: { following: { select: { id: true, pseudo: true, avatar: true } } },
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      prisma.follow.count({ where: { followerId: id } }),
+      getMyFollowingIds(req.user?.id),
+    ]);
 
-  const data = follows.map((f) => ({
-    ...f.following,
-    isFollowing: myFollowingIds.has(f.following.id),
-  }));
+    const data = follows.map((f) => ({
+      ...f.following,
+      isFollowing: myFollowingIds.has(f.following.id),
+    }));
 
-  res.json({ data, total, page, limit });
+    res.json({ data, total, page, limit });
+  } catch (err) {
+    next(err);
+  }
 };
 
 module.exports = { followUser, unfollowUser, getFollowers, getFollowing };
