@@ -1,5 +1,6 @@
 const prisma = require('../prisma');
 const { parseId } = require('../helpers');
+const { computeAvgRating } = require('../helpers/recipe-helpers');
 
 // POST /favorites/:recipeId — toggle (ajoute ou retire)
 const toggleFavorite = async (req, res, next) => {
@@ -47,14 +48,7 @@ const getMyFavorites = async (req, res, next) => {
       orderBy: { createdAt: 'desc' },
     });
 
-    const recipes = favorites.map(({ recipe }) => {
-      const { ratings, ...rest } = recipe;
-      const avgRating =
-        ratings.length > 0
-          ? Math.round((ratings.reduce((sum, r) => sum + r.score, 0) / ratings.length) * 10) / 10
-          : null;
-      return { ...rest, avgRating, ratingsCount: ratings.length };
-    });
+    const recipes = favorites.map(({ recipe }) => computeAvgRating(recipe));
 
     res.json(recipes);
   } catch (err) {

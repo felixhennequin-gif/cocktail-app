@@ -1,6 +1,7 @@
 const prisma = require('../prisma');
 const { parseId } = require('../helpers');
 const { createCollectionSchema, updateCollectionSchema, formatZodError } = require('../schemas');
+const { computeAvgRating } = require('../helpers/recipe-helpers');
 
 const MAX_COLLECTIONS_PER_USER = 20;
 const MAX_RECIPES_PER_COLLECTION = 100;
@@ -89,13 +90,7 @@ const getCollectionById = async (req, res) => {
   }
 
   // Calculer avgRating pour chaque recette
-  const recipes = collection.recipes.map(({ recipe }) => {
-    const { ratings, ...rest } = recipe;
-    const avgRating = ratings.length > 0
-      ? Math.round((ratings.reduce((s, r) => s + r.score, 0) / ratings.length) * 10) / 10
-      : null;
-    return { ...rest, avgRating, ratingsCount: ratings.length };
-  });
+  const recipes = collection.recipes.map(({ recipe }) => computeAvgRating(recipe));
 
   const { recipes: _, ...collectionData } = collection;
   res.json({ ...collectionData, recipes });

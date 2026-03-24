@@ -1,6 +1,7 @@
 const prisma = require('../prisma');
 const { parseId } = require('../helpers');
 const { updateProfileSchema, formatZodError } = require('../schemas');
+const { computeAvgRating } = require('../helpers/recipe-helpers');
 
 // PUT /users/me — met à jour le profil de l'utilisateur connecté
 const updateMyProfile = async (req, res) => {
@@ -68,13 +69,7 @@ const getUserProfile = async (req, res) => {
 
   if (!user) return res.status(404).json({ error: 'Utilisateur introuvable' });
 
-  const recipes = user.recipes.map(({ ratings, ...rest }) => {
-    const avgRating =
-      ratings.length > 0
-        ? Math.round((ratings.reduce((sum, r) => sum + r.score, 0) / ratings.length) * 10) / 10
-        : null;
-    return { ...rest, avgRating, ratingsCount: ratings.length };
-  });
+  const recipes = user.recipes.map(computeAvgRating);
 
   res.json({ ...user, recipes, followersCount, followingCount, isFollowing: !!followRow });
 };
@@ -108,13 +103,7 @@ const getUserRecipes = async (req, res) => {
     prisma.recipe.count({ where }),
   ]);
 
-  const data = recipes.map(({ ratings, ...rest }) => {
-    const avgRating =
-      ratings.length > 0
-        ? Math.round((ratings.reduce((s, r) => s + r.score, 0) / ratings.length) * 10) / 10
-        : null;
-    return { ...rest, avgRating, ratingsCount: ratings.length };
-  });
+  const data = recipes.map(computeAvgRating);
 
   res.json({ user, recipes: { data, total, page, limit } });
 };

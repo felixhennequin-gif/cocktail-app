@@ -1,6 +1,7 @@
 const prisma = require('../prisma');
 const { parseId } = require('../helpers');
 const { ratingSchema, formatZodError } = require('../schemas');
+const { calcAvg } = require('../helpers/recipe-helpers');
 
 // POST /ratings/:recipeId — upsert (crée ou met à jour la note de l'user)
 const upsertRating = async (req, res) => {
@@ -26,10 +27,7 @@ const upsertRating = async (req, res) => {
 
   // Retourne la nouvelle moyenne
   const ratings = await prisma.rating.findMany({ where: { recipeId }, select: { score: true } });
-  const avgRating =
-    ratings.length > 0
-      ? Math.round((ratings.reduce((sum, r) => sum + r.score, 0) / ratings.length) * 10) / 10
-      : null;
+  const avgRating = calcAvg(ratings);
 
   res.json({ avgRating, ratingsCount: ratings.length, userScore: score });
 };

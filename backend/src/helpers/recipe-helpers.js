@@ -36,13 +36,16 @@ const includeList = {
   ...includeTags,
 };
 
+// Calcule la moyenne d'un tableau de ratings (utile pour les résponses API partielles)
+const calcAvg = (ratings) =>
+  ratings.length > 0
+    ? Math.round((ratings.reduce((sum, r) => sum + r.score, 0) / ratings.length) * 10) / 10
+    : null;
+
 // Calcule la moyenne des notes et aplatit les tags
 const computeAvgRating = (recipe) => {
   const { ratings, tags, ...rest } = recipe;
-  const avgRating =
-    ratings.length > 0
-      ? Math.round((ratings.reduce((sum, r) => sum + r.score, 0) / ratings.length) * 10) / 10
-      : null;
+  const avgRating = calcAvg(ratings);
   return {
     ...rest,
     avgRating,
@@ -62,4 +65,4 @@ const handlePrismaError = (err, res) => {
   throw err;
 };
 
-module.exports = { includeTags, includeDetail, includeList, computeAvgRating, handlePrismaError };
+module.exports = { includeTags, includeDetail, includeList, computeAvgRating, calcAvg, handlePrismaError };
