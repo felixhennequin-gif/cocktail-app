@@ -182,44 +182,70 @@ const getAllRecipes = async (req, res) => {
     where.id = { in: minRatingIds.length > 0 ? minRatingIds : [-1] };
   }
 
-  // Tri par avgRating ou favoritesCount nécessite un raw SQL ou un post-sort
+  // Tri par avgRating ou favoritesCount : tri et pagination côté SQL
   const needsAggSort = sortBy === 'avgRating' || sortBy === 'favoritesCount';
 
   if (needsAggSort) {
-    // Récupère toutes les recettes filtrées sans pagination pour trier côté app
-    const allRecipes = await prisma.recipe.findMany({
+    // 1) Récupérer les IDs filtrés via Prisma (rapide, pas de données)
+    const filteredRows = await prisma.recipe.findMany({
       where,
-      include: {
-        ...includeList,
-        _count: { select: { favorites: true } },
-      },
+      select: { id: true },
     });
+    const filteredIds = filteredRows.map(r => r.id);
 
-    const withAgg = allRecipes.map((r) => {
-      const { ratings, _count, ...rest } = r;
-      const avgRating = ratings.length > 0
-        ? Math.round((ratings.reduce((s, x) => s + x.score, 0) / ratings.length) * 10) / 10
-        : null;
-      return { ...rest, avgRating, ratingsCount: ratings.length, favoritesCount: _count.favorites };
-    });
-
-    const dir = sortOrder === 'asc' ? 1 : -1;
-    withAgg.sort((a, b) => {
-      const av = sortBy === 'avgRating' ? (a.avgRating ?? -Infinity) : a.favoritesCount;
-      const bv = sortBy === 'avgRating' ? (b.avgRating ?? -Infinity) : b.favoritesCount;
-      return dir * (av - bv);
-    });
-
-    const total = withAgg.length;
-    const data  = withAgg.slice(offset, offset + limit).map(({ favoritesCount, ...r }) => r);
-
-    // Compteurs de tags facettés
-    const facetWhere = { ...whereWithoutTags };
-    if (minRatingIds !== null) {
-      facetWhere.id = { in: minRatingIds.length > 0 ? minRatingIds : [-1] };
+    if (filteredIds.length === 0) {
+      const facetWhere = { ...whereWithoutTags };
+      if (minRatingIds !== null) {
+        facetWhere.id = { in: minRatingIds.length > 0 ? minRatingIds : [-1] };
+      }
+      const tagCounts = await computeTagCounts(facetWhere);
+      return res.json({ data: [], total: 0, page, limit, tagCounts });
     }
-    const tagCounts = await computeTagCounts(facetWhere);
 
+    // 2) Tri + pagination côté SQL via agrégat
+    const orderCol = sortBy === 'avgRating' ? '"avg_rating"' : '"fav_count"';
+    const orderDir = sortOrder === 'asc' ? 'ASC' : 'DESC';
+    // NULLS LAST pour avgRating (recettes sans note en fin)
+    const nullsClause = sortBy === 'avgRating' ? (sortOrder === 'desc' ? 'NULLS LAST' : 'NULLS FIRST') : '';
+
+    const sortedRows = await prisma.$queryRawUnsafe(`
+      SELECT r.id,
+        COALESCE(AVG(rt.score), NULL) AS "avg_rating",
+        COUNT(DISTINCT f."userId")::int AS "fav_count"
+      FROM "Recipe" r
+      LEFT JOIN "Rating" rt ON rt."recipeId" = r.id
+      LEFT JOIN "Favorite" f ON f."recipeId" = r.id
+      WHERE r.id = ANY($1::int[])
+      GROUP BY r.id
+      ORDER BY ${orderCol} ${orderDir} ${nullsClause}, r.id DESC
+      LIMIT $2 OFFSET $3
+    `, filteredIds, limit, offset);
+
+    const total = filteredIds.length;
+    const pageIds = sortedRows.map(r => r.id);
+
+    if (pageIds.length === 0) {
+      const facetWhere = { ...whereWithoutTags };
+      if (minRatingIds !== null) {
+        facetWhere.id = { in: minRatingIds.length > 0 ? minRatingIds : [-1] };
+      }
+      const tagCounts = await computeTagCounts(facetWhere);
+      return res.json({ data: [], total, page, limit, tagCounts });
+    }
+
+    // 3) Récupérer les recettes complètes et réordonner
+    const [recipes, tagCounts] = await Promise.all([
+      prisma.recipe.findMany({
+        where: { id: { in: pageIds } },
+        include: includeList,
+      }),
+      computeTagCounts({
+        ...whereWithoutTags,
+        ...(minRatingIds !== null ? { id: { in: minRatingIds.length > 0 ? minRatingIds : [-1] } } : {}),
+      }),
+    ]);
+
+    const data = pageIds.map(id => recipes.find(r => r.id === id)).filter(Boolean).map(computeAvgRating);
     return res.json({ data, total, page, limit, tagCounts });
   }
 
