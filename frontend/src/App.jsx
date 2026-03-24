@@ -2,6 +2,7 @@ import { useState, lazy, Suspense } from 'react'
 import { Routes, Route, Link, useNavigate } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import Logo from './components/Logo'
+import ErrorBoundary from './components/ErrorBoundary'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from './contexts/AuthContext'
 import SearchBar        from './components/SearchBar'
@@ -164,25 +165,27 @@ export default function App() {
       <Header />
 
       <main id="main-content" role="main" className="max-w-5xl mx-auto px-4 py-6 md:py-8">
-        <Suspense fallback={<div className="flex justify-center py-16"><div className="w-6 h-6 border-2 border-gold-400 border-t-transparent rounded-full animate-spin" /></div>}>
-        <Routes>
-          <Route path="/"                        element={<LandingPage />} />
-          <Route path="/recipes"                  element={<RecipeList />} />
-          <Route path="/feed"                    element={<Feed />} />
-          <Route path="/recipes/new"             element={<RecipeSubmit />} />
-          <Route path="/recipes/:id"             element={<RecipeDetail />} />
-          <Route path="/login"                   element={<Login />} />
-          <Route path="/register"                element={<Register />} />
-          <Route path="/favorites"               element={<Favorites />} />
-          <Route path="/users/:id"               element={<UserProfile />} />
-          <Route path="/collections/:id"          element={<CollectionDetail />} />
-          <Route path="/admin"                   element={<AdminRecipeList />} />
-          <Route path="/admin/pending"           element={<AdminPendingList />} />
-          <Route path="/admin/recipes/new"       element={<AdminRecipeForm />} />
-          <Route path="/admin/recipes/:id/edit"  element={<AdminRecipeForm />} />
-          <Route path="*"                        element={<NotFound />} />
-        </Routes>
-        </Suspense>
+        <ErrorBoundary>
+          <Suspense fallback={<div className="flex justify-center py-16"><div className="w-6 h-6 border-2 border-gold-400 border-t-transparent rounded-full animate-spin" /></div>}>
+          <Routes>
+            <Route path="/"                        element={<LandingPage />} />
+            <Route path="/recipes"                  element={<RecipeList />} />
+            <Route path="/feed"                    element={<Feed />} />
+            <Route path="/recipes/new"             element={<RecipeSubmit />} />
+            <Route path="/recipes/:id"             element={<RecipeDetail />} />
+            <Route path="/login"                   element={<Login />} />
+            <Route path="/register"                element={<Register />} />
+            <Route path="/favorites"               element={<Favorites />} />
+            <Route path="/users/:id"               element={<UserProfile />} />
+            <Route path="/collections/:id"          element={<CollectionDetail />} />
+            <Route path="/admin"                   element={<AdminRecipeList />} />
+            <Route path="/admin/pending"           element={<AdminPendingList />} />
+            <Route path="/admin/recipes/new"       element={<AdminRecipeForm />} />
+            <Route path="/admin/recipes/:id/edit"  element={<AdminRecipeForm />} />
+            <Route path="*"                        element={<NotFound />} />
+          </Routes>
+          </Suspense>
+        </ErrorBoundary>
       </main>
       <Footer />
     </div>
