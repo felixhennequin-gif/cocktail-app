@@ -64,6 +64,10 @@ model Recipe {
   variants       Recipe[] @relation("RecipeVariants")
   // Collections (Feature 2)
   collections    CollectionRecipe[]
+
+  @@index([categoryId])
+  @@index([authorId])
+  @@index([status, createdAt])
 }
 
 model Category {
@@ -121,6 +125,7 @@ model Rating {
   recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
 
   @@unique([userId, recipeId])
+  @@index([recipeId])
 }
 
 model Comment {
@@ -134,6 +139,7 @@ model Comment {
   recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
 
   @@unique([userId, recipeId])
+  @@index([recipeId])
 }
 
 model Follow {
@@ -190,6 +196,8 @@ model Collection {
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
   recipes     CollectionRecipe[]
+
+  @@index([userId])
 }
 
 model CollectionRecipe {
