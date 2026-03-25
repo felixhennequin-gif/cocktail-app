@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useRef } from 'react'
+import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react'
 
 const AuthContext = createContext(null)
 
@@ -36,7 +36,7 @@ export function AuthProvider({ children }) {
         setRefreshToken(null)
       })
       .finally(() => setLoading(false))
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, []) // run once on mount — vérifie le token stocké au démarrage uniquement
 
   const login = async (email, password) => {
     const res = await fetch('/api/auth/login', {
@@ -98,7 +98,8 @@ export function AuthProvider({ children }) {
   }
 
   // fetch avec token JWT injecté automatiquement + refresh automatique sur 401
-  const authFetch = async (url, options = {}) => {
+  // useCallback([]) : authFetch est stable car elle lit le token via tokenRef/refreshTokenRef
+  const authFetch = useCallback(async (url, options = {}) => {
     const currentToken = tokenRef.current
     const res = await fetch(url, {
       ...options,
@@ -133,7 +134,7 @@ export function AuthProvider({ children }) {
       }
     }
     return res
-  }
+  }, [])
 
   return (
     <AuthContext.Provider value={{ user, token, loading, login, register, logout, authFetch }}>

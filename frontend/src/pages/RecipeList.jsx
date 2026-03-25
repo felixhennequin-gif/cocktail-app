@@ -62,7 +62,7 @@ export default function RecipeList() {
   // Ouvrir automatiquement le panneau filtres si des filtres avancés sont actifs au chargement
   useEffect(() => {
     if (hasAdvancedFilters) setShowFilters(true)
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, []) // run once on mount — initialise le panneau filtres selon l'URL initiale uniquement
 
   // Chargement des catégories, tags et cocktail du jour au montage
   useEffect(() => {
@@ -115,14 +115,14 @@ export default function RecipeList() {
         if (err.name !== 'AbortError') setError(err.message)
       })
       .finally(() => { setLoading(false); setLoadingMore(false) })
-  }, [q, categoryId, minRating, maxTime, sortBy, sortOrder, tagIds.join(',')]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [q, categoryId, minRating, maxTime, sortBy, sortOrder, tagIds.join(',')]) // eslint-disable-line react-hooks/exhaustive-deps — tagIds.join(',') est intentionnel (array instable)
 
   // Rechargement initial quand les filtres changent
   useEffect(() => {
     const controller = new AbortController()
     fetchPage(1, false, controller.signal)
     return () => controller.abort()
-  }, [filterKey]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [filterKey, fetchPage])
 
   const hasMore = recipes.length < total
 
@@ -139,7 +139,7 @@ export default function RecipeList() {
     )
     observer.observe(sentinelRef.current)
     return () => observer.disconnect()
-  }, [hasMore, loadingMore, loading, currentPage, filterKey]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [hasMore, loadingMore, loading, currentPage, filterKey, fetchPage])
 
   const handleMaxTimeChange = (e) => {
     const val = e.target.value

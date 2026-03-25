@@ -10,7 +10,7 @@ export default function useFavorites() {
     authFetch('/api/favorites')
       .then((r) => r.ok ? r.json() : [])
       .then((data) => setFavoriteIds(new Set(data.map((r) => r.id))))
-  }, [user]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [user, authFetch])
 
   const isFavorited = useCallback((recipeId) => favoriteIds.has(recipeId), [favoriteIds])
 

@@ -20,7 +20,7 @@ const formatNotif = (notif, t) => {
 
 export default function NotificationBell() {
   const { user, authFetch }           = useAuth()
-  const { t }                         = useTranslation()
+  const { t, i18n }                   = useTranslation()
   const [notifications, setNotifications] = useState([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [open, setOpen]               = useState(false)
@@ -56,7 +56,7 @@ export default function NotificationBell() {
       clearInterval(interval)
       document.removeEventListener('visibilitychange', handleVisibility)
     }
-  }, [user]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [user, authFetch])
 
   // Fermer au clic extérieur
   useEffect(() => {
@@ -129,7 +129,7 @@ export default function NotificationBell() {
                         {formatNotif(notif, t)}
                       </p>
                       <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                        {new Date(notif.createdAt).toLocaleDateString('fr-FR', {
+                        {new Date(notif.createdAt).toLocaleDateString(i18n.language, {
                           day: 'numeric', month: 'short',
                           hour: '2-digit', minute: '2-digit',
                         })}

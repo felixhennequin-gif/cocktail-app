@@ -65,7 +65,7 @@ export default function RecipeDetail() {
       .catch(() => {})
 
     return () => controller.abort()
-  }, [id, user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [id, user?.id, authFetch])
 
   const isFavorited = recipe ? isFavoritedFn(recipe.id) : false
 
