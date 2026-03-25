@@ -83,8 +83,11 @@ describe('GET /api/favorites', () => {
       .set(getAuthHeader(aliceToken));
 
     expect(res.status).toBe(200);
-    expect(res.body).toHaveLength(2);
-    const noms = res.body.map((r) => r.name);
+    expect(res.body).toHaveProperty('data');
+    expect(res.body).toHaveProperty('total', 2);
+    expect(res.body).toHaveProperty('page', 1);
+    expect(res.body.data).toHaveLength(2);
+    const noms = res.body.data.map((r) => r.name);
     expect(noms).toContain('Mojito');
     expect(noms).toContain('Daiquiri');
   });
@@ -95,7 +98,8 @@ describe('GET /api/favorites', () => {
       .set(getAuthHeader(aliceToken));
 
     expect(res.status).toBe(200);
-    expect(res.body).toEqual([]);
+    expect(res.body.data).toEqual([]);
+    expect(res.body.total).toBe(0);
   });
 
   it('chaque recette favorite contient avgRating et ratingsCount', async () => {
@@ -107,8 +111,8 @@ describe('GET /api/favorites', () => {
       .set(getAuthHeader(aliceToken));
 
     expect(res.status).toBe(200);
-    expect(res.body[0]).toHaveProperty('avgRating');
-    expect(res.body[0]).toHaveProperty('ratingsCount');
+    expect(res.body.data[0]).toHaveProperty('avgRating');
+    expect(res.body.data[0]).toHaveProperty('ratingsCount');
   });
 
   it('isole les favoris entre utilisateurs', async () => {
@@ -122,7 +126,28 @@ describe('GET /api/favorites', () => {
       .set(getAuthHeader(bobToken));
 
     expect(resBob.status).toBe(200);
-    expect(resBob.body).toHaveLength(0);
+    expect(resBob.body.data).toHaveLength(0);
+    expect(resBob.body.total).toBe(0);
+  });
+
+  it('supporte la pagination via ?page et ?limit', async () => {
+    const recipe1 = await createTestRecipe({ authorId: bob.id, categoryId: category.id, name: 'Mojito' });
+    const recipe2 = await createTestRecipe({ authorId: bob.id, categoryId: category.id, name: 'Daiquiri' });
+    const recipe3 = await createTestRecipe({ authorId: bob.id, categoryId: category.id, name: 'Margarita' });
+
+    await request(app).post(`/api/favorites/${recipe1.id}`).set(getAuthHeader(aliceToken));
+    await request(app).post(`/api/favorites/${recipe2.id}`).set(getAuthHeader(aliceToken));
+    await request(app).post(`/api/favorites/${recipe3.id}`).set(getAuthHeader(aliceToken));
+
+    const res = await request(app)
+      .get('/api/favorites?page=1&limit=2')
+      .set(getAuthHeader(aliceToken));
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toHaveLength(2);
+    expect(res.body.total).toBe(3);
+    expect(res.body.page).toBe(1);
+    expect(res.body.limit).toBe(2);
   });
 
   it('retourne 401 sans token', async () => {

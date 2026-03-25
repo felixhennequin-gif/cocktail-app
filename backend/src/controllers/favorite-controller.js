@@ -29,28 +29,34 @@ const toggleFavorite = async (req, res, next) => {
   }
 };
 
-// GET /favorites — recettes favorites de l'utilisateur connecté
+// GET /favorites — recettes favorites de l'utilisateur connecté (paginées)
 const getMyFavorites = async (req, res, next) => {
   try {
     const userId = req.user.id;
+    const page  = Math.max(1, parseInt(req.query.page)  || 1);
+    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 20));
 
-    const favorites = await prisma.favorite.findMany({
-      where: { userId },
-      include: {
-        recipe: {
-          include: {
-            category: true,
-            author: { select: { id: true, pseudo: true } },
-            ratings: { select: { score: true } },
+    const [favorites, total] = await Promise.all([
+      prisma.favorite.findMany({
+        where: { userId },
+        include: {
+          recipe: {
+            include: {
+              category: true,
+              author: { select: { id: true, pseudo: true } },
+              ratings: { select: { score: true } },
+            },
           },
         },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      prisma.favorite.count({ where: { userId } }),
+    ]);
 
-    const recipes = favorites.map(({ recipe }) => computeAvgRating(recipe));
-
-    res.json(recipes);
+    const data = favorites.map(({ recipe }) => computeAvgRating(recipe));
+    res.json({ data, total, page, limit });
   } catch (err) {
     next(err);
   }
