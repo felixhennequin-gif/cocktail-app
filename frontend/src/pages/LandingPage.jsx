@@ -53,11 +53,14 @@ export default function LandingPage() {
       {/* Hero */}
       <div className="mb-10 text-center py-10 sm:py-14">
         <h1 className="text-4xl sm:text-5xl font-serif font-normal text-gray-900 dark:text-gray-100 leading-tight mb-4">
-          {t('recipes.heroTitle').split(' ').map((word, i) =>
-            word === 'occasion' || word === 'every'
-              ? <em key={i} className="text-gold-400 dark:text-gold-400 not-italic">{word} </em>
-              : word + ' '
-          )}
+          {(() => {
+            const highlights = new Set(t('recipes.heroTitleHighlight').split(','))
+            return t('recipes.heroTitle').split(' ').map((word, i) =>
+              highlights.has(word.toLowerCase())
+                ? <em key={i} className="text-gold-400 dark:text-gold-400 not-italic">{word} </em>
+                : word + ' '
+            )
+          })()}
         </h1>
         <p className="text-base sm:text-lg text-gray-500 dark:text-gray-400 max-w-lg mx-auto mb-4">
           {t('recipes.heroSubtitle')}
