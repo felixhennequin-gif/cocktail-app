@@ -114,9 +114,13 @@ function Header() {
         <SearchBar />
       </div>
 
-      {/* Menu déroulant mobile */}
-      {menuOpen && (
-        <nav aria-label="Menu mobile" className="md:hidden absolute top-full left-0 right-0 bg-white dark:bg-ink-900 border-b border-gray-200 dark:border-gray-700 shadow-lg z-50 px-4 py-3 flex flex-col gap-3 text-sm">
+      {/* Menu déroulant mobile — toujours dans le DOM pour permettre la transition CSS */}
+      <nav
+        aria-label="Menu mobile"
+        className={`md:hidden absolute top-full left-0 right-0 bg-white dark:bg-ink-900 border-b border-gray-200 dark:border-gray-700 shadow-lg z-50 px-4 flex flex-col gap-3 text-sm overflow-hidden transition-all duration-200 ease-in-out ${
+          menuOpen ? 'max-h-96 opacity-100 py-3' : 'max-h-0 opacity-0 pointer-events-none'
+        }`}
+      >
           {user ? (
             <>
               <Link to="/feed"        onClick={closeMenu} className="text-gray-700 dark:text-gray-300 hover:text-gold-400 dark:hover:text-gold-300 py-1">{t('nav.feedFull')}</Link>
@@ -142,8 +146,7 @@ function Header() {
             <LanguageToggle />
             <ThemeToggle />
           </div>
-        </nav>
-      )}
+      </nav>
     </header>
   )
 }
