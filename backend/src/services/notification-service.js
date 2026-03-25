@@ -1,11 +1,28 @@
 const prisma = require('../prisma');
 
+// Nombre maximum de notifications conservées par user
+const MAX_NOTIFICATIONS_PER_USER = 100;
+
 /**
- * Crée une notification.
- * Retourne une Promise — à appeler avec .catch(console.error) (fire and forget).
+ * Crée une notification et supprime l'excédent au-delà de MAX_NOTIFICATIONS_PER_USER.
+ * Fire and forget — à appeler sans await.
  */
-const createNotification = ({ userId, type, data }) =>
-  prisma.notification.create({ data: { userId, type, data } });
+const createNotification = async ({ userId, type, data }) => {
+  const notif = await prisma.notification.create({ data: { userId, type, data } });
+
+  // Supprimer les notifications les plus anciennes si le seuil est dépassé
+  const toDelete = await prisma.notification.findMany({
+    where:   { userId },
+    orderBy: { createdAt: 'desc' },
+    skip:    MAX_NOTIFICATIONS_PER_USER,
+    select:  { id: true },
+  });
+  if (toDelete.length > 0) {
+    await prisma.notification.deleteMany({ where: { id: { in: toDelete.map((n) => n.id) } } });
+  }
+
+  return notif;
+};
 
 /**
  * Crée une notification pour chaque follower d'un auteur.
