@@ -25,28 +25,28 @@ describe('POST /api/favorites/:recipeId', () => {
     expect(res.body.favorited).toBe(true);
   });
 
-  it('retire le favori au second appel (toggle)', async () => {
+  it('retire le favori via DELETE', async () => {
     const recipe = await createTestRecipe({ authorId: bob.id, categoryId: category.id });
 
-    // Premier appel — ajoute
+    // Ajoute
     await request(app)
       .post(`/api/favorites/${recipe.id}`)
       .set(getAuthHeader(aliceToken));
 
-    // Second appel — retire
+    // Retire via DELETE
     const res = await request(app)
-      .post(`/api/favorites/${recipe.id}`)
+      .delete(`/api/favorites/${recipe.id}`)
       .set(getAuthHeader(aliceToken));
 
     expect(res.status).toBe(200);
     expect(res.body.favorited).toBe(false);
   });
 
-  it('re-ajoute après avoir retiré (toggle idempotent)', async () => {
+  it('re-ajoute après avoir retiré', async () => {
     const recipe = await createTestRecipe({ authorId: bob.id, categoryId: category.id });
 
     await request(app).post(`/api/favorites/${recipe.id}`).set(getAuthHeader(aliceToken)); // add
-    await request(app).post(`/api/favorites/${recipe.id}`).set(getAuthHeader(aliceToken)); // remove
+    await request(app).delete(`/api/favorites/${recipe.id}`).set(getAuthHeader(aliceToken)); // remove
     const res = await request(app).post(`/api/favorites/${recipe.id}`).set(getAuthHeader(aliceToken)); // add again
 
     expect(res.status).toBe(200);

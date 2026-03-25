@@ -92,6 +92,7 @@ model RecipeIngredient {
   ingredient   Ingredient @relation(fields: [ingredientId], references: [id])
 
   @@index([recipeId])
+  @@index([ingredientId])
 }
 
 model Step {
@@ -138,8 +139,8 @@ model Comment {
   user      User     @relation(fields: [userId], references: [id])
   recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, recipeId])
   @@index([recipeId])
+  @@index([userId, recipeId])
 }
 
 model Follow {

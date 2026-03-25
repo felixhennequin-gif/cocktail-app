@@ -137,7 +137,9 @@
     "heroCta": "Explore recipes",
     "heroCtaSecondary": "Create an account — it's free",
     "heroCtaHint": "Save your favorites, rate and comment on recipes.",
-    "heroSocialProof": "{{recipes}}+ recipes · {{categories}} categories · 100% free"
+    "heroSocialProof": "{{recipes}}+ recipes · {{categories}} categories · 100% free",
+    "viewList": "List view",
+    "viewGrid": "Grid view"
   },
   "favorites": {
     "title": "My favorites",
@@ -336,6 +338,8 @@
     "notifNewRecipe": "{{author}} published \"{{recipe}}\"",
     "notifComment": "{{commenter}} commented on \"{{recipe}}\": {{preview}}",
     "notifApproved": "Your recipe \"{{recipe}}\" has been published!",
+    "notifNewFollower": "{{follower}} is now following you",
+    "skipToContent": "Skip to main content",
     "notFound404": "404",
     "notFoundTitle": "Page not found",
     "notFoundMessage": "This page doesn't exist or has been moved.",

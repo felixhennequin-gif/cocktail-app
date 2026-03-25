@@ -8,6 +8,7 @@ const fs = require('fs');
 const FileType = require('file-type');
 const { generalLimiter, authLimiter } = require('./rateLimiter');
 const { requireAuth } = require('./middleware/auth');
+const prisma = require('./prisma');
 
 const recipeRoutes   = require('./routes/recipe-routes');
 const categoryRoutes = require('./routes/category-routes');
@@ -47,7 +48,7 @@ app.use(cors({
   ],
   credentials: true,
 }));
-app.use(express.json({ limit: '50kb' }));
+app.use(express.json({ limit: '10kb' }));
 app.use(generalLimiter);
 
 // Static uploads
@@ -121,7 +122,16 @@ const uploadStep = multer({ storage: stepStorage, limits: { fileSize: 5 * 1024 *
 // Router API — toutes les routes data sous /api
 const apiRouter = express.Router();
 
-apiRouter.get('/health', (req, res) => res.json({ status: 'ok' }));
+apiRouter.get('/health', async (req, res) => {
+  const checks = { db: false, redis: false };
+  try { await prisma.$queryRaw`SELECT 1`; checks.db = true; } catch {}
+  try {
+    const { redis } = require('./cache');
+    if (redis) { await redis.ping(); checks.redis = true; }
+  } catch {}
+  const ok = checks.db;
+  res.status(ok ? 200 : 503).json({ status: ok ? 'ok' : 'degraded', checks });
+});
 apiRouter.post('/upload', requireAuth, upload.single('image'), validateImageMagicBytes, (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Aucun fichier reçu' });
   res.json({ url: `/uploads/${req.file.filename}` });
@@ -187,9 +197,20 @@ app.use((err, req, res, next) => {
 
 // Démarrage du serveur (uniquement si exécuté directement, pas via require)
 if (require.main === module) {
-  app.listen(PORT, () => {
+  const server = app.listen(PORT, () => {
     console.log(`Serveur démarré sur le port ${PORT}`);
   });
+
+  const shutdown = async () => {
+    console.log('[server] Arrêt en cours...');
+    server.close();
+    await prisma.$disconnect();
+    const { redis } = require('./cache');
+    if (redis) await redis.quit();
+    process.exit(0);
+  };
+  process.on('SIGTERM', shutdown);
+  process.on('SIGINT', shutdown);
 }
 
 module.exports = app;

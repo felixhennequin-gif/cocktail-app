@@ -8,7 +8,7 @@ const { includeDetail, includeList, computeAvgRating, handlePrismaError } = requ
 const { createRecipeSchema, updateRecipeSchema, formatZodError } = require('../schemas');
 
 // Invalide toutes les entrées de cache liées aux recettes
-const bustRecipeCache = () => invalidateCacheByPattern('/recipes*').catch(() => {});
+const bustRecipeCache = () => invalidateCacheByPattern('cocktail:*').catch(() => {});
 
 // Calcule les compteurs de tags filtrés (faceted filter : tous les filtres SAUF les tags)
 const computeTagCounts = async (whereWithoutTags) => {
@@ -547,6 +547,7 @@ const deleteRecipe = async (req, res) => {
     prisma.recipe.delete({ where: { id } }),
   ]);
 
+  console.log('[recipe] deleted', { id, name: exists.name, authorId: exists.authorId });
   res.status(204).send();
   bustRecipeCache();
 };

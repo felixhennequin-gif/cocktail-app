@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../contexts/AuthContext'
 import RecipeCard from '../components/RecipeCard'
+import useFavorites from '../hooks/useFavorites'
 
 const LIMIT = 20
 
@@ -10,12 +11,12 @@ export default function Favorites() {
   const { user, authFetch } = useAuth()
   const { t }    = useTranslation()
   const navigate = useNavigate()
+  const { favoriteIds: globalFavoriteIds, toggleFavorite } = useFavorites()
 
-  const [recipes, setRecipes]         = useState([])
-  const [favoriteIds, setFavoriteIds] = useState(new Set())
-  const [loading, setLoading]         = useState(true)
-  const [page, setPage]               = useState(1)
-  const [total, setTotal]             = useState(0)
+  const [recipes, setRecipes] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [page, setPage]       = useState(1)
+  const [total, setTotal]     = useState(0)
 
   useEffect(() => {
     if (!user) { navigate('/login', { state: { from: '/favorites' } }); return }
@@ -24,21 +25,15 @@ export default function Favorites() {
       .then((r) => r.ok ? r.json() : { data: [], total: 0, page: 1, limit: LIMIT })
       .then(({ data, total: t }) => {
         setRecipes(data)
-        setFavoriteIds(new Set(data.map((r) => r.id)))
         setTotal(t)
       })
       .finally(() => setLoading(false))
   }, [user, page]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleToggleFavorite = async (recipeId) => {
-    const res = await authFetch(`/api/favorites/${recipeId}`, { method: 'POST' })
-    if (!res.ok) return
-    const data = await res.json()
-    if (!data.favorited) {
-      setRecipes((prev) => prev.filter((r) => r.id !== recipeId))
-      setFavoriteIds((prev) => { const next = new Set(prev); next.delete(recipeId); return next })
-      setTotal((prev) => Math.max(0, prev - 1))
-    }
+  const handleUnfavorite = async (recipeId) => {
+    await toggleFavorite(recipeId)
+    setRecipes((prev) => prev.filter((r) => r.id !== recipeId))
+    setTotal((prev) => Math.max(0, prev - 1))
   }
 
   const totalPages = Math.ceil(total / LIMIT)
@@ -68,8 +63,9 @@ export default function Favorites() {
               <RecipeCard
                 key={recipe.id}
                 recipe={recipe}
-                isFavorited={favoriteIds.has(recipe.id)}
-                onToggleFavorite={handleToggleFavorite}
+                isFavorited={globalFavoriteIds.has(recipe.id)}
+                onToggleFavorite={handleUnfavorite}
+                userId={user?.id}
               />
             ))}
           </div>

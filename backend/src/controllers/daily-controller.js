@@ -49,7 +49,7 @@ const getDailyRecipe = async (req, res) => {
       const midnight = new Date(now);
       midnight.setHours(24, 0, 0, 0);
       const ttl = Math.max(1, Math.floor((midnight - now) / 1000));
-      const cacheKey = 'daily-recipe';
+      const cacheKey = 'cocktail:daily-recipe';
       try {
         await redis.setex(cacheKey, ttl, JSON.stringify(computeAvgRating(recipe)));
       } catch {

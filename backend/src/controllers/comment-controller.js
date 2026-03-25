@@ -56,11 +56,12 @@ const createComment = async (req, res) => {
     return res.status(403).json({ error: 'Vous ne pouvez pas commenter votre propre recette' });
   }
 
-  const existing = await prisma.comment.findUnique({
-    where: { userId_recipeId: { userId, recipeId } },
+  // Vérifier si l'utilisateur a déjà commenté cette recette
+  const existingComment = await prisma.comment.findFirst({
+    where: { userId, recipeId },
   });
-  if (existing) {
-    return res.status(409).json({ error: 'Vous avez déjà commenté cette recette', commentId: existing.id });
+  if (existingComment) {
+    return res.status(409).json({ error: 'Vous avez déjà commenté cette recette' });
   }
 
   // Créer le commentaire et upsert la note dans une transaction

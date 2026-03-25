@@ -153,17 +153,18 @@ function Header() {
 
 export default function App() {
   const { loading } = useAuth()
+  const { t } = useTranslation()
 
   if (loading) return null
 
   return (
     <div className="min-h-screen bg-gold-50 dark:bg-ink-950 transition-colors">
-      <Helmet defaultTitle="Cocktails — Recettes &amp; Inspiration" />
+      <Helmet defaultTitle="Cocktails — Recettes & Inspiration" />
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2 focus:bg-gold-400 focus:text-ink-900 focus:rounded-lg focus:text-sm focus:font-medium"
       >
-        Aller au contenu principal
+        {t('common.skipToContent')}
       </a>
       <Header />
 

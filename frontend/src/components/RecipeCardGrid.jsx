@@ -1,13 +1,11 @@
 import { memo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { useAuth } from '../contexts/AuthContext'
 import { getImageUrl } from '../utils/image'
 import DifficultyBadge from './DifficultyBadge'
 import Stars from './Stars'
 
-function RecipeCardGrid({ recipe, isFavorited, onToggleFavorite }) {
-  const { user } = useAuth()
+function RecipeCardGrid({ recipe, isFavorited, onToggleFavorite, userId }) {
   const { t } = useTranslation()
 
   const handleFavorite = (e) => {
@@ -37,7 +35,7 @@ function RecipeCardGrid({ recipe, isFavorited, onToggleFavorite }) {
           <DifficultyBadge difficulty={recipe.difficulty} />
         </div>
         {/* Favori en overlay */}
-        {user && (
+        {userId && (
           <button
             onClick={handleFavorite}
             className={`absolute top-2 right-2 text-lg leading-none transition-colors drop-shadow ${isFavorited ? 'text-red-500' : 'text-white/70 hover:text-red-400'}`}

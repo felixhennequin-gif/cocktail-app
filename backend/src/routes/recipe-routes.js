@@ -8,7 +8,7 @@ const router = Router();
 
 router.get('/',          optionalAuth, cacheMiddleware(60),  getAllRecipes);
 router.get('/daily',     optionalAuth, cacheMiddleware(300), getDailyRecipe); // avant /:id
-router.get('/:id',       optionalAuth, cacheMiddleware(120), getRecipeById);
+router.get('/:id',       optionalAuth, getRecipeById);
 router.post('/',         requireAuth,  createRecipe);
 router.put('/:id',       requireAuth,  updateRecipe);
 router.delete('/:id',    requireAuth,  deleteRecipe);

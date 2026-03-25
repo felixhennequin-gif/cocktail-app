@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import RecipeCard from '../components/RecipeCard'
 import { SkeletonCard } from '../components/Skeleton'
 import { useAuth } from '../contexts/AuthContext'
+import useFavorites from '../hooks/useFavorites'
 
 const LIMIT = 20
 
@@ -11,13 +12,13 @@ export default function Feed() {
   const { user, authFetch } = useAuth()
   const { t }               = useTranslation()
   const navigate            = useNavigate()
+  const { favoriteIds, toggleFavorite } = useFavorites()
 
   const [recipes, setRecipes]         = useState([])
   const [nextCursor, setNextCursor]   = useState(null)
   const [hasMore, setHasMore]         = useState(false)
   const [loading, setLoading]         = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
-  const [favoriteIds, setFavoriteIds] = useState(new Set())
 
   useEffect(() => {
     if (!user) { navigate('/login'); return }
@@ -36,14 +37,6 @@ export default function Feed() {
       .finally(() => setLoading(false))
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Favoris
-  useEffect(() => {
-    if (!user) return
-    authFetch('/api/favorites')
-      .then((r) => r.ok ? r.json() : [])
-      .then((data) => setFavoriteIds(new Set(data.map((r) => r.id))))
-  }, [user]) // eslint-disable-line react-hooks/exhaustive-deps
-
   const loadMore = async () => {
     if (!nextCursor || loadingMore) return
     setLoadingMore(true)
@@ -55,18 +48,6 @@ export default function Feed() {
       setHasMore(data.nextCursor !== null)
     }
     setLoadingMore(false)
-  }
-
-  const handleToggleFavorite = async (recipeId) => {
-    if (!user) return
-    const res = await authFetch(`/api/favorites/${recipeId}`, { method: 'POST' })
-    if (!res.ok) return
-    const data = await res.json()
-    setFavoriteIds((prev) => {
-      const next = new Set(prev)
-      data.favorited ? next.add(recipeId) : next.delete(recipeId)
-      return next
-    })
   }
 
   if (!user) return null
@@ -98,7 +79,8 @@ export default function Feed() {
                 key={recipe.id}
                 recipe={recipe}
                 isFavorited={favoriteIds.has(recipe.id)}
-                onToggleFavorite={handleToggleFavorite}
+                onToggleFavorite={toggleFavorite}
+                userId={user?.id}
               />
             ))}
           </div>

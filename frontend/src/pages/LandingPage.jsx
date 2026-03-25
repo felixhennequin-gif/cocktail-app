@@ -20,30 +20,24 @@ export default function LandingPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch('/api/recipes/daily')
-      .then((r) => r.ok ? r.json() : null)
-      .then(setDailyRecipe)
-      .catch(() => setDailyRecipe(null))
-
-    fetch('/api/recipes?sortBy=avgRating&sortOrder=desc&limit=8')
-      .then((r) => r.ok ? r.json() : { data: [], total: 0 })
-      .then((data) => {
-        setPopularRecipes(data.data ?? [])
-        setTotalRecipes(data.total ?? 0)
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false))
-
-    fetch('/api/categories')
-      .then((r) => r.ok ? r.json() : [])
-      .then((cats) => setCategoryCount(cats.length))
-      .catch(() => {})
+    Promise.allSettled([
+      fetch('/api/recipes/daily').then((r) => r.ok ? r.json() : null),
+      fetch('/api/recipes?sortBy=avgRating&sortOrder=desc&limit=8').then((r) => r.ok ? r.json() : { data: [], total: 0 }),
+      fetch('/api/categories').then((r) => r.ok ? r.json() : []),
+    ]).then(([dailyResult, recipesResult, categoriesResult]) => {
+      if (dailyResult.status === 'fulfilled') setDailyRecipe(dailyResult.value)
+      if (recipesResult.status === 'fulfilled') {
+        setPopularRecipes(recipesResult.value.data ?? [])
+        setTotalRecipes(recipesResult.value.total ?? 0)
+      }
+      if (categoriesResult.status === 'fulfilled') setCategoryCount(categoriesResult.value.length)
+    }).finally(() => setLoading(false))
   }, [])
 
   return (
     <div>
       <Helmet>
-        <title>Cocktails — Recettes &amp; Inspiration</title>
+        <title>Cocktails — Recettes & Inspiration</title>
         <meta name="description" content="Découvrez des centaines de recettes de cocktails. Recherchez, filtrez, notez et partagez vos cocktails préférés." />
         <meta property="og:title" content="Cocktails — Recettes & Inspiration" />
         <meta property="og:description" content="Découvrez des centaines de recettes de cocktails artisanales." />
@@ -162,6 +156,7 @@ export default function LandingPage() {
                 recipe={recipe}
                 isFavorited={favoriteIds.has(recipe.id)}
                 onToggleFavorite={toggleFavorite}
+                userId={user?.id}
               />
             ))}
           </div>

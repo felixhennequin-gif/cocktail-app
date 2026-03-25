@@ -140,7 +140,9 @@ const logout = async (req, res, next) => {
   try {
     const { refreshToken } = req.body;
     if (refreshToken) {
-      await prisma.refreshToken.deleteMany({ where: { token: refreshToken } });
+      await prisma.refreshToken.deleteMany({
+        where: { token: refreshToken, userId: req.user.id },
+      });
     }
     res.json({ ok: true });
   } catch (err) {
