@@ -1,5 +1,5 @@
 const { Router } = require('express');
-const { requireAuth } = require('../middleware/auth');
+const { requireAuth, optionalAuth } = require('../middleware/auth');
 const {
   createCollection,
   getMyCollections,
@@ -14,7 +14,7 @@ const router = Router();
 
 router.post('/',                       requireAuth, createCollection);
 router.get('/me',                      requireAuth, getMyCollections);
-router.get('/:id',                     getCollectionById);
+router.get('/:id',                     optionalAuth, getCollectionById);
 router.put('/:id',                     requireAuth, updateCollection);
 router.delete('/:id',                  requireAuth, deleteCollection);
 router.post('/:id/recipes',           requireAuth, addRecipeToCollection);

@@ -5,6 +5,8 @@ const { JWT_SECRET } = require('../src/middleware/auth');
 
 // Vide toutes les tables dans l'ordre correct (FK)
 const cleanDb = async () => {
+  await prisma.collectionRecipe.deleteMany();
+  await prisma.collection.deleteMany();
   await prisma.follow.deleteMany();
   await prisma.notification.deleteMany();
   await prisma.comment.deleteMany();
@@ -12,7 +14,9 @@ const cleanDb = async () => {
   await prisma.favorite.deleteMany();
   await prisma.recipeIngredient.deleteMany();
   await prisma.step.deleteMany();
+  await prisma.recipeTag.deleteMany();
   await prisma.recipe.deleteMany();
+  await prisma.tag.deleteMany();
   await prisma.category.deleteMany();
   await prisma.ingredient.deleteMany();
   await prisma.user.deleteMany();
