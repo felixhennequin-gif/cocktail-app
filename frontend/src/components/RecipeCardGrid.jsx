@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../contexts/AuthContext'
@@ -5,7 +6,7 @@ import { getImageUrl } from '../utils/image'
 import DifficultyBadge from './DifficultyBadge'
 import Stars from './Stars'
 
-export default function RecipeCardGrid({ recipe, isFavorited, onToggleFavorite }) {
+function RecipeCardGrid({ recipe, isFavorited, onToggleFavorite }) {
   const { user } = useAuth()
   const { t } = useTranslation()
 
@@ -82,3 +83,5 @@ export default function RecipeCardGrid({ recipe, isFavorited, onToggleFavorite }
     </Link>
   )
 }
+
+export default memo(RecipeCardGrid)
