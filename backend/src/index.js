@@ -22,6 +22,7 @@ const feedRoutes         = require('./routes/feed-routes');
 const notificationRoutes = require('./routes/notification-routes');
 
 const app = express();
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3000;
 
 // Middlewares
@@ -174,11 +175,14 @@ if (fs.existsSync(frontendDist)) {
 
 // Gestion des erreurs globale
 app.use((err, req, res, next) => {
-  console.error(err);
-  if (err.message && err.message.includes('non autorisé')) {
-    return res.status(400).json({ error: err.message });
+  console.error('[ERROR]', err.message, err.stack);
+  if (err.type === 'entity.parse.failed') {
+    return res.status(400).json({ error: 'JSON invalide' });
   }
-  res.status(500).json({ error: 'Erreur interne du serveur' });
+  if (err.message && err.message.includes('non autorisé')) {
+    return res.status(400).json({ error: 'Fichier non autorisé : images uniquement' });
+  }
+  res.status(err.status || 500).json({ error: 'Erreur interne du serveur' });
 });
 
 // Démarrage du serveur (uniquement si exécuté directement, pas via require)
