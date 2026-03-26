@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const prisma = require('../prisma');
 const { includeDetail, computeAvgRating } = require('../helpers/recipe-helpers');
 const { redis } = require('../cache');
+const { notFound, sendError } = require('../helpers');
 
 // GET /recipes/daily — cocktail du jour (déterministe par date)
 const getDailyRecipe = async (req, res) => {
@@ -9,7 +10,7 @@ const getDailyRecipe = async (req, res) => {
     // Nombre de recettes publiées
     const count = await prisma.recipe.count({ where: { status: 'PUBLISHED' } });
     if (count === 0) {
-      return res.status(404).json({ error: 'Aucune recette publiée' });
+      return notFound(res, 'Aucune recette publiée');
     }
 
     // Hash déterministe de la date du jour → index stable pour la journée
@@ -26,7 +27,7 @@ const getDailyRecipe = async (req, res) => {
     });
 
     if (!recipe) {
-      return res.status(404).json({ error: 'Recette introuvable' });
+      return notFound(res, 'Recette introuvable');
     }
 
     // Données spécifiques à l'utilisateur connecté
@@ -66,7 +67,7 @@ const getDailyRecipe = async (req, res) => {
     res.json({ ...recipeRest, tags: flatTags, avgRating, ratingsCount: ratings.length, ...userFields });
   } catch (err) {
     console.error('[daily] Erreur:', err.message);
-    res.status(500).json({ error: 'Erreur serveur' });
+    sendError(res, 500, 'Erreur serveur', 'INTERNAL_ERROR');
   }
 };
 

@@ -1,5 +1,5 @@
 const prisma = require('../prisma');
-const { parseId } = require('../helpers');
+const { parseId, badRequest, notFound, conflict } = require('../helpers');
 const { updateProfileSchema, formatZodError } = require('../schemas');
 const { computeAvgRating } = require('../helpers/recipe-helpers');
 
@@ -9,7 +9,7 @@ const updateMyProfile = async (req, res) => {
 
   const parsed = updateProfileSchema.safeParse(req.body);
   if (!parsed.success) {
-    return res.status(400).json({ error: formatZodError(parsed.error) });
+    return badRequest(res, formatZodError(parsed.error));
   }
 
   const { pseudo, bio, avatar } = parsed.data;
@@ -29,7 +29,7 @@ const updateMyProfile = async (req, res) => {
     res.json(user);
   } catch (err) {
     if (err.code === 'P2002') {
-      return res.status(409).json({ error: 'Ce pseudo est déjà utilisé' });
+      return conflict(res, 'Ce pseudo est déjà utilisé');
     }
     throw err;
   }
@@ -38,7 +38,7 @@ const updateMyProfile = async (req, res) => {
 // GET /users/:id — profil public (optionalAuth pour isFollowing)
 const getUserProfile = async (req, res) => {
   const id = parseId(req.params.id);
-  if (!id) return res.status(400).json({ error: 'id invalide' });
+  if (!id) return badRequest(res, 'id invalide');
 
   const currentUserId = req.user?.id ?? null;
 
@@ -67,7 +67,7 @@ const getUserProfile = async (req, res) => {
       : null,
   ]);
 
-  if (!user) return res.status(404).json({ error: 'Utilisateur introuvable' });
+  if (!user) return notFound(res, 'Utilisateur introuvable');
 
   const recipes = user.recipes.map(computeAvgRating);
 
@@ -77,7 +77,7 @@ const getUserProfile = async (req, res) => {
 // GET /users/:id/recipes?page=1&limit=20
 const getUserRecipes = async (req, res) => {
   const id = parseId(req.params.id);
-  if (!id) return res.status(400).json({ error: 'id invalide' });
+  if (!id) return badRequest(res, 'id invalide');
 
   const page  = Math.max(1, parseInt(req.query.page)  || 1);
   const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 20));
@@ -86,7 +86,7 @@ const getUserRecipes = async (req, res) => {
     where: { id },
     select: { id: true, pseudo: true, avatar: true },
   });
-  if (!user) return res.status(404).json({ error: 'Utilisateur introuvable' });
+  if (!user) return notFound(res, 'Utilisateur introuvable');
 
   const where = { authorId: id, status: 'PUBLISHED' };
   const [recipes, total] = await Promise.all([

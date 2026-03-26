@@ -1,2 +1,3 @@
 const { parseId } = require('./parse-id');
-module.exports = { parseId };
+const errors = require('./errors');
+module.exports = { parseId, ...errors };

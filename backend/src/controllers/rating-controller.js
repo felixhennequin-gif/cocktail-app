@@ -1,5 +1,5 @@
 const prisma = require('../prisma');
-const { parseId } = require('../helpers');
+const { parseId, badRequest, notFound } = require('../helpers');
 const { ratingSchema, formatZodError } = require('../schemas');
 const { calcAvg } = require('../helpers/recipe-helpers');
 
@@ -7,17 +7,17 @@ const { calcAvg } = require('../helpers/recipe-helpers');
 const upsertRating = async (req, res) => {
   const userId   = req.user.id;
   const recipeId = parseId(req.params.recipeId);
-  if (!recipeId) return res.status(400).json({ error: 'recipeId invalide' });
+  if (!recipeId) return badRequest(res, 'recipeId invalide');
 
   const parsed = ratingSchema.safeParse(req.body);
   if (!parsed.success) {
-    return res.status(400).json({ error: formatZodError(parsed.error) });
+    return badRequest(res, formatZodError(parsed.error));
   }
 
   const { score } = parsed.data;
 
   const recipe = await prisma.recipe.findUnique({ where: { id: recipeId } });
-  if (!recipe) return res.status(404).json({ error: 'Recette introuvable' });
+  if (!recipe) return notFound(res, 'Recette introuvable');
 
   await prisma.rating.upsert({
     where: { userId_recipeId: { userId, recipeId } },
@@ -36,7 +36,7 @@ const upsertRating = async (req, res) => {
 const getMyRating = async (req, res) => {
   const userId   = req.user.id;
   const recipeId = parseId(req.params.recipeId);
-  if (!recipeId) return res.status(400).json({ error: 'recipeId invalide' });
+  if (!recipeId) return badRequest(res, 'recipeId invalide');
 
   const rating = await prisma.rating.findUnique({
     where: { userId_recipeId: { userId, recipeId } },

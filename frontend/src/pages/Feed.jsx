@@ -62,13 +62,13 @@ export default function Feed() {
         </div>
       ) : recipes.length === 0 ? (
         <div className="text-center py-16">
-          <p className="text-gray-500 dark:text-gray-400 mb-2 text-lg">{t('feed.empty')}</p>
-          <p className="text-gray-400 dark:text-gray-500 text-sm mb-6">{t('feed.emptyHint')}</p>
+          <p className="text-gray-500 dark:text-gray-400 mb-2 text-lg">{t('feed.emptyTitle')}</p>
+          <p className="text-gray-400 dark:text-gray-500 text-sm mb-6">{t('feed.emptyMessage')}</p>
           <Link
             to="/recipes"
             className="inline-block px-5 py-2.5 bg-gold-400 text-ink-900 rounded-lg text-sm font-medium hover:bg-gold-500 transition-colors"
           >
-            {t('feed.discover')}
+            {t('feed.discoverRecipes')}
           </Link>
         </div>
       ) : (

@@ -1,21 +1,21 @@
 const prisma = require('../prisma');
 const { createNotification } = require('../services/notification-service');
-const { parseId } = require('../helpers');
+const { parseId, badRequest, notFound } = require('../helpers');
 
 // POST /users/:id/follow — JWT requis
 const followUser = async (req, res, next) => {
   try {
     const targetId = parseId(req.params.id);
-    if (!targetId) return res.status(400).json({ error: 'id invalide' });
+    if (!targetId) return badRequest(res, 'id invalide');
 
     const userId = req.user.id;
 
     if (userId === targetId) {
-      return res.status(400).json({ error: 'Vous ne pouvez pas vous suivre vous-même' });
+      return badRequest(res, 'Vous ne pouvez pas vous suivre vous-même');
     }
 
     const target = await prisma.user.findUnique({ where: { id: targetId } });
-    if (!target) return res.status(404).json({ error: 'Utilisateur introuvable' });
+    if (!target) return notFound(res, 'Utilisateur introuvable');
 
     // Vérifier si la relation existait déjà (pour éviter une notif en double)
     const alreadyFollowing = await prisma.follow.findUnique({
@@ -51,7 +51,7 @@ const followUser = async (req, res, next) => {
 const unfollowUser = async (req, res, next) => {
   try {
     const targetId = parseId(req.params.id);
-    if (!targetId) return res.status(400).json({ error: 'id invalide' });
+    if (!targetId) return badRequest(res, 'id invalide');
 
     const userId = req.user.id;
 
@@ -80,7 +80,7 @@ const getMyFollowingIds = async (currentUserId) => {
 const getFollowers = async (req, res, next) => {
   try {
     const id = parseId(req.params.id);
-    if (!id) return res.status(400).json({ error: 'id invalide' });
+    if (!id) return badRequest(res, 'id invalide');
 
     const page  = Math.max(1, parseInt(req.query.page)  || 1);
     const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 20));
@@ -112,7 +112,7 @@ const getFollowers = async (req, res, next) => {
 const getFollowing = async (req, res, next) => {
   try {
     const id = parseId(req.params.id);
-    if (!id) return res.status(400).json({ error: 'id invalide' });
+    if (!id) return badRequest(res, 'id invalide');
 
     const page  = Math.max(1, parseInt(req.query.page)  || 1);
     const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 20));

@@ -1,12 +1,12 @@
 const prisma = require('../prisma');
 const { createNotification } = require('../services/notification-service');
-const { parseId } = require('../helpers');
+const { parseId, badRequest, notFound, forbidden, conflict } = require('../helpers');
 const { createCommentSchema, updateCommentSchema, formatZodError } = require('../schemas');
 
 // GET /comments/:recipeId — optionalAuth pour exposer myComment + avgRating
 const getComments = async (req, res) => {
   const recipeId = parseId(req.params.recipeId);
-  if (!recipeId) return res.status(400).json({ error: 'recipeId invalide' });
+  if (!recipeId) return badRequest(res, 'recipeId invalide');
 
   const [comments, ratingAgg] = await Promise.all([
     prisma.comment.findMany({
@@ -40,20 +40,20 @@ const getComments = async (req, res) => {
 const createComment = async (req, res) => {
   const userId   = req.user.id;
   const recipeId = parseId(req.params.recipeId);
-  if (!recipeId) return res.status(400).json({ error: 'recipeId invalide' });
+  if (!recipeId) return badRequest(res, 'recipeId invalide');
 
   const parsed = createCommentSchema.safeParse(req.body);
   if (!parsed.success) {
-    return res.status(400).json({ error: formatZodError(parsed.error) });
+    return badRequest(res, formatZodError(parsed.error));
   }
 
   const { content, score: scoreInt } = parsed.data;
 
   const recipe = await prisma.recipe.findUnique({ where: { id: recipeId } });
-  if (!recipe) return res.status(404).json({ error: 'Recette introuvable' });
+  if (!recipe) return notFound(res, 'Recette introuvable');
 
   if (recipe.authorId === userId) {
-    return res.status(403).json({ error: 'Vous ne pouvez pas commenter votre propre recette' });
+    return forbidden(res, 'Vous ne pouvez pas commenter votre propre recette');
   }
 
   // Vérifier si l'utilisateur a déjà commenté cette recette
@@ -61,7 +61,7 @@ const createComment = async (req, res) => {
     where: { userId, recipeId },
   });
   if (existingComment) {
-    return res.status(409).json({ error: 'Vous avez déjà commenté cette recette' });
+    return conflict(res, 'Vous avez déjà commenté cette recette');
   }
 
   // Créer le commentaire et upsert la note dans une transaction
@@ -104,20 +104,20 @@ const createComment = async (req, res) => {
 // body: { content, score? (1-5, optionnel) }
 const updateComment = async (req, res) => {
   const id = parseId(req.params.id);
-  if (!id) return res.status(400).json({ error: 'id invalide' });
+  if (!id) return badRequest(res, 'id invalide');
 
   const parsed = updateCommentSchema.safeParse(req.body);
   if (!parsed.success) {
-    return res.status(400).json({ error: formatZodError(parsed.error) });
+    return badRequest(res, formatZodError(parsed.error));
   }
 
   const { content, score: scoreInt } = parsed.data;
 
   const comment = await prisma.comment.findUnique({ where: { id } });
-  if (!comment) return res.status(404).json({ error: 'Commentaire introuvable' });
+  if (!comment) return notFound(res, 'Commentaire introuvable');
 
   if (comment.userId !== req.user.id) {
-    return res.status(403).json({ error: 'Non autorisé' });
+    return forbidden(res);
   }
 
   const updated = await prisma.$transaction(async (tx) => {
@@ -144,20 +144,20 @@ const updateComment = async (req, res) => {
 // DELETE /comments/:id — auteur du commentaire, auteur de la recette ou admin
 const deleteComment = async (req, res) => {
   const id = parseId(req.params.id);
-  if (!id) return res.status(400).json({ error: 'id invalide' });
+  if (!id) return badRequest(res, 'id invalide');
 
   const comment = await prisma.comment.findUnique({
     where: { id },
     include: { recipe: { select: { authorId: true } } },
   });
-  if (!comment) return res.status(404).json({ error: 'Commentaire introuvable' });
+  if (!comment) return notFound(res, 'Commentaire introuvable');
 
   const isAdmin        = req.user.role === 'ADMIN';
   const isCommentAuthor = comment.userId === req.user.id;
   const isRecipeAuthor  = comment.recipe.authorId === req.user.id;
 
   if (!isAdmin && !isCommentAuthor && !isRecipeAuthor) {
-    return res.status(403).json({ error: 'Non autorisé' });
+    return forbidden(res);
   }
 
   await prisma.comment.delete({ where: { id } });

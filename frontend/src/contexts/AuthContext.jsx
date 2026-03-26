@@ -122,6 +122,12 @@ export function AuthProvider({ children }) {
         localStorage.setItem('token', newToken)
         setToken(newToken)
         tokenRef.current = newToken
+        // Sauvegarde le nouveau refresh token (rotation)
+        if (data.refreshToken) {
+          localStorage.setItem('refreshToken', data.refreshToken)
+          setRefreshToken(data.refreshToken)
+          refreshTokenRef.current = data.refreshToken
+        }
         // Retry la requête originale avec le nouveau token
         return fetch(url, {
           ...options,

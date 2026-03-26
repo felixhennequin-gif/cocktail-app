@@ -1,5 +1,5 @@
 import { useState, lazy, Suspense } from 'react'
-import { Routes, Route, Link, useNavigate } from 'react-router-dom'
+import { Routes, Route, Link, Navigate, useNavigate } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import Logo from './components/Logo'
 import ErrorBoundary from './components/ErrorBoundary'
@@ -28,6 +28,24 @@ const AdminRecipeList  = lazy(() => import('./pages/admin/AdminRecipeList'))
 const AdminRecipeForm  = lazy(() => import('./pages/admin/AdminRecipeForm'))
 const AdminPendingList = lazy(() => import('./pages/admin/AdminPendingList'))
 const CollectionDetail = lazy(() => import('./pages/CollectionDetail'))
+const LegalPage        = lazy(() => import('./pages/LegalPage'))
+
+// Garde de route pour les pages nécessitant une authentification
+function ProtectedRoute({ children }) {
+  const { user, loading } = useAuth()
+  if (loading) return null
+  if (!user) return <Navigate to="/login" replace />
+  return children
+}
+
+// Garde de route pour les pages réservées aux administrateurs
+function AdminRoute({ children }) {
+  const { user, loading } = useAuth()
+  if (loading) return null
+  if (!user) return <Navigate to="/login" replace />
+  if (user.role !== 'ADMIN') return <Navigate to="/" replace />
+  return children
+}
 
 function Header() {
   const { user, logout } = useAuth()
@@ -174,18 +192,19 @@ export default function App() {
           <Routes>
             <Route path="/"                        element={<LandingPage />} />
             <Route path="/recipes"                  element={<RecipeList />} />
-            <Route path="/feed"                    element={<Feed />} />
-            <Route path="/recipes/new"             element={<RecipeSubmit />} />
+            <Route path="/feed"                    element={<ProtectedRoute><Feed /></ProtectedRoute>} />
+            <Route path="/recipes/new"             element={<ProtectedRoute><RecipeSubmit /></ProtectedRoute>} />
             <Route path="/recipes/:id"             element={<RecipeDetail />} />
             <Route path="/login"                   element={<Login />} />
             <Route path="/register"                element={<Register />} />
-            <Route path="/favorites"               element={<Favorites />} />
+            <Route path="/favorites"               element={<ProtectedRoute><Favorites /></ProtectedRoute>} />
             <Route path="/users/:id"               element={<UserProfile />} />
             <Route path="/collections/:id"          element={<CollectionDetail />} />
-            <Route path="/admin"                   element={<AdminRecipeList />} />
-            <Route path="/admin/pending"           element={<AdminPendingList />} />
-            <Route path="/admin/recipes/new"       element={<AdminRecipeForm />} />
-            <Route path="/admin/recipes/:id/edit"  element={<AdminRecipeForm />} />
+            <Route path="/admin"                   element={<AdminRoute><AdminRecipeList /></AdminRoute>} />
+            <Route path="/admin/pending"           element={<AdminRoute><AdminPendingList /></AdminRoute>} />
+            <Route path="/admin/recipes/new"       element={<AdminRoute><AdminRecipeForm /></AdminRoute>} />
+            <Route path="/admin/recipes/:id/edit"  element={<AdminRoute><AdminRecipeForm /></AdminRoute>} />
+            <Route path="/legal"                   element={<LegalPage />} />
             <Route path="*"                        element={<NotFound />} />
           </Routes>
           </Suspense>

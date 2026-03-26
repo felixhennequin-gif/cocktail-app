@@ -26,29 +26,16 @@ export default function AddToCollectionModal({ isOpen, onClose, recipeId }) {
   const [creating, setCreating]   = useState(false)
 
   // Charger les collections de l'utilisateur à l'ouverture
+  // Le paramètre recipeId permet au backend de calculer containsRecipe en une seule requête
   useEffect(() => {
     if (!isOpen) return
     setLoading(true)
-    authFetch('/api/collections/me')
+    authFetch(`/api/collections/me?recipeId=${parseInt(recipeId)}`)
       .then((r) => r.ok ? r.json() : [])
-      .then(async (list) => {
+      .then((list) => {
         setCollections(list)
-        // Déterminer quelles collections contiennent déjà la recette
-        // On charge le détail de chaque collection pour vérifier
-        const ids = new Set()
-        await Promise.all(
-          list.map(async (col) => {
-            try {
-              const res = await authFetch(`/api/collections/${col.id}`)
-              if (res.ok) {
-                const data = await res.json()
-                if (data.recipes?.some((r) => r.id === parseInt(recipeId))) {
-                  ids.add(col.id)
-                }
-              }
-            } catch { /* ignorer */ }
-          })
-        )
+        // Construire l'ensemble des ids à partir du champ containsRecipe fourni par le backend
+        const ids = new Set(list.filter((col) => col.containsRecipe).map((col) => col.id))
         setIncludedIds(ids)
       })
       .catch(() => {})

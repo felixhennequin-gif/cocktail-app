@@ -1,5 +1,5 @@
 const prisma = require('../prisma');
-const { parseId } = require('../helpers');
+const { parseId, badRequest, notFound, forbidden, conflict } = require('../helpers');
 const { createCollectionSchema, updateCollectionSchema, formatZodError } = require('../schemas');
 const { computeAvgRating } = require('../helpers/recipe-helpers');
 
@@ -12,7 +12,7 @@ const createCollection = async (req, res) => {
 
   const parsed = createCollectionSchema.safeParse(req.body);
   if (!parsed.success) {
-    return res.status(400).json({ error: formatZodError(parsed.error) });
+    return badRequest(res, formatZodError(parsed.error));
   }
 
   const { name, description, isPublic } = parsed.data;
@@ -20,7 +20,7 @@ const createCollection = async (req, res) => {
   // Vérifier la limite
   const count = await prisma.collection.count({ where: { userId } });
   if (count >= MAX_COLLECTIONS_PER_USER) {
-    return res.status(400).json({ error: `Vous ne pouvez pas créer plus de ${MAX_COLLECTIONS_PER_USER} collections` });
+    return badRequest(res, `Vous ne pouvez pas créer plus de ${MAX_COLLECTIONS_PER_USER} collections`);
   }
 
   const collection = await prisma.collection.create({
@@ -31,35 +31,57 @@ const createCollection = async (req, res) => {
 };
 
 // GET /collections/me
+// Accepte un paramètre optionnel ?recipeId=X pour indiquer si chaque collection contient déjà la recette
 const getMyCollections = async (req, res) => {
   const userId = req.user.id;
+  const recipeId = req.query.recipeId ? parseInt(req.query.recipeId) : null;
 
   const collections = await prisma.collection.findMany({
     where: { userId },
     include: {
       _count: { select: { recipes: true } },
-      recipes: {
-        take: 1,
-        orderBy: { addedAt: 'desc' },
-        include: {
-          recipe: { select: { imageUrl: true } },
-        },
-      },
+      recipes: recipeId
+        ? {
+            // Quand recipeId est fourni, on inclut tous les ids pour vérifier la présence
+            select: { recipeId: true },
+          }
+        : {
+            take: 1,
+            orderBy: { addedAt: 'desc' },
+            include: {
+              recipe: { select: { imageUrl: true } },
+            },
+          },
     },
     orderBy: { updatedAt: 'desc' },
   });
 
-  res.json(collections.map(({ _count, recipes, ...c }) => ({
-    ...c,
-    recipesCount: _count.recipes,
-    previewImage: recipes[0]?.recipe?.imageUrl || null,
-  })));
+  res.json(collections.map(({ _count, recipes, ...c }) => {
+    const base = {
+      ...c,
+      recipesCount: _count.recipes,
+    };
+
+    if (recipeId) {
+      // Mode "check" : on retourne containsRecipe et pas previewImage
+      return {
+        ...base,
+        containsRecipe: recipes.some((r) => r.recipeId === recipeId),
+      };
+    }
+
+    // Mode normal : previewImage depuis la dernière recette ajoutée
+    return {
+      ...base,
+      previewImage: recipes[0]?.recipe?.imageUrl || null,
+    };
+  }));
 };
 
 // GET /collections/:id
 const getCollectionById = async (req, res) => {
   const id = parseId(req.params.id);
-  if (!id) return res.status(400).json({ error: 'id invalide' });
+  if (!id) return badRequest(res, 'id invalide');
 
   const collection = await prisma.collection.findUnique({
     where: { id },
@@ -80,13 +102,11 @@ const getCollectionById = async (req, res) => {
     },
   });
 
-  if (!collection) {
-    return res.status(404).json({ error: 'Collection introuvable' });
-  }
+  if (!collection) return notFound(res, 'Collection introuvable');
 
   // Collection privée : seul le propriétaire peut la voir
   if (!collection.isPublic && collection.userId !== req.user?.id) {
-    return res.status(404).json({ error: 'Collection introuvable' });
+    return notFound(res, 'Collection introuvable');
   }
 
   // Calculer avgRating pour chaque recette
@@ -99,18 +119,18 @@ const getCollectionById = async (req, res) => {
 // PUT /collections/:id
 const updateCollection = async (req, res) => {
   const id = parseId(req.params.id);
-  if (!id) return res.status(400).json({ error: 'id invalide' });
+  if (!id) return badRequest(res, 'id invalide');
 
   const parsed = updateCollectionSchema.safeParse(req.body);
   if (!parsed.success) {
-    return res.status(400).json({ error: formatZodError(parsed.error) });
+    return badRequest(res, formatZodError(parsed.error));
   }
 
   const { name, description, isPublic } = parsed.data;
 
   const collection = await prisma.collection.findUnique({ where: { id } });
-  if (!collection) return res.status(404).json({ error: 'Collection introuvable' });
-  if (collection.userId !== req.user.id) return res.status(403).json({ error: 'Non autorisé' });
+  if (!collection) return notFound(res, 'Collection introuvable');
+  if (collection.userId !== req.user.id) return forbidden(res);
 
   const updated = await prisma.collection.update({
     where: { id },
@@ -127,11 +147,11 @@ const updateCollection = async (req, res) => {
 // DELETE /collections/:id
 const deleteCollection = async (req, res) => {
   const id = parseId(req.params.id);
-  if (!id) return res.status(400).json({ error: 'id invalide' });
+  if (!id) return badRequest(res, 'id invalide');
 
   const collection = await prisma.collection.findUnique({ where: { id } });
-  if (!collection) return res.status(404).json({ error: 'Collection introuvable' });
-  if (collection.userId !== req.user.id) return res.status(403).json({ error: 'Non autorisé' });
+  if (!collection) return notFound(res, 'Collection introuvable');
+  if (collection.userId !== req.user.id) return forbidden(res);
 
   await prisma.collection.delete({ where: { id } });
   res.status(204).send();
@@ -140,25 +160,25 @@ const deleteCollection = async (req, res) => {
 // POST /collections/:id/recipes
 const addRecipeToCollection = async (req, res) => {
   const collectionId = parseId(req.params.id);
-  if (!collectionId) return res.status(400).json({ error: 'id invalide' });
+  if (!collectionId) return badRequest(res, 'id invalide');
 
   const recipeId = parseId(req.body.recipeId);
-  if (!recipeId) return res.status(400).json({ error: 'recipeId invalide' });
+  if (!recipeId) return badRequest(res, 'recipeId invalide');
 
   const collection = await prisma.collection.findUnique({
     where: { id: collectionId },
     include: { _count: { select: { recipes: true } } },
   });
-  if (!collection) return res.status(404).json({ error: 'Collection introuvable' });
-  if (collection.userId !== req.user.id) return res.status(403).json({ error: 'Non autorisé' });
+  if (!collection) return notFound(res, 'Collection introuvable');
+  if (collection.userId !== req.user.id) return forbidden(res);
 
   if (collection._count.recipes >= MAX_RECIPES_PER_COLLECTION) {
-    return res.status(400).json({ error: `Une collection ne peut pas contenir plus de ${MAX_RECIPES_PER_COLLECTION} recettes` });
+    return badRequest(res, `Une collection ne peut pas contenir plus de ${MAX_RECIPES_PER_COLLECTION} recettes`);
   }
 
   // Vérifier que la recette existe
   const recipe = await prisma.recipe.findUnique({ where: { id: recipeId } });
-  if (!recipe) return res.status(404).json({ error: 'Recette introuvable' });
+  if (!recipe) return notFound(res, 'Recette introuvable');
 
   try {
     await prisma.collectionRecipe.create({
@@ -167,7 +187,7 @@ const addRecipeToCollection = async (req, res) => {
     res.status(201).json({ added: true });
   } catch (err) {
     if (err.code === 'P2002') {
-      return res.status(409).json({ error: 'Cette recette est déjà dans la collection' });
+      return conflict(res, 'Cette recette est déjà dans la collection');
     }
     throw err;
   }
@@ -176,14 +196,14 @@ const addRecipeToCollection = async (req, res) => {
 // DELETE /collections/:id/recipes/:recipeId
 const removeRecipeFromCollection = async (req, res) => {
   const collectionId = parseId(req.params.id);
-  if (!collectionId) return res.status(400).json({ error: 'id invalide' });
+  if (!collectionId) return badRequest(res, 'id invalide');
 
   const recipeId = parseId(req.params.recipeId);
-  if (!recipeId) return res.status(400).json({ error: 'recipeId invalide' });
+  if (!recipeId) return badRequest(res, 'recipeId invalide');
 
   const collection = await prisma.collection.findUnique({ where: { id: collectionId } });
-  if (!collection) return res.status(404).json({ error: 'Collection introuvable' });
-  if (collection.userId !== req.user.id) return res.status(403).json({ error: 'Non autorisé' });
+  if (!collection) return notFound(res, 'Collection introuvable');
+  if (collection.userId !== req.user.id) return forbidden(res);
 
   try {
     await prisma.collectionRecipe.delete({
@@ -192,7 +212,7 @@ const removeRecipeFromCollection = async (req, res) => {
     res.status(204).send();
   } catch (err) {
     if (err.code === 'P2025') {
-      return res.status(404).json({ error: 'Recette non trouvée dans cette collection' });
+      return notFound(res, 'Recette non trouvée dans cette collection');
     }
     throw err;
   }

@@ -155,7 +155,10 @@
     "title": "My activity feed",
     "empty": "You're not following anyone yet.",
     "emptyHint": "Follow users to see their recipes here.",
+    "emptyTitle": "Your feed is empty",
+    "emptyMessage": "Follow creators to see their new recipes here.",
     "discover": "Discover cocktails",
+    "discoverRecipes": "Discover recipes",
     "loadMore": "Load more",
     "loading": "Loading..."
   },
@@ -343,7 +346,10 @@
     "notFound404": "404",
     "notFoundTitle": "Page not found",
     "notFoundMessage": "This page doesn't exist or has been moved.",
-    "backHome": "← Back to home"
+    "backHome": "← Back to home",
+    "starsRating": "{{rating}} out of {{max}} stars",
+    "errorTitle": "Oops! Something went wrong",
+    "errorMessage": "An unexpected error occurred…"
   },
   "landing": {
     "popularTitle": "Popular recipes",
@@ -354,5 +360,12 @@
     "contact": "Contact",
     "about": "About",
     "copyright": "© 2025 Cocktails. All rights reserved."
+  },
+  "legal": {
+    "title": "Legal Notice",
+    "editor": "Publisher",
+    "hosting": "Hosting",
+    "editorInfo": "Personal project — cocktail-app.fr",
+    "hostingInfo": "Self-hosted server — Debian"
   }
 }

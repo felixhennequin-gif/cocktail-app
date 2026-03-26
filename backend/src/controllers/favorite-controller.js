@@ -1,5 +1,5 @@
 const prisma = require('../prisma');
-const { parseId } = require('../helpers');
+const { parseId, badRequest, notFound } = require('../helpers');
 const { computeAvgRating } = require('../helpers/recipe-helpers');
 
 // POST /favorites/:recipeId — ajouter (idempotent)
@@ -7,7 +7,7 @@ const addFavorite = async (req, res, next) => {
   try {
     const userId   = req.user.id;
     const recipeId = parseId(req.params.recipeId);
-    if (!recipeId) return res.status(400).json({ error: 'recipeId invalide' });
+    if (!recipeId) return badRequest(res, 'recipeId invalide');
 
     const existing = await prisma.favorite.findUnique({
       where: { userId_recipeId: { userId, recipeId } },
@@ -15,7 +15,7 @@ const addFavorite = async (req, res, next) => {
     if (existing) return res.json({ favorited: true });
 
     const recipe = await prisma.recipe.findUnique({ where: { id: recipeId } });
-    if (!recipe) return res.status(404).json({ error: 'Recette introuvable' });
+    if (!recipe) return notFound(res, 'Recette introuvable');
 
     await prisma.favorite.create({ data: { userId, recipeId } });
     res.json({ favorited: true });
@@ -29,7 +29,7 @@ const removeFavorite = async (req, res, next) => {
   try {
     const userId   = req.user.id;
     const recipeId = parseId(req.params.recipeId);
-    if (!recipeId) return res.status(400).json({ error: 'recipeId invalide' });
+    if (!recipeId) return badRequest(res, 'recipeId invalide');
 
     await prisma.favorite.deleteMany({
       where: { userId, recipeId },

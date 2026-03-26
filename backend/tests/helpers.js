@@ -28,7 +28,7 @@ const createTestUser = async ({ pseudo, email, password = 'test1234', role = 'US
   const user = await prisma.user.create({
     data: { pseudo, email, passwordHash, role },
   });
-  const token = jwt.sign({ id: user.id, pseudo: user.pseudo, role: user.role }, JWT_SECRET, {
+  const token = jwt.sign({ id: user.id }, JWT_SECRET, {
     expiresIn: '7d',
   });
   return { user, token };

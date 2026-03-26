@@ -1,282 +1,31 @@
-const { z } = require('zod');
 const prisma = require('../prisma');
 const { createNotification, notifyFollowers } = require('../services/notification-service');
 const { invalidateCacheByPattern } = require('../cache');
 const { resolveTagNames } = require('./tag-controller');
-const { parseId } = require('../helpers');
-const { includeDetail, includeList, computeAvgRating, handlePrismaError } = require('../helpers/recipe-helpers');
+const { parseId, badRequest, notFound, forbidden } = require('../helpers');
+const { includeDetail, computeAvgRating, handlePrismaError } = require('../helpers/recipe-helpers');
 const { createRecipeSchema, updateRecipeSchema, formatZodError } = require('../schemas');
+const { recipeListSchema, search } = require('../services/recipe-search-service');
+const { resolveIngredients } = require('../services/ingredient-resolver');
 
 // Invalide toutes les entrées de cache liées aux recettes
 const bustRecipeCache = () => invalidateCacheByPattern('cocktail:*').catch(() => {});
-
-// Calcule les compteurs de tags filtrés (faceted filter : tous les filtres SAUF les tags)
-const computeTagCounts = async (whereWithoutTags) => {
-  const filteredIds = await prisma.recipe.findMany({
-    where: whereWithoutTags,
-    select: { id: true },
-  });
-  const ids = filteredIds.map(r => r.id);
-  if (ids.length === 0) return [];
-  return prisma.$queryRaw`
-    SELECT t.id, t.name, COUNT(DISTINCT rt."recipeId")::int AS count
-    FROM "Tag" t
-    JOIN "RecipeTag" rt ON rt."tagId" = t.id
-    WHERE rt."recipeId" = ANY(${ids}::int[])
-    GROUP BY t.id, t.name
-    ORDER BY count DESC
-  `;
-};
-
-// Schéma de validation des query params de GET /recipes
-const recipeListSchema = z.object({
-  page:       z.coerce.number().int().min(1).default(1),
-  limit:      z.coerce.number().int().min(1).max(100).default(20),
-  q:          z.string().min(2).max(100).optional(),
-  categoryId: z.coerce.number().int().positive().optional(),
-  minRating:  z.coerce.number().min(0).max(5).optional(),
-  maxTime:    z.coerce.number().int().positive().optional(),
-  authorId:   z.coerce.number().int().positive().optional(),
-  status:     z.enum(['PUBLISHED', 'PENDING', 'DRAFT']).optional(),
-  tags:       z.string().optional(), // ids séparés par virgule
-  sortBy:     z.enum(['createdAt', 'prepTime', 'avgRating', 'favoritesCount']).default('createdAt'),
-  sortOrder:  z.enum(['asc', 'desc']).default('desc'),
-});
-
-// Résout les ingrédients : accepte { ingredientId } OU { name } (upsert)
-const resolveIngredients = async (ingredients) => {
-  return Promise.all(
-    ingredients.map(async ({ ingredientId, name, quantity, unit }) => {
-      if (name) {
-        const ingredient = await prisma.ingredient.upsert({
-          where: { name },
-          create: { name },
-          update: {},
-        });
-        return { id: ingredient.id, quantity, unit };
-      }
-      return { id: ingredientId, quantity, unit };
-    })
-  );
-};
 
 // GET /recipes?page=1&limit=20&q=mojito&categoryId=2&minRating=4&maxTime=10&authorId=1&status=PUBLISHED
 const getAllRecipes = async (req, res) => {
   const parsed = recipeListSchema.safeParse(req.query);
   if (!parsed.success) {
-    return res.status(400).json({ error: parsed.error.flatten().fieldErrors });
+    return res.status(400).json({ error: parsed.error.flatten().fieldErrors, code: 'VALIDATION_ERROR' });
   }
 
-  const { page, limit, q, categoryId, minRating, maxTime, authorId, status, tags, sortBy, sortOrder } = parsed.data;
-  const offset = (page - 1) * limit;
-
-  // Clause where de base (sans q ni minRating)
-  const where = {};
-  if (req.user?.role === 'ADMIN' && status) {
-    where.status = status;
-  } else if (req.user?.role === 'ADMIN') {
-    // admin sans filtre : voit tout
-  } else if (status === 'DRAFT' && req.user) {
-    // utilisateur connecté qui demande ses brouillons : seulement les siens
-    where.status  = 'DRAFT';
-    where.authorId = req.user.id;
-  } else {
-    where.status = 'PUBLISHED';
-  }
-  if (categoryId !== undefined) where.categoryId = categoryId;
-  if (maxTime    !== undefined) where.prepTime    = { lte: maxTime };
-  if (authorId   !== undefined) where.authorId    = authorId;
-
-  // Filtre par tags (AND : tous les tags doivent être présents)
-  if (tags) {
-    const tagIdList = tags.split(',').map(Number).filter(n => n > 0);
-    if (tagIdList.length > 0) {
-      where.AND = [
-        ...(where.AND || []),
-        ...tagIdList.map(tagId => ({
-          tags: { some: { tagId } }
-        }))
-      ];
-    }
-  }
-
-  // Snapshot du where SANS les tags pour les compteurs facettés
-  const { AND: _andWithTags, ...whereBase } = where;
-  const whereWithoutTags = { ...whereBase };
-
-  // minRating : sous-requête raw (avgRating n'est pas une colonne)
-  let minRatingIds = null;
-  if (minRating !== undefined) {
-    const rows = await prisma.$queryRaw`
-      SELECT "recipeId"::int FROM "Rating"
-      GROUP BY "recipeId"
-      HAVING AVG(score) >= ${minRating}
-    `;
-    minRatingIds = rows.map(r => r.recipeId);
-  }
-
-  // ----------------------------------------------------------------
-  // Branche A : recherche textuelle présente → ordre par pertinence
-  // ----------------------------------------------------------------
-  if (q) {
-    const clean = q.replace(/[^a-zA-ZÀ-ÿ0-9 -]/g, ' ').trim();
-    const tsquery = clean.split(/\s+/).filter(Boolean).map(w => `${w}:*`).join(' & ');
-
-    // IDs full-text ordonnés par rang
-    const searchRows = await prisma.$queryRaw`
-      SELECT id, ts_rank("searchVector", to_tsquery('french', ${tsquery})) AS rank
-      FROM "Recipe"
-      WHERE "searchVector" @@ to_tsquery('french', ${tsquery})
-      ORDER BY rank DESC
-    `;
-    const searchIds = searchRows.map(r => r.id);
-
-    // IDs satisfaisant les autres filtres (base + minRating)
-    const filterWhere = { ...where };
-    if (minRatingIds !== null) {
-      filterWhere.id = { in: minRatingIds.length > 0 ? minRatingIds : [-1] };
-    }
-    const filterRows = await prisma.recipe.findMany({ where: filterWhere, select: { id: true } });
-    const filterIdSet = new Set(filterRows.map(r => r.id));
-
-    // Intersection ordonnée par rang
-    const orderedIds = searchIds.filter(id => filterIdSet.has(id));
-    const total      = orderedIds.length;
-    const pageIds    = orderedIds.slice(offset, offset + limit);
-
-    // Compteurs de tags facettés (filtres hors tags)
-    const facetWhere = { ...whereWithoutTags };
-    if (minRatingIds !== null) {
-      facetWhere.id = { in: minRatingIds.length > 0 ? minRatingIds : [-1] };
-    }
-    const facetFilterRows = await prisma.recipe.findMany({ where: facetWhere, select: { id: true } });
-    const facetIds = facetFilterRows.map(r => r.id);
-    const facetSearchIds = searchIds.filter(id => facetIds.includes(id));
-    const tagCounts = facetSearchIds.length > 0
-      ? await prisma.$queryRaw`
-          SELECT t.id, t.name, COUNT(DISTINCT rt."recipeId")::int AS count
-          FROM "Tag" t
-          JOIN "RecipeTag" rt ON rt."tagId" = t.id
-          WHERE rt."recipeId" = ANY(${facetSearchIds}::int[])
-          GROUP BY t.id, t.name
-          ORDER BY count DESC
-        `
-      : [];
-
-    if (pageIds.length === 0) {
-      return res.json({ data: [], total, page, limit, tagCounts });
-    }
-
-    const recipes = await prisma.recipe.findMany({
-      where: { id: { in: pageIds } },
-      include: includeList,
-    });
-    const ranked = pageIds.map(id => recipes.find(r => r.id === id)).filter(Boolean);
-    return res.json({ data: ranked.map(computeAvgRating), total, page, limit, tagCounts });
-  }
-
-  // ----------------------------------------------------------------
-  // Branche B : pas de q → Prisma findMany classique
-  // ----------------------------------------------------------------
-  if (minRatingIds !== null) {
-    where.id = { in: minRatingIds.length > 0 ? minRatingIds : [-1] };
-  }
-
-  // Tri par avgRating ou favoritesCount : tri et pagination côté SQL
-  const needsAggSort = sortBy === 'avgRating' || sortBy === 'favoritesCount';
-
-  if (needsAggSort) {
-    // 1) Récupérer les IDs filtrés via Prisma (rapide, pas de données)
-    const filteredRows = await prisma.recipe.findMany({
-      where,
-      select: { id: true },
-    });
-    const filteredIds = filteredRows.map(r => r.id);
-
-    if (filteredIds.length === 0) {
-      const facetWhere = { ...whereWithoutTags };
-      if (minRatingIds !== null) {
-        facetWhere.id = { in: minRatingIds.length > 0 ? minRatingIds : [-1] };
-      }
-      const tagCounts = await computeTagCounts(facetWhere);
-      return res.json({ data: [], total: 0, page, limit, tagCounts });
-    }
-
-    // 2) Tri + pagination côté SQL via agrégat
-    const orderCol = sortBy === 'avgRating' ? '"avg_rating"' : '"fav_count"';
-    const orderDir = sortOrder === 'asc' ? 'ASC' : 'DESC';
-    // NULLS LAST pour avgRating (recettes sans note en fin)
-    const nullsClause = sortBy === 'avgRating' ? (sortOrder === 'desc' ? 'NULLS LAST' : 'NULLS FIRST') : '';
-
-    const sortedRows = await prisma.$queryRawUnsafe(`
-      SELECT r.id,
-        COALESCE(AVG(rt.score), NULL) AS "avg_rating",
-        COUNT(DISTINCT f."userId")::int AS "fav_count"
-      FROM "Recipe" r
-      LEFT JOIN "Rating" rt ON rt."recipeId" = r.id
-      LEFT JOIN "Favorite" f ON f."recipeId" = r.id
-      WHERE r.id = ANY($1::int[])
-      GROUP BY r.id
-      ORDER BY ${orderCol} ${orderDir} ${nullsClause}, r.id DESC
-      LIMIT $2 OFFSET $3
-    `, filteredIds, limit, offset);
-
-    const total = filteredIds.length;
-    const pageIds = sortedRows.map(r => r.id);
-
-    if (pageIds.length === 0) {
-      const facetWhere = { ...whereWithoutTags };
-      if (minRatingIds !== null) {
-        facetWhere.id = { in: minRatingIds.length > 0 ? minRatingIds : [-1] };
-      }
-      const tagCounts = await computeTagCounts(facetWhere);
-      return res.json({ data: [], total, page, limit, tagCounts });
-    }
-
-    // 3) Récupérer les recettes complètes et réordonner
-    const [recipes, tagCounts] = await Promise.all([
-      prisma.recipe.findMany({
-        where: { id: { in: pageIds } },
-        include: includeList,
-      }),
-      computeTagCounts({
-        ...whereWithoutTags,
-        ...(minRatingIds !== null ? { id: { in: minRatingIds.length > 0 ? minRatingIds : [-1] } } : {}),
-      }),
-    ]);
-
-    const data = pageIds.map(id => recipes.find(r => r.id === id)).filter(Boolean).map(computeAvgRating);
-    return res.json({ data, total, page, limit, tagCounts });
-  }
-
-  // Tri standard Prisma
-  const orderBy = { [sortBy]: sortOrder };
-
-  // Compteurs de tags facettés
-  const facetWhere = { ...whereWithoutTags };
-  if (minRatingIds !== null) {
-    facetWhere.id = { in: minRatingIds.length > 0 ? minRatingIds : [-1] };
-  }
-
-  const [recipes, total, tagCounts] = await Promise.all([
-    prisma.recipe.findMany({
-      where,
-      include: includeList,
-      orderBy,
-      skip: offset,
-      take: limit,
-    }),
-    prisma.recipe.count({ where }),
-    computeTagCounts(facetWhere),
-  ]);
-
-  res.json({ data: recipes.map(computeAvgRating), total, page, limit, tagCounts });
+  const result = await search({ ...parsed.data, user: req.user });
+  res.json(result);
 };
 
 // GET /recipes/:id
 const getRecipeById = async (req, res) => {
   const id = parseId(req.params.id);
-  if (!id) return res.status(400).json({ error: 'id invalide' });
+  if (!id) return badRequest(res, 'id invalide');
 
   const [recipe, ratingAgg] = await Promise.all([
     prisma.recipe.findUnique({
@@ -290,17 +39,13 @@ const getRecipeById = async (req, res) => {
     }),
   ]);
 
-  if (!recipe) {
-    return res.status(404).json({ error: 'Recette introuvable' });
-  }
+  if (!recipe) return notFound(res, 'Recette introuvable');
 
   // Les non-admins ne peuvent pas voir les recettes non publiées (sauf leur auteur)
   if (recipe.status === 'PENDING' || recipe.status === 'DRAFT') {
     const isAdmin  = req.user?.role === 'ADMIN';
     const isAuthor = req.user?.id === recipe.authorId;
-    if (!isAdmin && !isAuthor) {
-      return res.status(404).json({ error: 'Recette introuvable' });
-    }
+    if (!isAdmin && !isAuthor) return notFound(res, 'Recette introuvable');
   }
 
   const avgRating    = ratingAgg._avg.score !== null
@@ -335,7 +80,7 @@ const getRecipeById = async (req, res) => {
 const createRecipe = async (req, res) => {
   const parsed = createRecipeSchema.safeParse(req.body);
   if (!parsed.success) {
-    return res.status(400).json({ error: formatZodError(parsed.error) });
+    return badRequest(res, formatZodError(parsed.error));
   }
 
   const { name, description, imageUrl, difficulty, prepTime, servings, categoryId, ingredients, steps, tagIds, tagNames, parentRecipeId, status: requestedStatus } = parsed.data;
@@ -364,9 +109,9 @@ const createRecipe = async (req, res) => {
     // Vérifier la contrainte variante (Feature 4)
     if (parentRecipeId) {
       const parent = await prisma.recipe.findUnique({ where: { id: parseInt(parentRecipeId) } });
-      if (!parent) return res.status(400).json({ error: 'Recette parente introuvable' });
-      if (parent.status !== 'PUBLISHED') return res.status(400).json({ error: 'La recette parente doit être publiée' });
-      if (parent.parentRecipeId) return res.status(400).json({ error: 'Impossible de créer une variante d\'une variante' });
+      if (!parent) return badRequest(res, 'Recette parente introuvable');
+      if (parent.status !== 'PUBLISHED') return badRequest(res, 'La recette parente doit être publiée');
+      if (parent.parentRecipeId) return badRequest(res, 'Impossible de créer une variante d\'une variante');
     }
 
     const recipe = await prisma.recipe.create({
@@ -429,23 +174,21 @@ const createRecipe = async (req, res) => {
 // PUT /recipes/:id — auth requise (auteur ou admin)
 const updateRecipe = async (req, res) => {
   const id = parseId(req.params.id);
-  if (!id) return res.status(400).json({ error: 'id invalide' });
+  if (!id) return badRequest(res, 'id invalide');
 
   const parsed = updateRecipeSchema.safeParse(req.body);
   if (!parsed.success) {
-    return res.status(400).json({ error: formatZodError(parsed.error) });
+    return badRequest(res, formatZodError(parsed.error));
   }
 
   const { name, description, imageUrl, difficulty, prepTime, servings, categoryId, ingredients, steps, tagIds, tagNames, status: requestedStatus } = parsed.data;
 
   const exists = await prisma.recipe.findUnique({ where: { id } });
-  if (!exists) {
-    return res.status(404).json({ error: 'Recette introuvable' });
-  }
+  if (!exists) return notFound(res, 'Recette introuvable');
 
   // Seul l'auteur ou un admin peut modifier
   if (req.user.role !== 'ADMIN' && exists.authorId !== req.user.id) {
-    return res.status(403).json({ error: 'Non autorisé' });
+    return forbidden(res);
   }
 
   // Calcul du statut final (les users ne peuvent pas passer directement en PUBLISHED)
@@ -530,15 +273,13 @@ const updateRecipe = async (req, res) => {
 // DELETE /recipes/:id — auth requise (auteur ou admin)
 const deleteRecipe = async (req, res) => {
   const id = parseId(req.params.id);
-  if (!id) return res.status(400).json({ error: 'id invalide' });
+  if (!id) return badRequest(res, 'id invalide');
 
   const exists = await prisma.recipe.findUnique({ where: { id } });
-  if (!exists) {
-    return res.status(404).json({ error: 'Recette introuvable' });
-  }
+  if (!exists) return notFound(res, 'Recette introuvable');
 
   if (req.user.role !== 'ADMIN' && exists.authorId !== req.user.id) {
-    return res.status(403).json({ error: 'Non autorisé' });
+    return forbidden(res);
   }
 
   await prisma.$transaction([
@@ -555,10 +296,10 @@ const deleteRecipe = async (req, res) => {
 // PATCH /recipes/:id/publish — admin seulement
 const publishRecipe = async (req, res) => {
   const id = parseId(req.params.id);
-  if (!id) return res.status(400).json({ error: 'id invalide' });
+  if (!id) return badRequest(res, 'id invalide');
 
   const recipe = await prisma.recipe.findUnique({ where: { id } });
-  if (!recipe) return res.status(404).json({ error: 'Recette introuvable' });
+  if (!recipe) return notFound(res, 'Recette introuvable');
 
   const updated = await prisma.recipe.update({
     where: { id },
@@ -595,13 +336,13 @@ const publishRecipe = async (req, res) => {
 // PATCH /recipes/:id/unpublish — auteur ou admin
 const unpublishRecipe = async (req, res) => {
   const id = parseId(req.params.id);
-  if (!id) return res.status(400).json({ error: 'id invalide' });
+  if (!id) return badRequest(res, 'id invalide');
 
   const recipe = await prisma.recipe.findUnique({ where: { id } });
-  if (!recipe) return res.status(404).json({ error: 'Recette introuvable' });
+  if (!recipe) return notFound(res, 'Recette introuvable');
 
   if (req.user.role !== 'ADMIN' && recipe.authorId !== req.user.id) {
-    return res.status(403).json({ error: 'Non autorisé' });
+    return forbidden(res);
   }
 
   const updated = await prisma.recipe.update({

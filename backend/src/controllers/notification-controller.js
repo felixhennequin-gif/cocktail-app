@@ -1,5 +1,5 @@
 const prisma = require('../prisma');
-const { parseId } = require('../helpers');
+const { parseId, badRequest, notFound, forbidden } = require('../helpers');
 
 // GET /notifications — 20 dernières + unreadCount
 const getNotifications = async (req, res, next) => {
@@ -39,11 +39,11 @@ const markAllRead = async (req, res, next) => {
 const markOneRead = async (req, res, next) => {
   try {
     const id = parseId(req.params.id);
-    if (!id) return res.status(400).json({ error: 'id invalide' });
+    if (!id) return badRequest(res, 'id invalide');
 
     const notif = await prisma.notification.findUnique({ where: { id } });
-    if (!notif) return res.status(404).json({ error: 'Notification introuvable' });
-    if (notif.userId !== req.user.id) return res.status(403).json({ error: 'Non autorisé' });
+    if (!notif) return notFound(res, 'Notification introuvable');
+    if (notif.userId !== req.user.id) return forbidden(res);
 
     await prisma.notification.update({ where: { id }, data: { read: true } });
 

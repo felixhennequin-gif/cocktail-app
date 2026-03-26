@@ -57,10 +57,10 @@ const computeAvgRating = (recipe) => {
 // Convertit les erreurs Prisma connues en réponses HTTP appropriées
 const handlePrismaError = (err, res) => {
   if (err.code === 'P2003') {
-    return res.status(400).json({ error: 'Référence invalide : categoryId ou ingredientId inexistant' });
+    return res.status(400).json({ error: 'Référence invalide : categoryId ou ingredientId inexistant', code: 'BAD_REQUEST' });
   }
   if (err.code === 'P2025') {
-    return res.status(404).json({ error: 'Recette introuvable' });
+    return res.status(404).json({ error: 'Recette introuvable', code: 'NOT_FOUND' });
   }
   throw err;
 };

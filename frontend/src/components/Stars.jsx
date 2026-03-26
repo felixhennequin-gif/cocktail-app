@@ -7,6 +7,8 @@ export default function Stars({ value, count }) {
   const stars = '★'.repeat(full) + '☆'.repeat(5 - full)
   return (
     <span
+      role="img"
+      aria-label={t('common.starsRating', { rating: value, max: 5 })}
       className="text-amber-400 text-xs"
       title={`${t('recipes.avgRating', { value })} ${t('recipes.ratingsCount', { count })}`}
     >

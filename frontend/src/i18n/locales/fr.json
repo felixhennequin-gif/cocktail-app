@@ -155,7 +155,10 @@
     "title": "Mon fil d'actualité",
     "empty": "Vous ne suivez personne encore.",
     "emptyHint": "Suivez des utilisateurs pour voir leurs recettes ici.",
+    "emptyTitle": "Votre fil est vide",
+    "emptyMessage": "Suivez des créateurs pour voir leurs nouvelles recettes ici.",
     "discover": "Découvrir des cocktails",
+    "discoverRecipes": "Découvrir des recettes",
     "loadMore": "Charger plus",
     "loading": "Chargement..."
   },
@@ -343,7 +346,10 @@
     "notFound404": "404",
     "notFoundTitle": "Page introuvable",
     "notFoundMessage": "Cette page n'existe pas ou a été déplacée.",
-    "backHome": "← Retour à l'accueil"
+    "backHome": "← Retour à l'accueil",
+    "starsRating": "{{rating}} sur {{max}} étoiles",
+    "errorTitle": "Oops ! Une erreur est survenue",
+    "errorMessage": "Quelque chose s'est mal passé…"
   },
   "landing": {
     "popularTitle": "Recettes populaires",
@@ -354,5 +360,12 @@
     "contact": "Contact",
     "about": "À propos",
     "copyright": "© 2025 Cocktails. Tous droits réservés."
+  },
+  "legal": {
+    "title": "Mentions légales",
+    "editor": "Éditeur",
+    "hosting": "Hébergement",
+    "editorInfo": "Projet personnel — cocktail-app.fr",
+    "hostingInfo": "Serveur auto-hébergé — Debian"
   }
 }

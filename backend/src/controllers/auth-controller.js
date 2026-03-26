@@ -4,11 +4,15 @@ const { randomUUID } = require('crypto');
 const prisma = require('../prisma');
 const { JWT_SECRET } = require('../middleware/auth');
 const { registerSchema, loginSchema, formatZodError } = require('../schemas');
+const { badRequest, unauthorized, notFound, conflict } = require('../helpers');
 
 const SALT_ROUNDS = 10;
 
 // Durée de validité du refresh token : 7 jours en ms
 const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
+// Nombre maximum de refresh tokens actifs par utilisateur
+const MAX_REFRESH_TOKENS_PER_USER = 5;
 
 // Crée et persiste un refresh token pour un utilisateur donné
 const createRefreshToken = async (userId) => {
@@ -23,12 +27,33 @@ const createRefreshToken = async (userId) => {
   return token;
 };
 
+// Nettoie les refresh tokens expirés et limite à MAX_REFRESH_TOKENS_PER_USER par utilisateur
+const cleanupRefreshTokens = async (userId) => {
+  // Supprime les tokens expirés
+  await prisma.refreshToken.deleteMany({
+    where: { userId, expiresAt: { lt: new Date() } },
+  });
+
+  // Limite au maximum autorisé (garde les plus récents)
+  const tokensToDelete = await prisma.refreshToken.findMany({
+    where: { userId },
+    orderBy: { createdAt: 'desc' },
+    skip: MAX_REFRESH_TOKENS_PER_USER,
+    select: { id: true },
+  });
+  if (tokensToDelete.length > 0) {
+    await prisma.refreshToken.deleteMany({
+      where: { id: { in: tokensToDelete.map((t) => t.id) } },
+    });
+  }
+};
+
 // POST /auth/register
 const register = async (req, res, next) => {
   try {
     const parsed = registerSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: formatZodError(parsed.error) });
+      return badRequest(res, formatZodError(parsed.error));
     }
 
     const { email, pseudo, password } = parsed.data;
@@ -38,7 +63,7 @@ const register = async (req, res, next) => {
     });
     if (existing) {
       const field = existing.email === email ? 'email' : 'pseudo';
-      return res.status(409).json({ error: `Ce ${field} est déjà utilisé` });
+      return conflict(res, `Ce ${field} est déjà utilisé`);
     }
 
     const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
@@ -47,11 +72,12 @@ const register = async (req, res, next) => {
       select: { id: true, email: true, pseudo: true, role: true, createdAt: true },
     });
 
-    const token = jwt.sign({ id: user.id, pseudo: user.pseudo, role: user.role }, JWT_SECRET, {
+    const token = jwt.sign({ id: user.id }, JWT_SECRET, {
       expiresIn: '15m',
     });
 
     const refreshToken = await createRefreshToken(user.id);
+    await cleanupRefreshTokens(user.id);
 
     res.status(201).json({ user, token, refreshToken });
   } catch (err) {
@@ -64,26 +90,27 @@ const login = async (req, res, next) => {
   try {
     const parsed = loginSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: formatZodError(parsed.error) });
+      return badRequest(res, formatZodError(parsed.error));
     }
 
     const { email, password } = parsed.data;
 
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
-      return res.status(401).json({ error: 'Identifiants invalides' });
+      return unauthorized(res, 'Identifiants invalides');
     }
 
     const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) {
-      return res.status(401).json({ error: 'Identifiants invalides' });
+      return unauthorized(res, 'Identifiants invalides');
     }
 
-    const token = jwt.sign({ id: user.id, pseudo: user.pseudo, role: user.role }, JWT_SECRET, {
+    const token = jwt.sign({ id: user.id }, JWT_SECRET, {
       expiresIn: '15m',
     });
 
     const refreshToken = await createRefreshToken(user.id);
+    await cleanupRefreshTokens(user.id);
 
     res.json({
       user: { id: user.id, email: user.email, pseudo: user.pseudo, role: user.role, avatar: user.avatar },
@@ -102,7 +129,7 @@ const me = async (req, res, next) => {
       where: { id: req.user.id },
       select: { id: true, email: true, pseudo: true, role: true, avatar: true, createdAt: true },
     });
-    if (!user) return res.status(404).json({ error: 'Utilisateur introuvable' });
+    if (!user) return notFound(res, 'Utilisateur introuvable');
     res.json(user);
   } catch (err) {
     next(err);
@@ -113,23 +140,23 @@ const me = async (req, res, next) => {
 const refresh = async (req, res, next) => {
   try {
     const { refreshToken } = req.body;
-    if (!refreshToken) return res.status(400).json({ error: 'Refresh token requis' });
+    if (!refreshToken) return badRequest(res, 'Refresh token requis');
 
     const stored = await prisma.refreshToken.findUnique({ where: { token: refreshToken } });
     if (!stored || stored.expiresAt < new Date()) {
-      return res.status(401).json({ error: 'Refresh token invalide ou expiré' });
+      return unauthorized(res, 'Refresh token invalide ou expiré');
     }
 
     const user = await prisma.user.findUnique({ where: { id: stored.userId } });
-    if (!user) return res.status(401).json({ error: 'Utilisateur introuvable' });
+    if (!user) return unauthorized(res, 'Utilisateur introuvable');
 
-    const newAccessToken = jwt.sign(
-      { id: user.id, pseudo: user.pseudo, role: user.role },
-      JWT_SECRET,
-      { expiresIn: '15m' }
-    );
+    // Rotation du refresh token — invalide l'ancien et en crée un nouveau
+    await prisma.refreshToken.delete({ where: { id: stored.id } });
+    const newRefreshToken = await createRefreshToken(user.id);
 
-    res.json({ token: newAccessToken });
+    const newAccessToken = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: '15m' });
+
+    res.json({ token: newAccessToken, refreshToken: newRefreshToken });
   } catch (err) {
     next(err);
   }
