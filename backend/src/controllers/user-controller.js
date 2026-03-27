@@ -50,6 +50,7 @@ const getUserProfile = async (req, res, next) => {
         id: true,
         pseudo: true,
         avatar: true,
+        bio: true,
         createdAt: true,
         recipes: {
           where: { status: 'PUBLISHED' },
@@ -58,6 +59,7 @@ const getUserProfile = async (req, res, next) => {
             _count: { select: { ratings: true } },
           },
           orderBy: { createdAt: 'desc' },
+          take: 20,
         },
       },
     }),

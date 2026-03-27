@@ -86,10 +86,12 @@ const cacheMiddleware = (ttlSeconds) => async (req, res, next) => {
     return res.json(cached);
   }
 
-  // Intercepter res.json pour stocker en cache avant d'envoyer
+  // Intercepter res.json pour stocker en cache uniquement les réponses 2xx
   const originalJson = res.json.bind(res);
   res.json = (body) => {
-    setCache(key, body, ttlSeconds).catch(() => {});
+    if (res.statusCode >= 200 && res.statusCode < 300) {
+      setCache(key, body, ttlSeconds).catch(() => {});
+    }
     return originalJson(body);
   };
 

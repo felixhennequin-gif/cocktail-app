@@ -160,7 +160,11 @@ const deleteComment = async (req, res) => {
     return forbidden(res);
   }
 
-  await prisma.comment.delete({ where: { id } });
+  // Supprimer le commentaire et la note associée dans une transaction
+  await prisma.$transaction([
+    prisma.rating.deleteMany({ where: { userId: comment.userId, recipeId: comment.recipeId } }),
+    prisma.comment.delete({ where: { id } }),
+  ]);
   res.status(204).send();
 };
 

@@ -26,8 +26,11 @@ const createNotification = async ({ userId, type, data }) => {
 
 /**
  * Crée une notification pour chaque follower d'un auteur.
+ * Traite par lots de 500 pour éviter les requêtes trop volumineuses.
  * Fire and forget — à appeler sans await.
  */
+const BATCH_SIZE = 500;
+
 const notifyFollowers = async ({ authorId, type, data }) => {
   const follows = await prisma.follow.findMany({
     where:  { followingId: authorId },
@@ -35,9 +38,13 @@ const notifyFollowers = async ({ authorId, type, data }) => {
   });
   if (follows.length === 0) return;
 
-  await prisma.notification.createMany({
-    data: follows.map((f) => ({ userId: f.followerId, type, data })),
-  });
+  // Traitement par lots
+  for (let i = 0; i < follows.length; i += BATCH_SIZE) {
+    const batch = follows.slice(i, i + BATCH_SIZE);
+    await prisma.notification.createMany({
+      data: batch.map((f) => ({ userId: f.followerId, type, data })),
+    });
+  }
 };
 
 module.exports = { createNotification, notifyFollowers };

@@ -40,12 +40,12 @@ app.use(helmet({
     },
   },
 }));
+// CORS : origines depuis la variable d'env ou valeurs par défaut
+const corsOrigins = process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(',').map((s) => s.trim())
+  : ['http://localhost:5173', 'http://192.168.1.85:5173', 'https://cocktail-app.fr'];
 app.use(cors({
-  origin: [
-    'http://localhost:5173',
-    'http://192.168.1.85:5173',
-    'https://cocktail-app.fr',
-  ],
+  origin: corsOrigins,
   credentials: true,
 }));
 app.use(express.json({ limit: '10kb' }));
@@ -199,8 +199,9 @@ if (fs.existsSync(frontendDist)) {
 }
 
 // Gestion des erreurs globale
+const logger = require('./logger');
 app.use((err, req, res, next) => {
-  console.error('[ERROR]', err.message, err.stack);
+  logger.error('server', err.message, { stack: err.stack, path: req.path });
   if (err.type === 'entity.parse.failed') {
     return res.status(400).json({ error: 'JSON invalide' });
   }
@@ -216,16 +217,34 @@ if (require.main === module) {
     console.log(`Serveur démarré sur le port ${PORT}`);
   });
 
-  const shutdown = async () => {
-    console.log('[server] Arrêt en cours...');
-    server.close();
-    await prisma.$disconnect();
-    const { redis } = require('./cache');
-    if (redis) await redis.quit();
-    process.exit(0);
+  let isShuttingDown = false;
+  const shutdown = async (signal) => {
+    if (isShuttingDown) return;
+    isShuttingDown = true;
+    console.log(`[server] ${signal} reçu — arrêt gracieux en cours...`);
+
+    // Timeout de sécurité : force l'arrêt après 10 secondes
+    const forceTimeout = setTimeout(() => {
+      console.error('[server] Arrêt forcé après timeout');
+      process.exit(1);
+    }, 10_000);
+    forceTimeout.unref();
+
+    try {
+      // Arrêter d'accepter de nouvelles connexions et attendre les connexions en cours
+      await new Promise((resolve) => server.close(resolve));
+      await prisma.$disconnect();
+      const { redis } = require('./cache');
+      if (redis) await redis.quit();
+      console.log('[server] Arrêt propre terminé');
+      process.exit(0);
+    } catch (err) {
+      console.error('[server] Erreur lors de l\'arrêt:', err.message);
+      process.exit(1);
+    }
   };
-  process.on('SIGTERM', shutdown);
-  process.on('SIGINT', shutdown);
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
 }
 
 module.exports = app;

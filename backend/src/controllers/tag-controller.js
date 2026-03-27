@@ -24,21 +24,23 @@ const getAllTags = async (req, res, next) => {
   }
 };
 
-// Résout des tagNames en tagIds, crée les tags manquants
+// Résout des tagNames en tagIds, crée les tags manquants (batch)
 const resolveTagNames = async (tagNames) => {
   const normalized = tagNames.map(normalizeTagName).filter(Boolean);
   const unique = [...new Set(normalized)];
+  if (unique.length === 0) return [];
 
-  const ids = [];
-  for (const name of unique) {
-    const tag = await prisma.tag.upsert({
-      where: { name },
-      create: { name },
-      update: {},
-    });
-    ids.push(tag.id);
-  }
-  return ids;
+  // Upsert tous les tags en parallèle
+  const tags = await Promise.all(
+    unique.map((name) =>
+      prisma.tag.upsert({
+        where: { name },
+        create: { name },
+        update: {},
+      })
+    )
+  );
+  return tags.map((t) => t.id);
 };
 
 module.exports = { getAllTags, resolveTagNames, normalizeTagName };

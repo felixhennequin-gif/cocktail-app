@@ -79,7 +79,8 @@ const getDailyRecipe = async (req, res) => {
 
     res.json({ ...publicData, ...userFields });
   } catch (err) {
-    console.error('[daily] Erreur:', err.message);
+    const logger = require('../logger');
+    logger.error('daily', 'Erreur cocktail du jour', { error: err.message });
     sendError(res, 500, 'Erreur serveur', 'INTERNAL_ERROR');
   }
 };

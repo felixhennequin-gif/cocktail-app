@@ -6,7 +6,7 @@ const { includeList, enrichRecipes } = require('../helpers/recipe-helpers');
 
 // Schéma de validation des query params de GET /recipes
 const recipeListSchema = z.object({
-  page:       z.coerce.number().int().min(1).default(1),
+  page:       z.coerce.number().int().min(1).max(500).default(1),
   limit:      z.coerce.number().int().min(1).max(100).default(20),
   q:          z.string().min(2).max(100).optional(),
   categoryId: z.coerce.number().int().positive().optional(),
@@ -19,11 +19,13 @@ const recipeListSchema = z.object({
   sortOrder:  z.enum(['asc', 'desc']).default('desc'),
 });
 
-// Calcule les compteurs de tags filtrés (faceted filter : tous les filtres SAUF les tags)
+// Calcule les compteurs de tags filtrés (sous-requête SQL via IDs capés)
+const MAX_FACET_IDS = 5000;
 const computeTagCounts = async (whereWithoutTags) => {
   const filteredIds = await prisma.recipe.findMany({
     where: whereWithoutTags,
     select: { id: true },
+    take: MAX_FACET_IDS,
   });
   const ids = filteredIds.map(r => r.id);
   if (ids.length === 0) return [];

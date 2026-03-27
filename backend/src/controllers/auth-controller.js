@@ -2,8 +2,9 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { randomUUID } = require('crypto');
 const prisma = require('../prisma');
+const logger = require('../logger');
 const { JWT_SECRET } = require('../middleware/auth');
-const { registerSchema, loginSchema, formatZodError } = require('../schemas');
+const { registerSchema, loginSchema, refreshSchema, formatZodError } = require('../schemas');
 const { badRequest, unauthorized, notFound, conflict } = require('../helpers');
 
 const SALT_ROUNDS = 10;
@@ -68,15 +69,16 @@ const register = async (req, res, next) => {
 
     const { email, pseudo, password } = parsed.data;
 
-    const existing = await prisma.user.findFirst({
-      where: { OR: [{ email }, { pseudo }] },
-    });
+    // Toujours calculer le hash pour éviter les attaques par timing
+    // (un attaquant ne peut pas distinguer email existant vs inexistant par le temps de réponse)
+    const [existing, passwordHash] = await Promise.all([
+      prisma.user.findFirst({ where: { OR: [{ email }, { pseudo }] } }),
+      bcrypt.hash(password, SALT_ROUNDS),
+    ]);
     if (existing) {
       const field = existing.email === email ? 'email' : 'pseudo';
       return conflict(res, `Ce ${field} est déjà utilisé`);
     }
-
-    const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
     const user = await prisma.user.create({
       data: { email, pseudo, passwordHash },
       select: { id: true, email: true, pseudo: true, role: true, createdAt: true },
@@ -152,8 +154,9 @@ const me = async (req, res, next) => {
 // Implémente la détection de réutilisation (refresh token reuse detection)
 const refresh = async (req, res, next) => {
   try {
-    const { refreshToken } = req.body;
-    if (!refreshToken) return badRequest(res, 'Refresh token requis');
+    const parsed = refreshSchema.safeParse(req.body);
+    if (!parsed.success) return badRequest(res, formatZodError(parsed.error));
+    const { refreshToken } = parsed.data;
 
     const stored = await prisma.refreshToken.findUnique({ where: { token: refreshToken } });
 
@@ -169,7 +172,7 @@ const refresh = async (req, res, next) => {
     if (stored.consumed) {
       // Invalider TOUS les tokens de cette famille
       await prisma.refreshToken.deleteMany({ where: { family: stored.family } });
-      console.warn('[auth] Refresh token réutilisé — famille invalidée', { userId: stored.userId, family: stored.family });
+      logger.warn('auth', 'Refresh token réutilisé — famille invalidée', { userId: stored.userId, family: stored.family });
       return unauthorized(res, 'Refresh token réutilisé — session révoquée par sécurité');
     }
 

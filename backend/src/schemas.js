@@ -91,6 +91,12 @@ const loginSchema = z.object({
   password: z.string().min(1, 'password est requis'),
 });
 
+// --- Refresh Token ---
+
+const refreshSchema = z.object({
+  refreshToken: z.string().min(1, 'Refresh token requis'),
+});
+
 // --- Rating ---
 
 const ratingSchema = z.object({
@@ -114,6 +120,7 @@ module.exports = {
   updateProfileSchema,
   registerSchema,
   loginSchema,
+  refreshSchema,
   ratingSchema,
   formatZodError,
 };

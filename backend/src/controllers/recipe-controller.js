@@ -1,24 +1,15 @@
+const fs = require('fs');
+const path = require('path');
 const prisma = require('../prisma');
+const logger = require('../logger');
 const { createNotification, notifyFollowers } = require('../services/notification-service');
-const { invalidateCacheByPattern, invalidateCache } = require('../cache');
+const { bustRecipeCache } = require('../services/recipe-cache-service');
 const { resolveTagNames } = require('./tag-controller');
 const { parseId, badRequest, notFound, forbidden } = require('../helpers');
 const { includeDetail, enrichRecipes, flattenRecipe, handlePrismaError } = require('../helpers/recipe-helpers');
 const { createRecipeSchema, updateRecipeSchema, formatZodError } = require('../schemas');
 const { recipeListSchema, search } = require('../services/recipe-search-service');
 const { resolveIngredients } = require('../services/ingredient-resolver');
-
-// Invalide uniquement les entrées de cache liées aux recettes et au daily (pas les catégories ni les tags)
-const bustRecipeCache = (recipeId) => {
-  const promises = [
-    invalidateCacheByPattern('cocktail:/api/recipes*'),
-    invalidateCache('cocktail:daily-recipe'),
-  ];
-  if (recipeId) {
-    promises.push(invalidateCache(`cocktail:/api/recipes/${recipeId}`));
-  }
-  return Promise.all(promises).catch(() => {});
-};
 
 // GET /recipes?page=1&limit=20&q=mojito&categoryId=2&minRating=4&maxTime=10&authorId=1&status=PUBLISHED
 const getAllRecipes = async (req, res, next) => {
@@ -294,7 +285,10 @@ const deleteRecipe = async (req, res, next) => {
     const id = parseId(req.params.id);
     if (!id) return badRequest(res, 'id invalide');
 
-    const exists = await prisma.recipe.findUnique({ where: { id } });
+    const exists = await prisma.recipe.findUnique({
+      where: { id },
+      include: { steps: { select: { imageUrl: true } } },
+    });
     if (!exists) return notFound(res, 'Recette introuvable');
 
     if (req.user.role !== 'ADMIN' && exists.authorId !== req.user.id) {
@@ -307,7 +301,18 @@ const deleteRecipe = async (req, res, next) => {
       prisma.recipe.delete({ where: { id } }),
     ]);
 
-    console.log('[recipe] deleted', { id, name: exists.name, authorId: exists.authorId });
+    // Nettoyage des images associées (fire and forget)
+    const uploadsDir = path.join(__dirname, '..', '..', 'uploads');
+    const imagesToDelete = [];
+    if (exists.imageUrl) imagesToDelete.push(path.join(uploadsDir, path.basename(exists.imageUrl)));
+    for (const step of exists.steps) {
+      if (step.imageUrl) imagesToDelete.push(path.join(uploadsDir, ...step.imageUrl.replace('/uploads/', '').split('/')));
+    }
+    for (const imgPath of imagesToDelete) {
+      fs.unlink(imgPath, () => {});
+    }
+
+    logger.info('recipe', 'Recette supprimée', { id, name: exists.name, authorId: exists.authorId });
     res.status(204).send();
     bustRecipeCache();
   } catch (err) {
