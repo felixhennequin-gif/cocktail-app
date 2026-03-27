@@ -2,7 +2,7 @@
 const { z } = require('zod');
 const { Prisma } = require('@prisma/client');
 const prisma = require('../prisma');
-const { includeList, computeAvgRating } = require('../helpers/recipe-helpers');
+const { includeList, enrichRecipes } = require('../helpers/recipe-helpers');
 
 // Schéma de validation des query params de GET /recipes
 const recipeListSchema = z.object({
@@ -126,7 +126,7 @@ const searchWithQuery = async ({ q, where, whereWithoutTags, minRatingIds, offse
   ]);
 
   const ranked = pageIds.map(id => recipes.find(r => r.id === id)).filter(Boolean);
-  return { data: ranked.map(computeAvgRating), total, page, limit, tagCounts };
+  return { data: await enrichRecipes(ranked), total, page, limit, tagCounts };
 };
 
 // Recherche avec tri par agrégat (avgRating / favoritesCount)
@@ -181,7 +181,8 @@ const searchWithAggSort = async ({ where, whereWithoutTags, minRatingIds, sortBy
     computeTagCounts(facetWhere),
   ]);
 
-  const data = pageIds.map(id => recipes.find(r => r.id === id)).filter(Boolean).map(computeAvgRating);
+  const ordered = pageIds.map(id => recipes.find(r => r.id === id)).filter(Boolean);
+  const data = await enrichRecipes(ordered);
   return { data, total, page, limit, tagCounts };
 };
 
@@ -235,7 +236,7 @@ const search = async (params) => {
     computeTagCounts(facetWhere),
   ]);
 
-  return { data: recipes.map(computeAvgRating), total, page, limit, tagCounts };
+  return { data: await enrichRecipes(recipes), total, page, limit, tagCounts };
 };
 
 module.exports = { recipeListSchema, search };

@@ -7,7 +7,7 @@ const { cacheMiddleware } = require('../cache');
 const router = Router();
 
 router.get('/',          optionalAuth, cacheMiddleware(60),  getAllRecipes);
-router.get('/daily',     optionalAuth, cacheMiddleware(300), getDailyRecipe); // avant /:id
+router.get('/daily',     optionalAuth, getDailyRecipe); // cache géré manuellement dans le controller
 router.get('/:id',       optionalAuth, getRecipeById);
 router.post('/',         requireAuth,  createRecipe);
 router.put('/:id',       requireAuth,  updateRecipe);

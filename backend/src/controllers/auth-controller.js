@@ -15,28 +15,38 @@ const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const MAX_REFRESH_TOKENS_PER_USER = 5;
 
 // Crée et persiste un refresh token pour un utilisateur donné
-const createRefreshToken = async (userId) => {
+// family : identifiant de la chaîne de rotation (nouveau si login, hérité si refresh)
+const createRefreshToken = async (userId, family) => {
   const token = randomUUID();
+  const tokenFamily = family || randomUUID();
   await prisma.refreshToken.create({
     data: {
       token,
       userId,
+      family: tokenFamily,
       expiresAt: new Date(Date.now() + REFRESH_TOKEN_TTL_MS),
     },
   });
-  return token;
+  return { token, family: tokenFamily };
 };
 
-// Nettoie les refresh tokens expirés et limite à MAX_REFRESH_TOKENS_PER_USER par utilisateur
+// Nettoie les refresh tokens expirés et les tokens consommés anciens
 const cleanupRefreshTokens = async (userId) => {
-  // Supprime les tokens expirés
+  // Supprime les tokens expirés et les tokens consommés de plus de 24h
+  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
   await prisma.refreshToken.deleteMany({
-    where: { userId, expiresAt: { lt: new Date() } },
+    where: {
+      userId,
+      OR: [
+        { expiresAt: { lt: new Date() } },
+        { consumed: true, createdAt: { lt: oneDayAgo } },
+      ],
+    },
   });
 
-  // Limite au maximum autorisé (garde les plus récents)
+  // Limite au maximum autorisé (garde les plus récents non-consommés)
   const tokensToDelete = await prisma.refreshToken.findMany({
-    where: { userId },
+    where: { userId, consumed: false },
     orderBy: { createdAt: 'desc' },
     skip: MAX_REFRESH_TOKENS_PER_USER,
     select: { id: true },
@@ -74,9 +84,10 @@ const register = async (req, res, next) => {
 
     const token = jwt.sign({ id: user.id }, JWT_SECRET, {
       expiresIn: '15m',
+      algorithm: 'HS256',
     });
 
-    const refreshToken = await createRefreshToken(user.id);
+    const { token: refreshToken } = await createRefreshToken(user.id);
     await cleanupRefreshTokens(user.id);
 
     res.status(201).json({ user, token, refreshToken });
@@ -107,9 +118,10 @@ const login = async (req, res, next) => {
 
     const token = jwt.sign({ id: user.id }, JWT_SECRET, {
       expiresIn: '15m',
+      algorithm: 'HS256',
     });
 
-    const refreshToken = await createRefreshToken(user.id);
+    const { token: refreshToken } = await createRefreshToken(user.id);
     await cleanupRefreshTokens(user.id);
 
     res.json({
@@ -137,24 +149,43 @@ const me = async (req, res, next) => {
 };
 
 // POST /auth/refresh — émet un nouvel access token à partir d'un refresh token valide
+// Implémente la détection de réutilisation (refresh token reuse detection)
 const refresh = async (req, res, next) => {
   try {
     const { refreshToken } = req.body;
     if (!refreshToken) return badRequest(res, 'Refresh token requis');
 
     const stored = await prisma.refreshToken.findUnique({ where: { token: refreshToken } });
+
     if (!stored || stored.expiresAt < new Date()) {
+      // Token inconnu ou expiré
+      if (stored) {
+        await prisma.refreshToken.delete({ where: { id: stored.id } }).catch(() => {});
+      }
       return unauthorized(res, 'Refresh token invalide ou expiré');
+    }
+
+    // Détection de réutilisation : token déjà consommé → vol probable
+    if (stored.consumed) {
+      // Invalider TOUS les tokens de cette famille
+      await prisma.refreshToken.deleteMany({ where: { family: stored.family } });
+      console.warn('[auth] Refresh token réutilisé — famille invalidée', { userId: stored.userId, family: stored.family });
+      return unauthorized(res, 'Refresh token réutilisé — session révoquée par sécurité');
     }
 
     const user = await prisma.user.findUnique({ where: { id: stored.userId } });
     if (!user) return unauthorized(res, 'Utilisateur introuvable');
 
-    // Rotation du refresh token — invalide l'ancien et en crée un nouveau
-    await prisma.refreshToken.delete({ where: { id: stored.id } });
-    const newRefreshToken = await createRefreshToken(user.id);
+    // Marquer l'ancien token comme consommé (au lieu de le supprimer)
+    await prisma.refreshToken.update({
+      where: { id: stored.id },
+      data: { consumed: true },
+    });
 
-    const newAccessToken = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: '15m' });
+    // Créer un nouveau token dans la même famille
+    const { token: newRefreshToken } = await createRefreshToken(user.id, stored.family);
+
+    const newAccessToken = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: '15m', algorithm: 'HS256' });
 
     res.json({ token: newAccessToken, refreshToken: newRefreshToken });
   } catch (err) {
@@ -167,9 +198,11 @@ const logout = async (req, res, next) => {
   try {
     const { refreshToken } = req.body;
     if (refreshToken) {
-      await prisma.refreshToken.deleteMany({
-        where: { token: refreshToken, userId: req.user.id },
-      });
+      // Trouver le token et supprimer toute la famille
+      const stored = await prisma.refreshToken.findUnique({ where: { token: refreshToken } });
+      if (stored && stored.userId === req.user.id) {
+        await prisma.refreshToken.deleteMany({ where: { family: stored.family } });
+      }
     }
     res.json({ ok: true });
   } catch (err) {

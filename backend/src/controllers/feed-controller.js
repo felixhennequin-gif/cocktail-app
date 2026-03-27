@@ -1,8 +1,9 @@
 const prisma = require('../prisma');
-const { includeList, computeAvgRating } = require('../helpers/recipe-helpers');
+const { includeList, enrichRecipes } = require('../helpers/recipe-helpers');
 
 // GET /feed?cursor=123&limit=20 — JWT requis, pagination par curseur
-const getFeed = async (req, res) => {
+const getFeed = async (req, res, next) => {
+  try {
   const limit  = Math.min(20, Math.max(1, parseInt(req.query.limit) || 20));
   const cursor = req.query.cursor ? parseInt(req.query.cursor) : null;
 
@@ -35,7 +36,10 @@ const getFeed = async (req, res) => {
   const data       = hasMore ? recipes.slice(0, limit) : recipes;
   const nextCursor = hasMore ? data[data.length - 1].id : null;
 
-  res.json({ data: data.map(computeAvgRating), nextCursor });
+  res.json({ data: await enrichRecipes(data), nextCursor });
+  } catch (err) {
+    next(err);
+  }
 };
 
 module.exports = { getFeed };

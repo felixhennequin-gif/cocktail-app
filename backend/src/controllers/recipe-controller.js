@@ -1,29 +1,43 @@
 const prisma = require('../prisma');
 const { createNotification, notifyFollowers } = require('../services/notification-service');
-const { invalidateCacheByPattern } = require('../cache');
+const { invalidateCacheByPattern, invalidateCache } = require('../cache');
 const { resolveTagNames } = require('./tag-controller');
 const { parseId, badRequest, notFound, forbidden } = require('../helpers');
-const { includeDetail, computeAvgRating, handlePrismaError } = require('../helpers/recipe-helpers');
+const { includeDetail, enrichRecipes, flattenRecipe, handlePrismaError } = require('../helpers/recipe-helpers');
 const { createRecipeSchema, updateRecipeSchema, formatZodError } = require('../schemas');
 const { recipeListSchema, search } = require('../services/recipe-search-service');
 const { resolveIngredients } = require('../services/ingredient-resolver');
 
-// Invalide toutes les entrées de cache liées aux recettes
-const bustRecipeCache = () => invalidateCacheByPattern('cocktail:*').catch(() => {});
+// Invalide uniquement les entrées de cache liées aux recettes et au daily (pas les catégories ni les tags)
+const bustRecipeCache = (recipeId) => {
+  const promises = [
+    invalidateCacheByPattern('cocktail:/api/recipes*'),
+    invalidateCache('cocktail:daily-recipe'),
+  ];
+  if (recipeId) {
+    promises.push(invalidateCache(`cocktail:/api/recipes/${recipeId}`));
+  }
+  return Promise.all(promises).catch(() => {});
+};
 
 // GET /recipes?page=1&limit=20&q=mojito&categoryId=2&minRating=4&maxTime=10&authorId=1&status=PUBLISHED
-const getAllRecipes = async (req, res) => {
-  const parsed = recipeListSchema.safeParse(req.query);
-  if (!parsed.success) {
-    return res.status(400).json({ error: parsed.error.flatten().fieldErrors, code: 'VALIDATION_ERROR' });
-  }
+const getAllRecipes = async (req, res, next) => {
+  try {
+    const parsed = recipeListSchema.safeParse(req.query);
+    if (!parsed.success) {
+      return res.status(400).json({ error: parsed.error.flatten().fieldErrors, code: 'VALIDATION_ERROR' });
+    }
 
-  const result = await search({ ...parsed.data, user: req.user });
-  res.json(result);
+    const result = await search({ ...parsed.data, user: req.user });
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
 };
 
 // GET /recipes/:id
-const getRecipeById = async (req, res) => {
+const getRecipeById = async (req, res, next) => {
+  try {
   const id = parseId(req.params.id);
   if (!id) return badRequest(res, 'id invalide');
 
@@ -67,17 +81,19 @@ const getRecipeById = async (req, res) => {
     userFields = { isFavorited: !!fav, userScore: userRating?.score ?? null };
   }
 
-  // Aplatir les tags
-  const { tags: recipeTags, ratings, ...recipeRest } = recipe;
-  const flatTags = recipeTags ? recipeTags.map((rt) => rt.tag) : [];
+  // Aplatir les tags et supprimer _count
+  const cleaned = flattenRecipe(recipe);
 
-  res.json({ ...recipeRest, tags: flatTags, avgRating, ratingsCount, ...userFields });
+  res.json({ ...cleaned, avgRating, ratingsCount, ...userFields });
+  } catch (err) {
+    next(err);
+  }
 };
 
 // POST /recipes — auth requise
 // ingredients : [{ ingredientId, quantity, unit }] OU [{ name, quantity, unit }]
 // steps       : [{ order, description }]
-const createRecipe = async (req, res) => {
+const createRecipe = async (req, res, next) => {
   const parsed = createRecipeSchema.safeParse(req.body);
   if (!parsed.success) {
     return badRequest(res, formatZodError(parsed.error));
@@ -149,7 +165,8 @@ const createRecipe = async (req, res) => {
       include: includeDetail,
     });
 
-    res.status(201).json(computeAvgRating(recipe));
+    const [enriched] = await enrichRecipes([recipe]);
+    res.status(201).json(enriched);
 
     bustRecipeCache();
 
@@ -263,7 +280,8 @@ const updateRecipe = async (req, res) => {
       });
     });
 
-    res.json(computeAvgRating(recipe));
+    const [enriched] = await enrichRecipes([recipe]);
+    res.json(enriched);
     bustRecipeCache();
   } catch (err) {
     handlePrismaError(err, res);
@@ -271,88 +289,100 @@ const updateRecipe = async (req, res) => {
 };
 
 // DELETE /recipes/:id — auth requise (auteur ou admin)
-const deleteRecipe = async (req, res) => {
-  const id = parseId(req.params.id);
-  if (!id) return badRequest(res, 'id invalide');
+const deleteRecipe = async (req, res, next) => {
+  try {
+    const id = parseId(req.params.id);
+    if (!id) return badRequest(res, 'id invalide');
 
-  const exists = await prisma.recipe.findUnique({ where: { id } });
-  if (!exists) return notFound(res, 'Recette introuvable');
+    const exists = await prisma.recipe.findUnique({ where: { id } });
+    if (!exists) return notFound(res, 'Recette introuvable');
 
-  if (req.user.role !== 'ADMIN' && exists.authorId !== req.user.id) {
-    return forbidden(res);
+    if (req.user.role !== 'ADMIN' && exists.authorId !== req.user.id) {
+      return forbidden(res);
+    }
+
+    await prisma.$transaction([
+      // Détacher les variantes avant suppression
+      prisma.recipe.updateMany({ where: { parentRecipeId: id }, data: { parentRecipeId: null } }),
+      prisma.recipe.delete({ where: { id } }),
+    ]);
+
+    console.log('[recipe] deleted', { id, name: exists.name, authorId: exists.authorId });
+    res.status(204).send();
+    bustRecipeCache();
+  } catch (err) {
+    next(err);
   }
-
-  await prisma.$transaction([
-    // Détacher les variantes avant suppression
-    prisma.recipe.updateMany({ where: { parentRecipeId: id }, data: { parentRecipeId: null } }),
-    prisma.recipe.delete({ where: { id } }),
-  ]);
-
-  console.log('[recipe] deleted', { id, name: exists.name, authorId: exists.authorId });
-  res.status(204).send();
-  bustRecipeCache();
 };
 
 // PATCH /recipes/:id/publish — admin seulement
-const publishRecipe = async (req, res) => {
-  const id = parseId(req.params.id);
-  if (!id) return badRequest(res, 'id invalide');
+const publishRecipe = async (req, res, next) => {
+  try {
+    const id = parseId(req.params.id);
+    if (!id) return badRequest(res, 'id invalide');
 
-  const recipe = await prisma.recipe.findUnique({ where: { id } });
-  if (!recipe) return notFound(res, 'Recette introuvable');
+    const recipe = await prisma.recipe.findUnique({ where: { id } });
+    if (!recipe) return notFound(res, 'Recette introuvable');
 
-  const updated = await prisma.recipe.update({
-    where: { id },
-    data: { status: 'PUBLISHED' },
-    include: includeDetail,
-  });
+    const updated = await prisma.recipe.update({
+      where: { id },
+      data: { status: 'PUBLISHED' },
+      include: includeDetail,
+    });
 
-  res.json(computeAvgRating(updated));
-  bustRecipeCache();
+    const [enriched] = await enrichRecipes([updated]);
+    res.json(enriched);
+    bustRecipeCache();
 
-  // Notifications fire and forget
-  if (recipe.authorId) {
-    // Notifier l'auteur : sa recette a été approuvée
-    createNotification({
-      userId: recipe.authorId,
-      type:   'RECIPE_APPROVED',
-      data:   { recipeId: recipe.id, recipeName: recipe.name },
-    }).catch(console.error);
+    // Notifications fire and forget
+    if (recipe.authorId) {
+      createNotification({
+        userId: recipe.authorId,
+        type:   'RECIPE_APPROVED',
+        data:   { recipeId: recipe.id, recipeName: recipe.name },
+      }).catch(console.error);
 
-    // Notifier les followers de l'auteur : nouvelle recette publiée
-    notifyFollowers({
-      authorId:     recipe.authorId,
-      type:         'NEW_RECIPE',
-      data: {
-        recipeId:     recipe.id,
-        recipeName:   recipe.name,
+      notifyFollowers({
         authorId:     recipe.authorId,
-        authorPseudo: updated.author?.pseudo ?? null,
-      },
-    }).catch(console.error);
+        type:         'NEW_RECIPE',
+        data: {
+          recipeId:     recipe.id,
+          recipeName:   recipe.name,
+          authorId:     recipe.authorId,
+          authorPseudo: updated.author?.pseudo ?? null,
+        },
+      }).catch(console.error);
+    }
+  } catch (err) {
+    next(err);
   }
 };
 
 // PATCH /recipes/:id/unpublish — auteur ou admin
-const unpublishRecipe = async (req, res) => {
-  const id = parseId(req.params.id);
-  if (!id) return badRequest(res, 'id invalide');
+const unpublishRecipe = async (req, res, next) => {
+  try {
+    const id = parseId(req.params.id);
+    if (!id) return badRequest(res, 'id invalide');
 
-  const recipe = await prisma.recipe.findUnique({ where: { id } });
-  if (!recipe) return notFound(res, 'Recette introuvable');
+    const recipe = await prisma.recipe.findUnique({ where: { id } });
+    if (!recipe) return notFound(res, 'Recette introuvable');
 
-  if (req.user.role !== 'ADMIN' && recipe.authorId !== req.user.id) {
-    return forbidden(res);
+    if (req.user.role !== 'ADMIN' && recipe.authorId !== req.user.id) {
+      return forbidden(res);
+    }
+
+    const updated = await prisma.recipe.update({
+      where: { id },
+      data: { status: 'DRAFT' },
+      include: includeDetail,
+    });
+
+    const [enriched] = await enrichRecipes([updated]);
+    res.json(enriched);
+    bustRecipeCache();
+  } catch (err) {
+    next(err);
   }
-
-  const updated = await prisma.recipe.update({
-    where: { id },
-    data: { status: 'DRAFT' },
-    include: includeDetail,
-  });
-
-  res.json(computeAvgRating(updated));
-  bustRecipeCache();
 };
 
 module.exports = { getAllRecipes, getRecipeById, createRecipe, updateRecipe, deleteRecipe, publishRecipe, unpublishRecipe };

@@ -1,6 +1,6 @@
 const prisma = require('../prisma');
 const { parseId, badRequest, notFound } = require('../helpers');
-const { computeAvgRating } = require('../helpers/recipe-helpers');
+const { enrichRecipes } = require('../helpers/recipe-helpers');
 
 // POST /favorites/:recipeId — ajouter (idempotent)
 const addFavorite = async (req, res, next) => {
@@ -55,7 +55,7 @@ const getMyFavorites = async (req, res, next) => {
             include: {
               category: true,
               author: { select: { id: true, pseudo: true } },
-              ratings: { select: { score: true } },
+              _count: { select: { ratings: true } },
             },
           },
         },
@@ -66,7 +66,8 @@ const getMyFavorites = async (req, res, next) => {
       prisma.favorite.count({ where: { userId } }),
     ]);
 
-    const data = favorites.map(({ recipe }) => computeAvgRating(recipe));
+    const rawRecipes = favorites.map(({ recipe }) => recipe);
+    const data = await enrichRecipes(rawRecipes);
     res.json({ data, total, page, limit });
   } catch (err) {
     next(err);

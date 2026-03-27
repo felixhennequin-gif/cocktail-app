@@ -1,9 +1,10 @@
 // Helpers partagés pour les controllers liés aux recettes
+const prisma = require('../prisma');
 
 // Inclusions des tags (réutilisable)
 const includeTags = { tags: { include: { tag: true } } };
 
-// Inclusions pour les vues détaillées
+// Inclusions pour les vues détaillées (sans charger tous les ratings en mémoire)
 const includeDetail = {
   category: true,
   author: {
@@ -15,8 +16,8 @@ const includeDetail = {
   steps: {
     orderBy: { order: 'asc' },
   },
-  ratings: {
-    select: { score: true },
+  _count: {
+    select: { ratings: true },
   },
   parentRecipe: {
     select: { id: true, name: true },
@@ -28,28 +29,64 @@ const includeDetail = {
   ...includeTags,
 };
 
-// Inclusions pour les listes (plus légères)
+// Inclusions pour les listes (plus légères, sans charger tous les ratings)
 const includeList = {
   category: true,
   author: { select: { id: true, pseudo: true } },
-  ratings: { select: { score: true } },
+  _count: { select: { ratings: true } },
   ...includeTags,
 };
 
-// Calcule la moyenne d'un tableau de ratings (utile pour les résponses API partielles)
-const calcAvg = (ratings) =>
-  ratings.length > 0
-    ? Math.round((ratings.reduce((sum, r) => sum + r.score, 0) / ratings.length) * 10) / 10
-    : null;
+/**
+ * Récupère les stats de ratings (avg + count) pour un lot de recettes en une seule requête.
+ * Retourne une Map<recipeId, { avgRating, ratingsCount }>.
+ */
+const batchRatingStats = async (recipeIds) => {
+  if (recipeIds.length === 0) return new Map();
+  const rows = await prisma.$queryRaw`
+    SELECT "recipeId", AVG(score)::float AS avg, COUNT(*)::int AS count
+    FROM "Rating"
+    WHERE "recipeId" = ANY(${recipeIds}::int[])
+    GROUP BY "recipeId"
+  `;
+  const map = new Map();
+  for (const row of rows) {
+    map.set(row.recipeId, {
+      avgRating: Math.round(Number(row.avg) * 10) / 10,
+      ratingsCount: row.count,
+    });
+  }
+  return map;
+};
 
-// Calcule la moyenne des notes et aplatit les tags
-const computeAvgRating = (recipe) => {
-  const { ratings, tags, ...rest } = recipe;
-  const avgRating = calcAvg(ratings);
+/**
+ * Enrichit un lot de recettes avec avgRating/ratingsCount (batch) et aplatit les tags.
+ * Remplace l'ancien pattern `recipes.map(computeAvgRating)`.
+ */
+const enrichRecipes = async (recipes) => {
+  if (recipes.length === 0) return [];
+  const ids = recipes.map((r) => r.id);
+  const stats = await batchRatingStats(ids);
+  return recipes.map((recipe) => {
+    const { tags, _count, ...rest } = recipe;
+    const s = stats.get(recipe.id) || { avgRating: null, ratingsCount: _count?.ratings || 0 };
+    return {
+      ...rest,
+      avgRating: s.avgRating,
+      ratingsCount: s.ratingsCount,
+      ...(tags ? { tags: tags.map((rt) => rt.tag) } : {}),
+    };
+  });
+};
+
+/**
+ * Aplatit les tags et supprime les champs internes (_count).
+ * Pour les cas où avgRating/ratingsCount sont déjà calculés séparément.
+ */
+const flattenRecipe = (recipe) => {
+  const { tags, _count, ...rest } = recipe;
   return {
     ...rest,
-    avgRating,
-    ratingsCount: ratings.length,
     ...(tags ? { tags: tags.map((rt) => rt.tag) } : {}),
   };
 };
@@ -65,4 +102,4 @@ const handlePrismaError = (err, res) => {
   throw err;
 };
 
-module.exports = { includeTags, includeDetail, includeList, computeAvgRating, calcAvg, handlePrismaError };
+module.exports = { includeTags, includeDetail, includeList, batchRatingStats, enrichRecipes, flattenRecipe, handlePrismaError };

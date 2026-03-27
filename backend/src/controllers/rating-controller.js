@@ -1,7 +1,6 @@
 const prisma = require('../prisma');
 const { parseId, badRequest, notFound } = require('../helpers');
 const { ratingSchema, formatZodError } = require('../schemas');
-const { calcAvg } = require('../helpers/recipe-helpers');
 
 // POST /ratings/:recipeId — upsert (crée ou met à jour la note de l'user)
 const upsertRating = async (req, res) => {
@@ -25,11 +24,17 @@ const upsertRating = async (req, res) => {
     update: { score },
   });
 
-  // Retourne la nouvelle moyenne
-  const ratings = await prisma.rating.findMany({ where: { recipeId }, select: { score: true } });
-  const avgRating = calcAvg(ratings);
+  // Retourne la nouvelle moyenne via aggregate (pas de chargement en mémoire)
+  const agg = await prisma.rating.aggregate({
+    where: { recipeId },
+    _avg: { score: true },
+    _count: { score: true },
+  });
+  const avgRating = agg._avg.score !== null
+    ? Math.round(agg._avg.score * 10) / 10
+    : null;
 
-  res.json({ avgRating, ratingsCount: ratings.length, userScore: score });
+  res.json({ avgRating, ratingsCount: agg._count.score, userScore: score });
 };
 
 // GET /ratings/:recipeId/me — note de l'utilisateur connecté pour cette recette

@@ -16,7 +16,7 @@ const requireAuth = async (req, res, next) => {
   const token = header.slice(7);
   let decoded;
   try {
-    decoded = jwt.verify(token, JWT_SECRET);
+    decoded = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] });
   } catch {
     return res.status(401).json({ error: 'Token invalide ou expiré' });
   }
@@ -48,7 +48,7 @@ const optionalAuth = async (req, res, next) => {
   if (header && header.startsWith('Bearer ')) {
     let decoded;
     try {
-      decoded = jwt.verify(header.slice(7), JWT_SECRET);
+      decoded = jwt.verify(header.slice(7), JWT_SECRET, { algorithms: ['HS256'] });
     } catch {
       // token invalide ignoré
       return next();

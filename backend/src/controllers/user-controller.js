@@ -1,7 +1,7 @@
 const prisma = require('../prisma');
 const { parseId, badRequest, notFound, conflict } = require('../helpers');
 const { updateProfileSchema, formatZodError } = require('../schemas');
-const { computeAvgRating } = require('../helpers/recipe-helpers');
+const { enrichRecipes } = require('../helpers/recipe-helpers');
 
 // PUT /users/me — met à jour le profil de l'utilisateur connecté
 const updateMyProfile = async (req, res) => {
@@ -36,7 +36,8 @@ const updateMyProfile = async (req, res) => {
 };
 
 // GET /users/:id — profil public (optionalAuth pour isFollowing)
-const getUserProfile = async (req, res) => {
+const getUserProfile = async (req, res, next) => {
+  try {
   const id = parseId(req.params.id);
   if (!id) return badRequest(res, 'id invalide');
 
@@ -54,7 +55,7 @@ const getUserProfile = async (req, res) => {
           where: { status: 'PUBLISHED' },
           include: {
             category: true,
-            ratings: { select: { score: true } },
+            _count: { select: { ratings: true } },
           },
           orderBy: { createdAt: 'desc' },
         },
@@ -69,13 +70,17 @@ const getUserProfile = async (req, res) => {
 
   if (!user) return notFound(res, 'Utilisateur introuvable');
 
-  const recipes = user.recipes.map(computeAvgRating);
+  const recipes = await enrichRecipes(user.recipes);
 
   res.json({ ...user, recipes, followersCount, followingCount, isFollowing: !!followRow });
+  } catch (err) {
+    next(err);
+  }
 };
 
 // GET /users/:id/recipes?page=1&limit=20
-const getUserRecipes = async (req, res) => {
+const getUserRecipes = async (req, res, next) => {
+  try {
   const id = parseId(req.params.id);
   if (!id) return badRequest(res, 'id invalide');
 
@@ -94,7 +99,7 @@ const getUserRecipes = async (req, res) => {
       where,
       include: {
         category: true,
-        ratings: { select: { score: true } },
+        _count: { select: { ratings: true } },
       },
       orderBy: { createdAt: 'desc' },
       skip: (page - 1) * limit,
@@ -103,9 +108,12 @@ const getUserRecipes = async (req, res) => {
     prisma.recipe.count({ where }),
   ]);
 
-  const data = recipes.map(computeAvgRating);
+  const data = await enrichRecipes(recipes);
 
   res.json({ user, recipes: { data, total, page, limit } });
+  } catch (err) {
+    next(err);
+  }
 };
 
 module.exports = { updateMyProfile, getUserProfile, getUserRecipes };

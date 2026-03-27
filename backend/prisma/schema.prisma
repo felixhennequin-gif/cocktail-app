@@ -31,9 +31,14 @@ model RefreshToken {
   id        String   @id @default(uuid())
   userId    Int
   token     String   @unique
+  family    String   @default(dbgenerated("gen_random_uuid()")) // Groupe de rotation — détection de réutilisation
+  consumed  Boolean  @default(false) // Marqué true lors de la rotation (au lieu d'être supprimé)
   expiresAt DateTime
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
+
+  @@index([family])
+  @@index([userId])
 }
 
 model Recipe {

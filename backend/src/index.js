@@ -137,7 +137,22 @@ apiRouter.post('/upload', requireAuth, upload.single('image'), validateImageMagi
   res.json({ url: `/uploads/${req.file.filename}` });
 });
 // Upload image d'étape — stockée dans uploads/recipes/{recipeId}/steps/
-apiRouter.post('/upload/step/:recipeId', requireAuth, uploadStep.single('image'), validateImageMagicBytes, (req, res) => {
+// Vérifie que l'utilisateur est l'auteur de la recette ou admin
+apiRouter.post('/upload/step/:recipeId', requireAuth, async (req, res, next) => {
+  try {
+    const recipeId = parseInt(req.params.recipeId);
+    if (isNaN(recipeId)) return res.status(400).json({ error: 'recipeId invalide' });
+
+    const recipe = await prisma.recipe.findUnique({ where: { id: recipeId } });
+    if (!recipe) return res.status(404).json({ error: 'Recette introuvable' });
+    if (recipe.authorId !== req.user.id && req.user.role !== 'ADMIN') {
+      return res.status(403).json({ error: 'Accès refusé' });
+    }
+    next();
+  } catch (err) {
+    next(err);
+  }
+}, uploadStep.single('image'), validateImageMagicBytes, (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Aucun fichier reçu' });
   const recipeId = req.params.recipeId;
   const rel = `/uploads/recipes/${recipeId}/steps/${req.file.filename}`;
