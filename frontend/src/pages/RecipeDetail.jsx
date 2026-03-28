@@ -134,13 +134,11 @@ export default function RecipeDetail() {
       <div className="lg:flex lg:gap-8">
         {/* Colonne gauche : image + ingrédients (sidebar) */}
         <div className="lg:w-2/5 lg:shrink-0">
-          <div className="relative rounded-xl overflow-hidden mb-6 bg-gray-100 dark:bg-gray-700">
+          <div className="relative aspect-video rounded-xl overflow-hidden mb-6 bg-gray-100 dark:bg-gray-700">
             <img
               src={getImageUrl(recipe.imageUrl)}
               alt={recipe.name}
-              width="800"
-              height="450"
-              className="w-full h-56 lg:h-72 object-cover"
+              className="w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
           </div>
@@ -183,9 +181,8 @@ export default function RecipeDetail() {
                         <img
                           src={getImageUrl(step.imageUrl)}
                           alt={t('recipes.stepAlt', { order: step.order })}
-                          width="500"
-                          height="400"
-                          className="w-full max-w-sm rounded-lg mb-2 border border-gray-100 dark:border-gray-700"
+                          loading="lazy"
+                          className="w-full max-w-sm aspect-[5/4] object-cover rounded-lg mb-2 border border-gray-100 dark:border-gray-700"
                         />
                       )}
                       <p className="text-gray-700 dark:text-gray-300 leading-relaxed">{step.description}</p>
@@ -210,8 +207,7 @@ export default function RecipeDetail() {
                     <img
                       src={getImageUrl(v.imageUrl)}
                       alt={v.name}
-                      width="200"
-                      height="96"
+                      loading="lazy"
                       className="w-full h-24 object-cover bg-gray-100 dark:bg-gray-700"
                     />
                     <div className="p-2.5">

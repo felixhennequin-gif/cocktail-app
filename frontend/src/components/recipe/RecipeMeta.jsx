@@ -31,6 +31,15 @@ export default function RecipeMeta({ recipe, avgRating, ratingsCount, isFavorite
               +
             </button>
           )}
+          {user && (recipe.author?.id === user?.id || user?.role === 'ADMIN') && (
+            <Link
+              to={`/recipes/${recipe.id}/edit`}
+              className="text-xl leading-none text-gray-300 dark:text-gray-600 hover:text-gold-400 transition-colors"
+              title={t('common.edit')}
+            >
+              ✎
+            </Link>
+          )}
         </div>
       </div>
       <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 mb-2">

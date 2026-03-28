@@ -198,6 +198,7 @@
   },
   "submit": {
     "title": "Proposer une recette",
+    "editTitle": "Modifier la recette",
     "pendingHint": "Votre recette sera soumise pour validation avant publication.",
     "back": "← Retour",
     "cancel": "Annuler",
@@ -206,6 +207,7 @@
     "sending": "Envoi...",
     "publishedToast": "Recette publiée !",
     "submittedToast": "Recette soumise ! Elle sera publiée après validation.",
+    "editSuccess": "Recette modifiée avec succès",
     "sections": {
       "info": "Informations",
       "ingredients": "Ingrédients",
@@ -349,7 +351,8 @@
     "backHome": "← Retour à l'accueil",
     "starsRating": "{{rating}} sur {{max}} étoiles",
     "errorTitle": "Oops ! Une erreur est survenue",
-    "errorMessage": "Quelque chose s'est mal passé…"
+    "errorMessage": "Quelque chose s'est mal passé…",
+    "edit": "Modifier"
   },
   "landing": {
     "popularTitle": "Recettes populaires",

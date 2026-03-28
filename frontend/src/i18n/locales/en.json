@@ -198,6 +198,7 @@
   },
   "submit": {
     "title": "Submit a recipe",
+    "editTitle": "Edit recipe",
     "pendingHint": "Your recipe will be submitted for review before publication.",
     "back": "← Back",
     "cancel": "Cancel",
@@ -206,6 +207,7 @@
     "sending": "Sending...",
     "publishedToast": "Recipe published!",
     "submittedToast": "Recipe submitted! It will be published after review.",
+    "editSuccess": "Recipe updated successfully",
     "sections": {
       "info": "Information",
       "ingredients": "Ingredients",
@@ -349,7 +351,8 @@
     "backHome": "← Back to home",
     "starsRating": "{{rating}} out of {{max}} stars",
     "errorTitle": "Oops! Something went wrong",
-    "errorMessage": "An unexpected error occurred…"
+    "errorMessage": "An unexpected error occurred…",
+    "edit": "Edit"
   },
   "landing": {
     "popularTitle": "Popular recipes",

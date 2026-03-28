@@ -194,6 +194,7 @@ export default function App() {
             <Route path="/recipes"                  element={<RecipeList />} />
             <Route path="/feed"                    element={<ProtectedRoute><Feed /></ProtectedRoute>} />
             <Route path="/recipes/new"             element={<ProtectedRoute><RecipeSubmit /></ProtectedRoute>} />
+            <Route path="/recipes/:id/edit"        element={<ProtectedRoute><RecipeSubmit /></ProtectedRoute>} />
             <Route path="/recipes/:id"             element={<RecipeDetail />} />
             <Route path="/login"                   element={<Login />} />
             <Route path="/register"                element={<Register />} />

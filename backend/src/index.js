@@ -10,6 +10,8 @@ const { generalLimiter, authLimiter } = require('./rateLimiter');
 const { requireAuth } = require('./middleware/auth');
 const prisma = require('./prisma');
 
+const prerenderMiddleware = require('./middleware/prerender');
+
 const recipeRoutes   = require('./routes/recipe-routes');
 const categoryRoutes = require('./routes/category-routes');
 const authRoutes     = require('./routes/auth-routes');
@@ -191,6 +193,9 @@ if (fs.existsSync(frontendDist)) {
       }
     },
   }));
+  // Prerender pour les bots : sert du HTML avec meta tags OG avant le catch-all SPA
+  app.use(prerenderMiddleware);
+
   // Catch-all pour React Router (SPA) — toujours no-cache sur index.html
   app.get(/.*/, (req, res) => {
     res.setHeader('Cache-Control', 'no-cache');

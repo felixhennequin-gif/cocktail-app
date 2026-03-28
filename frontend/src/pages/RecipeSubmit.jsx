@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, Link, useSearchParams } from 'react-router-dom'
+import { useNavigate, Link, useSearchParams, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
@@ -23,6 +23,7 @@ export default function RecipeSubmit() {
   const { t }               = useTranslation()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
+  const { id: editId } = useParams()
 
   const [form, setForm]             = useState(defaultForm)
   const [ingredients, setIngredients] = useState([{ ...EMPTY_INGREDIENT }])
@@ -61,6 +62,39 @@ export default function RecipeSubmit() {
         .catch(() => {})
     }
   }, [user]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Pré-remplissage du formulaire en mode édition
+  useEffect(() => {
+    if (!editId) return
+    fetch(`/api/recipes/${editId}`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (!data) return
+        setForm({
+          name: data.name ?? '',
+          description: data.description ?? '',
+          categoryId: String(data.categoryId ?? ''),
+          difficulty: data.difficulty ?? 'EASY',
+          prepTime: String(data.prepTime ?? ''),
+          imageUrl: data.imageUrl ?? '',
+        })
+        if (data.imageUrl) setPreview(data.imageUrl)
+        if (data.ingredients?.length) {
+          setIngredients(data.ingredients.map((i) => ({
+            name: i.ingredient?.name ?? i.name ?? '',
+            quantity: String(i.quantity ?? ''),
+            unit: i.unit ?? '',
+          })))
+        }
+        if (data.steps?.length) {
+          setSteps([...data.steps].sort((a, b) => a.order - b.order).map((s) => ({ description: s.description })))
+        }
+        if (data.tags?.length) {
+          setSelectedTags(data.tags.map((t) => ({ id: t.id, name: t.name })))
+        }
+      })
+      .catch(() => {})
+  }, [editId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleField = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }))
 
@@ -129,8 +163,10 @@ export default function RecipeSubmit() {
     }
 
     try {
-      const res = await authFetch('/api/recipes', {
-        method: 'POST',
+      const url    = editId ? `/api/recipes/${editId}` : '/api/recipes'
+      const method = editId ? 'PUT' : 'POST'
+      const res = await authFetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       })
@@ -138,8 +174,13 @@ export default function RecipeSubmit() {
         const data = await res.json()
         throw new Error(data.error || 'Erreur lors de la soumission')
       }
-      showToast(isAdmin ? t('submit.publishedToast') : t('submit.submittedToast'), 'success')
-      navigate('/recipes')
+      if (editId) {
+        showToast(t('submit.editSuccess'), 'success')
+        navigate(`/recipes/${editId}`)
+      } else {
+        showToast(isAdmin ? t('submit.publishedToast') : t('submit.submittedToast'), 'success')
+        navigate('/recipes')
+      }
     } catch (err) {
       setError(err.message)
     } finally {
@@ -155,8 +196,8 @@ export default function RecipeSubmit() {
     <div className="max-w-2xl mx-auto p-8 bg-white dark:bg-gray-800 rounded-xl shadow-sm">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('submit.title')}</h1>
-          {!isAdmin && (
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{editId ? t('submit.editTitle') : t('submit.title')}</h1>
+          {!isAdmin && !editId && (
             <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">{t('submit.pendingHint')}</p>
           )}
         </div>
