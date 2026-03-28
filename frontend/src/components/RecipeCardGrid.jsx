@@ -51,7 +51,7 @@ function RecipeCardGrid({ recipe, isFavorited, onToggleFavorite, userId }) {
           {recipe.name}
         </h2>
 
-        <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-500">
+        <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-500 min-w-0 overflow-hidden">
           <span>{recipe.prepTime} min</span>
           {recipe.category && <span>{recipe.category.name}</span>}
           {recipe.avgRating != null && (

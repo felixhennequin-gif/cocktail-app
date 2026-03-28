@@ -39,9 +39,16 @@ export default function LandingPage() {
       <Helmet>
         <title>Cocktails — Recettes & Inspiration</title>
         <meta name="description" content="Découvrez des centaines de recettes de cocktails. Recherchez, filtrez, notez et partagez vos cocktails préférés." />
+        <meta property="og:site_name" content="Cocktail App" />
         <meta property="og:title" content="Cocktails — Recettes & Inspiration" />
         <meta property="og:description" content="Découvrez des centaines de recettes de cocktails artisanales." />
+        <meta property="og:image" content="https://cocktail-app.fr/og-default.png" />
+        <meta property="og:url" content="https://cocktail-app.fr" />
         <meta property="og:type" content="website" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Cocktails — Recettes & Inspiration" />
+        <meta name="twitter:description" content="Découvrez des centaines de recettes de cocktails artisanales." />
+        <meta name="twitter:image" content="https://cocktail-app.fr/og-default.png" />
       </Helmet>
 
       {/* Hero */}

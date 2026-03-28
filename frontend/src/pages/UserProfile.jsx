@@ -314,9 +314,15 @@ export default function UserProfile() {
       <Helmet>
         <title>{t('profile.title', { pseudo: profile.pseudo })}</title>
         <meta name="description" content={profile.bio || `Profil de ${profile.pseudo} — ${profile.followersCount} abonné(s), ${profile.recipes?.length ?? 0} recette(s) publiée(s).`} />
+        <meta property="og:site_name" content="Cocktail App" />
         <meta property="og:title" content={`${profile.pseudo} sur Cocktails`} />
+        <meta property="og:description" content={profile.bio || `Profil de ${profile.pseudo} sur Cocktail App`} />
         <meta property="og:type" content="profile" />
+        <meta property="og:url" content={`https://cocktail-app.fr/users/${profile.id}`} />
         {profile.avatar && <meta property="og:image" content={getImageUrl(profile.avatar)} />}
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content={`${profile.pseudo} sur Cocktails`} />
+        <meta name="twitter:description" content={profile.bio || `Profil de ${profile.pseudo} sur Cocktail App`} />
       </Helmet>
       {/* Modale d'édition de profil */}
       {editOpen && (

@@ -158,6 +158,14 @@ export default function CollectionDetail() {
     <div className="max-w-2xl mx-auto">
       <Helmet>
         <title>{collection.name} — Cocktails</title>
+        <meta name="description" content={collection.description || `Collection de cocktails par ${collection.user?.pseudo}`} />
+        <meta property="og:site_name" content="Cocktail App" />
+        <meta property="og:title" content={`${collection.name} — Collection`} />
+        <meta property="og:description" content={collection.description || `Collection de cocktails par ${collection.user?.pseudo}`} />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={`https://cocktail-app.fr/collections/${collection.id}`} />
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content={`${collection.name} — Collection`} />
       </Helmet>
 
       {/* Modale de confirmation de suppression */}

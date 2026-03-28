@@ -76,7 +76,7 @@ function RecipeCard({ recipe, isFavorited, onToggleFavorite, userId }) {
           </div>
         )}
 
-        <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-500 mt-2">
+        <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-500 mt-2 min-w-0 overflow-hidden">
           <span>⏱ {recipe.prepTime} min</span>
           {recipe.category && <span>📂 {recipe.category.name}</span>}
           {recipe.avgRating !== null && recipe.avgRating !== undefined && (

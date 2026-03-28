@@ -104,10 +104,16 @@ export default function RecipeDetail() {
       <Helmet>
         <title>{recipe.name} — Cocktails</title>
         <meta name="description" content={metaDescription} />
+        <meta property="og:site_name" content="Cocktail App" />
         <meta property="og:title" content={recipe.name} />
         <meta property="og:description" content={metaDescription} />
         <meta property="og:type" content="article" />
+        <meta property="og:url" content={`https://cocktail-app.fr/recipes/${recipe.id}`} />
         {recipe.imageUrl && <meta property="og:image" content={getImageUrl(recipe.imageUrl)} />}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={recipe.name} />
+        <meta name="twitter:description" content={metaDescription} />
+        {recipe.imageUrl && <meta name="twitter:image" content={getImageUrl(recipe.imageUrl)} />}
       </Helmet>
 
       <AddToCollectionModal
