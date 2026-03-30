@@ -25,8 +25,9 @@ model User {
   notifications  Notification[]
   collections    Collection[]
   refreshTokens  RefreshToken[]
-  bar            UserIngredient[]
-  badges         UserBadge[]
+  bar              UserIngredient[]
+  badges           UserBadge[]
+  challengeEntries ChallengeEntry[]
 }
 
 model RefreshToken {
@@ -65,12 +66,15 @@ model Recipe {
   comments      Comment[]
   searchVector  Unsupported("tsvector")?
   tags          RecipeTag[]
+  // Saison (null = toutes saisons)
+  season         String?  // "spring", "summer", "autumn", "winter"
   // Variantes (Feature 4)
   parentRecipeId Int?
   parentRecipe   Recipe?  @relation("RecipeVariants", fields: [parentRecipeId], references: [id])
   variants       Recipe[] @relation("RecipeVariants")
   // Collections (Feature 2)
   collections    CollectionRecipe[]
+  challengeEntries ChallengeEntry[]
 
   @@index([categoryId])
   @@index([authorId])
@@ -181,10 +185,11 @@ model Notification {
 }
 
 model Tag {
-  id        Int         @id @default(autoincrement())
-  name      String      @unique
-  createdAt DateTime    @default(now())
-  recipes   RecipeTag[]
+  id         Int         @id @default(autoincrement())
+  name       String      @unique
+  createdAt  DateTime    @default(now())
+  recipes    RecipeTag[]
+  challenges Challenge[]
 }
 
 model RecipeTag {
@@ -249,6 +254,35 @@ model UserBadge {
   badge      Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
 
   @@id([userId, badgeId])
+}
+
+model Challenge {
+  id          Int              @id @default(autoincrement())
+  title       String
+  description String
+  startDate   DateTime
+  endDate     DateTime
+  tagId       Int?
+  tag         Tag?             @relation(fields: [tagId], references: [id])
+  active      Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  entries     ChallengeEntry[]
+
+  @@index([active, startDate, endDate])
+}
+
+model ChallengeEntry {
+  id          Int       @id @default(autoincrement())
+  challengeId Int
+  recipeId    Int
+  userId      Int
+  createdAt   DateTime  @default(now())
+  challenge   Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  recipe      Recipe    @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([challengeId, recipeId])
+  @@index([challengeId])
 }
 
 enum NotificationType {

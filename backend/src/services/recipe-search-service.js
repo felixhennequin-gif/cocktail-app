@@ -15,6 +15,7 @@ const recipeListSchema = z.object({
   authorId:   z.coerce.number().int().positive().optional(),
   status:     z.enum(['PUBLISHED', 'PENDING', 'DRAFT']).optional(),
   tags:       z.string().optional(),
+  season:     z.enum(['spring', 'summer', 'autumn', 'winter']).optional(),
   sortBy:     z.enum(['createdAt', 'prepTime', 'avgRating', 'favoritesCount']).default('createdAt'),
   sortOrder:  z.enum(['asc', 'desc']).default('desc'),
 });
@@ -40,7 +41,7 @@ const computeTagCounts = async (whereWithoutTags) => {
 };
 
 // Construit la clause where selon le contexte utilisateur
-const buildWhereClause = ({ categoryId, maxTime, authorId, status, tags, user }) => {
+const buildWhereClause = ({ categoryId, maxTime, authorId, status, tags, season, user }) => {
   const where = {};
 
   if (user?.role === 'ADMIN' && status) {
@@ -57,6 +58,7 @@ const buildWhereClause = ({ categoryId, maxTime, authorId, status, tags, user })
   if (categoryId !== undefined) where.categoryId = categoryId;
   if (maxTime    !== undefined) where.prepTime    = { lte: maxTime };
   if (authorId   !== undefined) where.authorId    = authorId;
+  if (season     !== undefined) where.season      = season;
 
   if (tags) {
     const tagIdList = tags.split(',').map(Number).filter(n => n > 0);
@@ -190,10 +192,10 @@ const searchWithAggSort = async ({ where, whereWithoutTags, minRatingIds, sortBy
 
 // Point d'entrée principal : recherche de recettes avec filtres, tri et pagination
 const search = async (params) => {
-  const { page, limit, q, categoryId, minRating, maxTime, authorId, status, tags, sortBy, sortOrder, user } = params;
+  const { page, limit, q, categoryId, minRating, maxTime, authorId, status, tags, season, sortBy, sortOrder, user } = params;
   const offset = (page - 1) * limit;
 
-  const where = buildWhereClause({ categoryId, maxTime, authorId, status, tags, user });
+  const where = buildWhereClause({ categoryId, maxTime, authorId, status, tags, season, user });
 
   // Snapshot du where SANS les tags pour les compteurs facettés
   const { AND: _andWithTags, ...whereBase } = where;

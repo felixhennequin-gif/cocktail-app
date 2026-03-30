@@ -32,6 +32,7 @@ const lazyImports = {
   MyBar:            () => import('./pages/MyBar'),
   LegalPage:        () => import('./pages/LegalPage'),
   PartyMode:        () => import('./pages/PartyMode'),
+  ChallengeDetail:  () => import('./pages/ChallengeDetail'),
 }
 
 const RecipeDetail     = lazy(lazyImports.RecipeDetail)
@@ -46,6 +47,7 @@ const CollectionDetail = lazy(lazyImports.CollectionDetail)
 const MyBar            = lazy(lazyImports.MyBar)
 const LegalPage        = lazy(lazyImports.LegalPage)
 const PartyMode        = lazy(lazyImports.PartyMode)
+const ChallengeDetail  = lazy(lazyImports.ChallengeDetail)
 
 // Préchargement des pages au survol des liens
 export const preload = (page) => { lazyImports[page]?.() }
@@ -225,6 +227,7 @@ export default function App() {
             <Route path="/users/:id"               element={<UserProfile />} />
             <Route path="/my-bar"                    element={<ProtectedRoute><MyBar /></ProtectedRoute>} />
             <Route path="/collections/:id"          element={<CollectionDetail />} />
+            <Route path="/challenges/:id"           element={<ChallengeDetail />} />
             <Route path="/admin"                   element={<AdminRoute><AdminRecipeList /></AdminRoute>} />
             <Route path="/admin/pending"           element={<AdminRoute><AdminPendingList /></AdminRoute>} />
             <Route path="/admin/recipes/new"       element={<AdminRoute><AdminRecipeForm /></AdminRoute>} />

@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { getImageUrl } from '../utils/image'
+import VoiceSearch from './VoiceSearch'
 
 export default function SearchBar() {
   const { t }                 = useTranslation()
@@ -81,24 +82,34 @@ export default function SearchBar() {
     navigate(`/recipes?q=${encodeURIComponent(value.trim())}`)
   }
 
+  // Callback pour la recherche vocale
+  const handleVoiceResult = useCallback((transcript) => {
+    setValue(transcript)
+    setOpen(false)
+    navigate(`/recipes?q=${encodeURIComponent(transcript.trim())}`)
+  }, [navigate])
+
   return (
     <div ref={containerRef} className="relative w-full">
       <label htmlFor="search-nav" className="sr-only">{t('recipes.searchNavPlaceholder')}</label>
-      <input
-        id="search-nav"
-        type="text"
-        value={value}
-        onChange={handleChange}
-        onKeyDown={handleKeyDown}
-        placeholder={t('recipes.searchNavPlaceholder')}
-        role="combobox"
-        aria-expanded={open && results.length > 0}
-        aria-haspopup="listbox"
-        aria-autocomplete="list"
-        aria-activedescendant={activeIndex >= 0 ? `search-option-${results[activeIndex]?.id}` : undefined}
-        aria-controls="search-listbox"
-        className="w-full px-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gold-400 focus:border-transparent"
-      />
+      <div className="flex items-center gap-1">
+        <input
+          id="search-nav"
+          type="text"
+          value={value}
+          onChange={handleChange}
+          onKeyDown={handleKeyDown}
+          placeholder={t('recipes.searchNavPlaceholder')}
+          role="combobox"
+          aria-expanded={open && results.length > 0}
+          aria-haspopup="listbox"
+          aria-autocomplete="list"
+          aria-activedescendant={activeIndex >= 0 ? `search-option-${results[activeIndex]?.id}` : undefined}
+          aria-controls="search-listbox"
+          className="w-full px-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gold-400 focus:border-transparent"
+        />
+        <VoiceSearch onResult={handleVoiceResult} />
+      </div>
 
       {open && results.length > 0 && (
         <div

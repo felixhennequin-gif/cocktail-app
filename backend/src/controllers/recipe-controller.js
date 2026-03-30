@@ -6,7 +6,7 @@ const { createNotification, notifyFollowers } = require('../services/notificatio
 const { bustRecipeCache } = require('../services/recipe-cache-service');
 const { resolveTagNames } = require('./tag-controller');
 const { parseId, badRequest, notFound, forbidden } = require('../helpers');
-const { includeDetail, enrichRecipes, flattenRecipe, handlePrismaError } = require('../helpers/recipe-helpers');
+const { includeDetail, includeList, enrichRecipes, flattenRecipe, handlePrismaError } = require('../helpers/recipe-helpers');
 const { createRecipeSchema, updateRecipeSchema, formatZodError } = require('../schemas');
 const { checkAndAwardBadges } = require('../services/badge-service');
 const { recipeListSchema, search } = require('../services/recipe-search-service');
@@ -92,7 +92,7 @@ const createRecipe = async (req, res, next) => {
     return badRequest(res, formatZodError(parsed.error));
   }
 
-  const { name, description, imageUrl, difficulty, prepTime, servings, categoryId, ingredients, steps, tagIds, tagNames, parentRecipeId, status: requestedStatus } = parsed.data;
+  const { name, description, imageUrl, difficulty, prepTime, servings, categoryId, ingredients, steps, tagIds, tagNames, parentRecipeId, season, status: requestedStatus } = parsed.data;
 
   // Calcul du statut final selon le rôle
   let status;
@@ -132,6 +132,7 @@ const createRecipe = async (req, res, next) => {
         categoryId: parseInt(categoryId),
         status,
         authorId,
+        season: season || null,
         ...(parentRecipeId ? { parentRecipeId: parseInt(parentRecipeId) } : {}),
         ingredients: {
           create: resolved.map(({ id, quantity, unit }) => ({
@@ -192,7 +193,7 @@ const updateRecipe = async (req, res, next) => {
     return badRequest(res, formatZodError(parsed.error));
   }
 
-  const { name, description, imageUrl, difficulty, prepTime, servings, categoryId, ingredients, steps, tagIds, tagNames, status: requestedStatus } = parsed.data;
+  const { name, description, imageUrl, difficulty, prepTime, servings, categoryId, ingredients, steps, tagIds, tagNames, season, status: requestedStatus } = parsed.data;
 
   const exists = await prisma.recipe.findUnique({ where: { id } });
   if (!exists) return notFound(res, 'Recette introuvable');
@@ -245,6 +246,7 @@ const updateRecipe = async (req, res, next) => {
           ...(prepTime    !== undefined && { prepTime: parseInt(prepTime) }),
           ...(servings    !== undefined && { servings: servings ? parseInt(servings) : null }),
           ...(categoryId  !== undefined && { categoryId: parseInt(categoryId) }),
+          ...(season      !== undefined && { season: season || null }),
           ...(newStatus   !== undefined && { status: newStatus }),
           ...(resolved    !== undefined && {
             ingredients: {
@@ -393,4 +395,38 @@ const unpublishRecipe = async (req, res, next) => {
   }
 };
 
-module.exports = { getAllRecipes, getRecipeById, createRecipe, updateRecipe, deleteRecipe, publishRecipe, unpublishRecipe };
+// GET /recipes/seasonal — recettes de saison (basé sur le mois courant)
+const getSeasonalRecipes = async (req, res, next) => {
+  try {
+    // Déterminer la saison en fonction du mois
+    const month = new Date().getMonth() + 1; // 1-12
+    let season;
+    if (month >= 3 && month <= 5)       season = 'spring';
+    else if (month >= 6 && month <= 8)  season = 'summer';
+    else if (month >= 9 && month <= 11) season = 'autumn';
+    else                                season = 'winter';
+
+    const limit = parseInt(req.query.limit) || 4;
+
+    // Récupérer les recettes de la saison courante + celles sans saison (toutes saisons)
+    const recipes = await prisma.recipe.findMany({
+      where: {
+        status: 'PUBLISHED',
+        OR: [
+          { season },
+          { season: null },
+        ],
+      },
+      include: includeList,
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+    });
+
+    const enriched = await enrichRecipes(recipes);
+    res.json({ data: enriched, season });
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { getAllRecipes, getRecipeById, getSeasonalRecipes, createRecipe, updateRecipe, deleteRecipe, publishRecipe, unpublishRecipe };

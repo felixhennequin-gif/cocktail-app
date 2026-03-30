@@ -11,6 +11,7 @@ import DifficultyBadge from '../components/DifficultyBadge'
 import RecipeMeta from '../components/recipe/RecipeMeta'
 import RecipeIngredients from '../components/recipe/RecipeIngredients'
 import CommentSection from '../components/recipe/CommentSection'
+import StepTimer, { extractDuration } from '../components/recipe/StepTimer'
 
 export default function RecipeDetail() {
   const { id }              = useParams()
@@ -207,24 +208,28 @@ export default function RecipeDetail() {
             <section className="mb-8">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">{t('recipes.preparation')}</h2>
               <ol className="space-y-4">
-                {recipe.steps.map((step) => (
-                  <li key={step.id} className="flex gap-4">
-                    <span className="shrink-0 w-7 h-7 rounded-full bg-gold-400 text-white text-sm font-bold flex items-center justify-center">
-                      {step.order}
-                    </span>
-                    <div className="flex-1 pt-0.5">
-                      {step.imageUrl && (
-                        <img
-                          src={getImageUrl(step.imageUrl)}
-                          alt={t('recipes.stepAlt', { order: step.order })}
-                          loading="lazy"
-                          className="w-full max-w-sm aspect-[5/4] object-cover rounded-lg mb-2 border border-gray-100 dark:border-gray-700"
-                        />
-                      )}
-                      <p className="text-gray-700 dark:text-gray-300 leading-relaxed">{step.description}</p>
-                    </div>
-                  </li>
-                ))}
+                {recipe.steps.map((step) => {
+                  const duration = extractDuration(step.description)
+                  return (
+                    <li key={step.id} className="flex gap-4">
+                      <span className="shrink-0 w-7 h-7 rounded-full bg-gold-400 text-white text-sm font-bold flex items-center justify-center">
+                        {step.order}
+                      </span>
+                      <div className="flex-1 pt-0.5">
+                        {step.imageUrl && (
+                          <img
+                            src={getImageUrl(step.imageUrl)}
+                            alt={t('recipes.stepAlt', { order: step.order })}
+                            loading="lazy"
+                            className="w-full max-w-sm aspect-[5/4] object-cover rounded-lg mb-2 border border-gray-100 dark:border-gray-700"
+                          />
+                        )}
+                        <p className="text-gray-700 dark:text-gray-300 leading-relaxed">{step.description}</p>
+                        {duration && <StepTimer durationSeconds={duration} />}
+                      </div>
+                    </li>
+                  )
+                })}
               </ol>
             </section>
           )}

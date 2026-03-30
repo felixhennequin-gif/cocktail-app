@@ -23,6 +23,7 @@ const tagRoutes          = require('./routes/tag-routes');
 const collectionRoutes   = require('./routes/collection-routes');
 const feedRoutes         = require('./routes/feed-routes');
 const notificationRoutes = require('./routes/notification-routes');
+const challengeRoutes    = require('./routes/challenge-routes');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -174,6 +175,7 @@ apiRouter.use('/tags',          tagRoutes);
 apiRouter.use('/collections',   collectionRoutes);
 apiRouter.use('/feed',          feedRoutes);
 apiRouter.use('/notifications', notificationRoutes);
+apiRouter.use('/challenges',   challengeRoutes);
 
 // Export routes (PDF, OG image) — montées sous /api/recipes
 const recipeExportRoutes = require('./routes/recipe-export-routes');

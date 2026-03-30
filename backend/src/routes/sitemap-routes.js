@@ -16,7 +16,7 @@ router.get('/sitemap.xml', async (req, res) => {
       return res.send(cached);
     }
 
-    const [recipes, users, collections, categories] = await Promise.all([
+    const [recipes, users, collections, categories, tags] = await Promise.all([
       prisma.recipe.findMany({
         where: { status: 'PUBLISHED' },
         select: { id: true, updatedAt: true },
@@ -30,6 +30,9 @@ router.get('/sitemap.xml', async (req, res) => {
         select: { id: true, createdAt: true },
       }),
       prisma.category.findMany({
+        select: { id: true },
+      }),
+      prisma.tag.findMany({
         select: { id: true },
       }),
     ]);
@@ -51,6 +54,11 @@ router.get('/sitemap.xml', async (req, res) => {
     // Catégories (page catalogue filtrée)
     for (const c of categories) {
       urls += url(`${SITE_URL}/recipes?category=${c.id}`, now, 'weekly', '0.6');
+    }
+
+    // Tags (page catalogue filtrée par tag)
+    for (const t of tags) {
+      urls += url(`${SITE_URL}/recipes?tags=${t.id}`, now, 'weekly', '0.5');
     }
 
     // Profils utilisateurs

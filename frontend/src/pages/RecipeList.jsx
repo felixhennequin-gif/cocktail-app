@@ -23,6 +23,7 @@ export default function RecipeList() {
   const maxTime    = searchParams.get('maxTime')     || ''
   const sortBy     = searchParams.get('sortBy')      || 'createdAt'
   const sortOrder  = searchParams.get('sortOrder')   || 'desc'
+  const season     = searchParams.get('season') || ''
   const tagIds     = searchParams.get('tags') ? searchParams.get('tags').split(',').map(Number).filter(Boolean) : []
 
   // Valeur affichée dans l'input de recherche (mise à jour immédiate, envoyée après debounce)
@@ -44,9 +45,9 @@ export default function RecipeList() {
   const maxTimeDebounceRef = useRef(null)
   const sentinelRef = useRef(null)
   // Clé de filtres : quand elle change, on repart de la page 1
-  const filterKey = `${q}|${categoryId}|${minRating}|${maxTime}|${sortBy}|${sortOrder}|${tagIds.join(',')}`
+  const filterKey = `${q}|${categoryId}|${minRating}|${maxTime}|${season}|${sortBy}|${sortOrder}|${tagIds.join(',')}`
 
-  const hasAdvancedFilters = !!(minRating || maxTime || tagIds.length > 0)
+  const hasAdvancedFilters = !!(minRating || maxTime || season || tagIds.length > 0)
   const hasActiveFilters = categoryId || hasAdvancedFilters
 
   // Met à jour un param URL — réinitialise la page
@@ -88,6 +89,7 @@ export default function RecipeList() {
     if (categoryId) params.set('categoryId', categoryId)
     if (minRating)  params.set('minRating', minRating)
     if (maxTime)    params.set('maxTime', maxTime)
+    if (season)     params.set('season', season)
     if (sortBy !== 'createdAt' || sortOrder !== 'desc') {
       params.set('sortBy', sortBy)
       params.set('sortOrder', sortOrder)
@@ -118,7 +120,7 @@ export default function RecipeList() {
         if (err.name !== 'AbortError') setError(err.message)
       })
       .finally(() => { setLoading(false); setLoadingMore(false) })
-  }, [q, categoryId, minRating, maxTime, sortBy, sortOrder, tagIds.join(',')]) // eslint-disable-line react-hooks/exhaustive-deps — tagIds.join(',') est intentionnel (array instable)
+  }, [q, categoryId, minRating, maxTime, season, sortBy, sortOrder, tagIds.join(',')]) // eslint-disable-line react-hooks/exhaustive-deps — tagIds.join(',') est intentionnel (array instable)
 
   // Rechargement initial quand les filtres changent
   useEffect(() => {
@@ -197,17 +199,31 @@ export default function RecipeList() {
     }, { replace: true })
   }
 
+  // Titre dynamique selon le filtre actif (catégorie, tag, recherche)
+  const activeCategoryName = categoryId ? categories.find((c) => c.id === categoryId)?.name : null
+  const activeTagName = tagIds.length === 1 ? tags.find((t2) => t2.id === tagIds[0])?.name : null
+
   const pageTitle = q
     ? t('recipes.searchPageTitle', { q })
-    : t('recipes.pageTitle')
+    : activeCategoryName
+      ? t('recipes.categoryPageTitle', { category: activeCategoryName })
+      : activeTagName
+        ? t('recipes.tagPageTitle', { tag: activeTagName })
+        : t('recipes.pageTitle')
+
+  const pageDescription = activeCategoryName
+    ? t('recipes.categoryPageTitle', { category: activeCategoryName }) + ' — Cocktail App'
+    : activeTagName
+      ? t('recipes.tagPageTitle', { tag: activeTagName }) + ' — Cocktail App'
+      : t('recipes.pageTitle')
 
   return (
     <div>
       <Helmet>
         <title>{pageTitle}</title>
-        <meta name="description" content="Découvrez et explorez notre catalogue de recettes de cocktails. Filtrez par catégorie, note, temps de préparation et plus encore." />
+        <meta name="description" content={pageDescription} />
         <meta property="og:title" content={pageTitle} />
-        <meta property="og:description" content="Explorez des centaines de recettes de cocktails." />
+        <meta property="og:description" content={pageDescription} />
         <meta property="og:type" content="website" />
       </Helmet>
       <h1 className="text-3xl font-serif font-medium text-gray-900 dark:text-gray-100 mb-6">{t('recipes.allTitle')}</h1>
@@ -270,7 +286,7 @@ export default function RecipeList() {
           {t('recipes.advancedFilters')}
           {hasAdvancedFilters && (
             <span className="w-5 h-5 flex items-center justify-center rounded-full bg-gold-500 text-ink-900 text-[10px] font-bold leading-none">
-              {(tagIds.length > 0 ? 1 : 0) + (minRating ? 1 : 0) + (maxTime ? 1 : 0)}
+              {(tagIds.length > 0 ? 1 : 0) + (minRating ? 1 : 0) + (maxTime ? 1 : 0) + (season ? 1 : 0)}
             </span>
           )}
         </button>
@@ -385,6 +401,22 @@ export default function RecipeList() {
                 className="w-20 px-2 py-1 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-gold-400 focus:border-transparent"
               />
               <span className="text-xs text-gray-400 dark:text-gray-500">{t('recipes.maxTimeUnit')}</span>
+            </div>
+
+            {/* Saison */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">{t('recipes.seasonal')}</span>
+              <select
+                value={season}
+                onChange={(e) => setParam('season', e.target.value || null)}
+                className="text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 px-2 py-1 focus:outline-none focus:ring-2 focus:ring-gold-400"
+              >
+                <option value="">{t('recipes.season.all')}</option>
+                <option value="spring">{t('recipes.season.spring')}</option>
+                <option value="summer">{t('recipes.season.summer')}</option>
+                <option value="autumn">{t('recipes.season.autumn')}</option>
+                <option value="winter">{t('recipes.season.winter')}</option>
+              </select>
             </div>
           </div>
 

@@ -24,6 +24,7 @@ const createRecipeSchema = z.object({
   tagIds:         z.array(z.number()).optional(),
   tagNames:       z.array(z.string()).optional(),
   parentRecipeId: z.coerce.number().int().positive().optional().nullable(),
+  season:         z.enum(['spring', 'summer', 'autumn', 'winter']).optional().nullable(),
   status:         z.enum(['PUBLISHED', 'PENDING', 'DRAFT']).optional(),
 });
 
@@ -103,6 +104,19 @@ const logoutSchema = z.object({
   refreshToken: z.string().min(1, 'Refresh token requis'),
 });
 
+// --- Challenges ---
+
+const createChallengeSchema = z.object({
+  title:       z.string().min(1, 'Le titre est requis').max(200, 'Le titre ne doit pas dépasser 200 caractères').transform(s => s.trim()),
+  description: z.string().min(1, 'La description est requise').max(2000, 'La description ne doit pas dépasser 2000 caractères').transform(s => s.trim()),
+  startDate:   z.string().min(1, 'La date de début est requise'),
+  endDate:     z.string().min(1, 'La date de fin est requise'),
+  tagId:       z.coerce.number().int().positive().optional().nullable(),
+}).refine((data) => new Date(data.endDate) > new Date(data.startDate), {
+  message: 'La date de fin doit être postérieure à la date de début',
+  path: ['endDate'],
+});
+
 // --- Rating ---
 
 const ratingSchema = z.object({
@@ -123,6 +137,7 @@ module.exports = {
   updateCommentSchema,
   createCollectionSchema,
   updateCollectionSchema,
+  createChallengeSchema,
   updateProfileSchema,
   registerSchema,
   loginSchema,

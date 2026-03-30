@@ -15,8 +15,11 @@ export default function LandingPage() {
 
   const [dailyRecipe, setDailyRecipe] = useState(null)
   const [popularRecipes, setPopularRecipes] = useState([])
+  const [seasonalRecipes, setSeasonalRecipes] = useState([])
+  const [currentSeason, setCurrentSeason] = useState(null)
   const [totalRecipes, setTotalRecipes] = useState(0)
   const [categoryCount, setCategoryCount] = useState(0)
+  const [currentChallenge, setCurrentChallenge] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -24,13 +27,20 @@ export default function LandingPage() {
       fetch('/api/recipes/daily').then((r) => r.ok ? r.json() : null),
       fetch('/api/recipes?sortBy=avgRating&sortOrder=desc&limit=8').then((r) => r.ok ? r.json() : { data: [], total: 0 }),
       fetch('/api/categories').then((r) => r.ok ? r.json() : []),
-    ]).then(([dailyResult, recipesResult, categoriesResult]) => {
+      fetch('/api/recipes/seasonal?limit=4').then((r) => r.ok ? r.json() : { data: [], season: null }),
+      fetch('/api/challenges/current').then((r) => r.ok ? r.json() : null),
+    ]).then(([dailyResult, recipesResult, categoriesResult, seasonalResult, challengeResult]) => {
       if (dailyResult.status === 'fulfilled') setDailyRecipe(dailyResult.value)
       if (recipesResult.status === 'fulfilled') {
         setPopularRecipes(recipesResult.value.data ?? [])
         setTotalRecipes(recipesResult.value.total ?? 0)
       }
       if (categoriesResult.status === 'fulfilled') setCategoryCount(categoriesResult.value.length)
+      if (seasonalResult.status === 'fulfilled') {
+        setSeasonalRecipes(seasonalResult.value.data ?? [])
+        setCurrentSeason(seasonalResult.value.season ?? null)
+      }
+      if (challengeResult.status === 'fulfilled') setCurrentChallenge(challengeResult.value)
     }).finally(() => setLoading(false))
   }, [])
 
@@ -143,6 +153,37 @@ export default function LandingPage() {
         </Link>
       )}
 
+      {/* Défi de la semaine */}
+      {currentChallenge && (
+        <Link
+          to={`/challenges/${currentChallenge.id}`}
+          className="block mb-10 rounded-2xl overflow-hidden bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border border-purple-200 dark:border-purple-700/30 hover:shadow-lg transition-shadow"
+        >
+          <div className="p-5 sm:p-6">
+            <span className="inline-block text-xs font-semibold uppercase tracking-wider text-purple-600 dark:text-purple-400 mb-2">
+              {t('challenges.currentChallenge')}
+            </span>
+            <h2 className="text-xl sm:text-2xl font-serif font-medium text-gray-900 dark:text-gray-100 mb-2">
+              {currentChallenge.title}
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
+              {currentChallenge.description}
+            </p>
+            <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+              {currentChallenge.tag && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+                  {currentChallenge.tag.name}
+                </span>
+              )}
+              <span>{t('challenges.entriesCount', { count: currentChallenge._count?.entries ?? 0 })}</span>
+              <span className="inline-flex items-center text-sm font-medium text-purple-500 dark:text-purple-400 hover:text-purple-600 dark:hover:text-purple-300">
+                {t('challenges.seeDetails')} &rarr;
+              </span>
+            </div>
+          </div>
+        </Link>
+      )}
+
       {/* Recettes populaires */}
       <section>
         <h2 className="text-2xl font-serif font-medium text-gray-900 dark:text-gray-100 mb-6">
@@ -178,6 +219,31 @@ export default function LandingPage() {
           </Link>
         </div>
       </section>
+
+      {/* Cocktails de saison */}
+      {seasonalRecipes.length > 0 && (
+        <section className="mt-12">
+          <h2 className="text-2xl font-serif font-medium text-gray-900 dark:text-gray-100 mb-1">
+            {t('recipes.seasonal')}
+          </h2>
+          {currentSeason && (
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+              {t(`recipes.season.${currentSeason}`)}
+            </p>
+          )}
+          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {seasonalRecipes.map((recipe) => (
+              <RecipeCardGrid
+                key={recipe.id}
+                recipe={recipe}
+                isFavorited={favoriteIds.has(recipe.id)}
+                onToggleFavorite={toggleFavorite}
+                userId={user?.id}
+              />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   )
 }

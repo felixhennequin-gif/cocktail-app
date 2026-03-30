@@ -187,8 +187,42 @@ async function prerenderMiddleware(req, res, next) {
       }));
     }
 
-    // Catalogue recettes
+    // Catalogue recettes — avec support catégorie et tag
     if (req.path === '/recipes') {
+      const categoryParam = req.query.category || req.query.categoryId;
+      const tagsParam = req.query.tags;
+
+      // Page filtrée par catégorie
+      if (categoryParam) {
+        const catId = parseInt(categoryParam, 10);
+        if (!isNaN(catId)) {
+          const category = await prisma.category.findUnique({ where: { id: catId } });
+          if (category) {
+            return res.send(renderMetaPage({
+              title: `Cocktails ${category.name} — Cocktail App`,
+              description: `Découvrez nos recettes de cocktails ${category.name}. Filtrez, notez et partagez vos cocktails préférés.`,
+              url: fullUrl,
+            }));
+          }
+        }
+      }
+
+      // Page filtrée par tag (un seul tag)
+      if (tagsParam) {
+        const tagId = parseInt(tagsParam, 10);
+        if (!isNaN(tagId)) {
+          const tag = await prisma.tag.findUnique({ where: { id: tagId } });
+          if (tag) {
+            return res.send(renderMetaPage({
+              title: `Cocktails ${tag.name} — Cocktail App`,
+              description: `Découvrez nos recettes de cocktails ${tag.name}. Filtrez, notez et partagez vos cocktails préférés.`,
+              url: fullUrl,
+            }));
+          }
+        }
+      }
+
+      // Catalogue générique
       return res.send(renderMetaPage({
         title: 'Catalogue de cocktails — Cocktail App',
         description: 'Explorez notre catalogue complet de recettes de cocktails. Filtrez par catégorie, difficulté et tags.',
