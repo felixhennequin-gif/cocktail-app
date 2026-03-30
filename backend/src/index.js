@@ -177,6 +177,10 @@ apiRouter.use('/notifications', notificationRoutes);
 
 app.use('/api', apiRouter);
 
+// Sitemap XML dynamique
+const sitemapRoutes = require('./routes/sitemap-routes');
+app.use(sitemapRoutes);
+
 // Frontend production — sert le build React si le dossier dist existe
 const frontendDist = path.join(__dirname, '..', '..', 'frontend', 'dist');
 if (fs.existsSync(frontendDist)) {

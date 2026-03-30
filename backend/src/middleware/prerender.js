@@ -24,8 +24,47 @@ function escapeHtml(str) {
     .replace(/'/g, '&#39;');
 }
 
+// Génère le JSON-LD Schema.org pour une recette
+function buildRecipeJsonLd(recipe, siteUrl, avgRating, ratingsCount) {
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'Recipe',
+    name: recipe.name,
+    image: recipe.imageUrl
+      ? (recipe.imageUrl.startsWith('http') ? recipe.imageUrl : `${siteUrl}${recipe.imageUrl}`)
+      : undefined,
+    author: recipe.author ? { '@type': 'Person', name: recipe.author.pseudo } : undefined,
+    datePublished: recipe.createdAt?.toISOString?.() || recipe.createdAt,
+    description: recipe.description || `${recipe.name} — Recette de cocktail`,
+    prepTime: recipe.prepTime ? `PT${recipe.prepTime}M` : undefined,
+    recipeCategory: recipe.category?.name,
+    recipeIngredient: recipe.ingredients?.map((ri) =>
+      `${ri.quantity || ''} ${ri.unit || ''} ${ri.ingredient?.name || ''}`.trim()
+    ),
+    recipeInstructions: recipe.steps?.map((s) => ({
+      '@type': 'HowToStep',
+      position: s.order,
+      text: s.description,
+    })),
+    recipeYield: recipe.servings ? `${recipe.servings} portions` : undefined,
+  };
+
+  if (avgRating && ratingsCount > 0) {
+    schema.aggregateRating = {
+      '@type': 'AggregateRating',
+      ratingValue: avgRating.toFixed(1),
+      ratingCount: ratingsCount,
+      bestRating: '5',
+      worstRating: '1',
+    };
+  }
+
+  // Supprimer les champs undefined
+  return JSON.stringify(schema, (k, v) => v === undefined ? undefined : v);
+}
+
 // Génère une page HTML minimale avec les meta tags OG
-function renderMetaPage({ title, description, image, url, type = 'website' }) {
+function renderMetaPage({ title, description, image, url, type = 'website', jsonLd }) {
   const siteUrl = process.env.SITE_URL || 'https://cocktail-app.fr';
   const fullImage = image
     ? (image.startsWith('http') ? image : `${siteUrl}${image}`)
@@ -52,7 +91,8 @@ function renderMetaPage({ title, description, image, url, type = 'website' }) {
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="${safeTitle}">
   <meta name="twitter:description" content="${safeDescription}">
-  <meta name="twitter:image" content="${safeImage}">
+  <meta name="twitter:image" content="${safeImage}">${jsonLd ? `
+  <script type="application/ld+json">${jsonLd}</script>` : ''}
 </head>
 <body>
   <h1>${safeTitle}</h1>
@@ -77,16 +117,29 @@ async function prerenderMiddleware(req, res, next) {
       const id = parseInt(recipeMatch[1], 10);
       const recipe = await prisma.recipe.findUnique({
         where: { id },
-        include: { category: true, author: true },
+        include: {
+          category: true,
+          author: true,
+          ingredients: { include: { ingredient: true } },
+          steps: { orderBy: { order: 'asc' } },
+        },
       });
       if (recipe && recipe.status === 'PUBLISHED') {
         const desc = recipe.description || `${recipe.name} — Recette de cocktail`;
+        // Calcul de la note moyenne pour le JSON-LD
+        const agg = await prisma.rating.aggregate({
+          where: { recipeId: id },
+          _avg: { score: true },
+          _count: { score: true },
+        });
+        const jsonLd = buildRecipeJsonLd(recipe, siteUrl, agg._avg.score, agg._count.score);
         return res.send(renderMetaPage({
           title: `${recipe.name} — Cocktail App`,
           description: desc.substring(0, 160),
           image: recipe.imageUrl,
           url: fullUrl,
           type: 'article',
+          jsonLd,
         }));
       }
     }

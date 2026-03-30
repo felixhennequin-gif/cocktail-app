@@ -92,6 +92,34 @@ export default function RecipeDetail() {
   const metaDescription = recipe.description
     || `${recipe.name} — ${t(`recipes.difficulty.${recipe.difficulty}`)}, ${recipe.prepTime} min.`
 
+  const jsonLd = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'Recipe',
+    name: recipe.name,
+    image: recipe.imageUrl ? getImageUrl(recipe.imageUrl) : undefined,
+    author: recipe.author ? { '@type': 'Person', name: recipe.author.pseudo } : undefined,
+    datePublished: recipe.createdAt,
+    description: metaDescription,
+    prepTime: recipe.prepTime ? `PT${recipe.prepTime}M` : undefined,
+    recipeCategory: recipe.category?.name,
+    recipeIngredient: recipe.ingredients?.map((ri) =>
+      `${ri.quantity || ''} ${ri.unit || ''} ${ri.ingredient?.name || ''}`.trim()
+    ),
+    recipeInstructions: recipe.steps?.map((s) => ({
+      '@type': 'HowToStep', position: s.order, text: s.description,
+    })),
+    recipeYield: recipe.servings ? `${recipe.servings} portions` : undefined,
+    ...(avgRating && ratingsCount > 0 ? {
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: avgRating.toFixed(1),
+        ratingCount: ratingsCount,
+        bestRating: '5',
+        worstRating: '1',
+      },
+    } : {}),
+  })
+
   const metaProps = {
     recipe, avgRating, ratingsCount, isFavorited,
     onToggleFavorite: handleToggleFavorite,
@@ -114,6 +142,7 @@ export default function RecipeDetail() {
         <meta name="twitter:title" content={recipe.name} />
         <meta name="twitter:description" content={metaDescription} />
         {recipe.imageUrl && <meta name="twitter:image" content={getImageUrl(recipe.imageUrl)} />}
+        <script type="application/ld+json">{jsonLd}</script>
       </Helmet>
 
       <AddToCollectionModal
