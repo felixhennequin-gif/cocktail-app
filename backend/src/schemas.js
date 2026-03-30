@@ -26,6 +26,10 @@ const createRecipeSchema = z.object({
   parentRecipeId: z.coerce.number().int().positive().optional().nullable(),
   season:         z.enum(['spring', 'summer', 'autumn', 'winter']).optional().nullable(),
   status:         z.enum(['PUBLISHED', 'PENDING', 'DRAFT']).optional(),
+  // Champs sponsoring (ignorés côté controller si l'utilisateur n'est pas ADMIN)
+  sponsorName:    z.string().max(200).optional().nullable(),
+  sponsorLogo:    z.string().optional().nullable(),
+  isSponsored:    z.boolean().optional(),
 });
 
 const updateRecipeSchema = createRecipeSchema.partial().omit({ ingredients: true, steps: true }).extend({
@@ -117,6 +121,52 @@ const createChallengeSchema = z.object({
   path: ['endDate'],
 });
 
+// --- Articles ---
+
+const createArticleSchema = z.object({
+  title:      z.string().min(1, 'Le titre est requis').max(200, 'Le titre ne doit pas dépasser 200 caractères').transform(s => s.trim()),
+  content:    z.string().min(1, 'Le contenu est requis').max(50000, 'Le contenu ne doit pas dépasser 50 000 caractères'),
+  excerpt:    z.string().min(1, 'L\'extrait est requis').max(500, 'L\'extrait ne doit pas dépasser 500 caractères').transform(s => s.trim()),
+  coverImage: z.string().optional().nullable(),
+  status:     z.enum(['PUBLISHED', 'DRAFT']).optional(),
+  tagIds:     z.array(z.number()).optional(),
+});
+
+const updateArticleSchema = createArticleSchema.partial();
+
+// --- Ingrédients ---
+
+const updateIngredientSchema = z.object({
+  affiliateUrl: z.string().url('L\'URL affiliée doit être une URL valide').max(2000, 'L\'URL ne doit pas dépasser 2000 caractères').nullable().optional(),
+});
+
+// --- Techniques ---
+
+const createTechniqueSchema = z.object({
+  name:        z.string().min(1, 'Le nom est requis').max(100, 'Le nom ne doit pas dépasser 100 caractères').transform(s => s.trim()),
+  description: z.string().min(1, 'La description est requise').max(5000, 'La description ne doit pas dépasser 5000 caractères').transform(s => s.trim()),
+  videoUrl:    z.string().url('URL vidéo invalide').optional().nullable(),
+  iconUrl:     z.string().optional().nullable(),
+});
+
+const updateTechniqueSchema = createTechniqueSchema.partial();
+
+// --- Plan utilisateur (admin) ---
+
+const updateUserPlanSchema = z.object({
+  plan: z.enum(['FREE', 'PREMIUM'], { message: 'Le plan doit être FREE ou PREMIUM' }),
+});
+
+// --- Préférences gustatives ---
+
+const preferencesSchema = z.object({
+  sweetness:           z.number().int().min(1).max(5).optional(),
+  bitterness:          z.number().int().min(1).max(5).optional(),
+  sourness:            z.number().int().min(1).max(5).optional(),
+  strength:            z.number().int().min(1).max(5).optional(),
+  excludedIngredients: z.array(z.number().int().positive()).optional(),
+});
+
 // --- Rating ---
 
 const ratingSchema = z.object({
@@ -144,5 +194,12 @@ module.exports = {
   refreshSchema,
   logoutSchema,
   ratingSchema,
+  createArticleSchema,
+  updateArticleSchema,
+  updateIngredientSchema,
+  createTechniqueSchema,
+  updateTechniqueSchema,
+  updateUserPlanSchema,
+  preferencesSchema,
   formatZodError,
 };

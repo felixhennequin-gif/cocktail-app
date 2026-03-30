@@ -92,7 +92,7 @@ const createRecipe = async (req, res, next) => {
     return badRequest(res, formatZodError(parsed.error));
   }
 
-  const { name, description, imageUrl, difficulty, prepTime, servings, categoryId, ingredients, steps, tagIds, tagNames, parentRecipeId, season, status: requestedStatus } = parsed.data;
+  const { name, description, imageUrl, difficulty, prepTime, servings, categoryId, ingredients, steps, tagIds, tagNames, parentRecipeId, season, status: requestedStatus, sponsorName, sponsorLogo, isSponsored } = parsed.data;
 
   // Calcul du statut final selon le rôle
   let status;
@@ -121,6 +121,15 @@ const createRecipe = async (req, res, next) => {
       if (parent.parentRecipeId) return badRequest(res, 'Impossible de créer une variante d\'une variante');
     }
 
+    // Les champs sponsoring ne sont accessibles qu'aux admins
+    const sponsorFields = req.user.role === 'ADMIN'
+      ? {
+          isSponsored: isSponsored ?? false,
+          sponsorName: sponsorName ?? null,
+          sponsorLogo: sponsorLogo ?? null,
+        }
+      : {};
+
     const recipe = await prisma.recipe.create({
       data: {
         name,
@@ -133,6 +142,7 @@ const createRecipe = async (req, res, next) => {
         status,
         authorId,
         season: season || null,
+        ...sponsorFields,
         ...(parentRecipeId ? { parentRecipeId: parseInt(parentRecipeId) } : {}),
         ingredients: {
           create: resolved.map(({ id, quantity, unit }) => ({
@@ -193,7 +203,7 @@ const updateRecipe = async (req, res, next) => {
     return badRequest(res, formatZodError(parsed.error));
   }
 
-  const { name, description, imageUrl, difficulty, prepTime, servings, categoryId, ingredients, steps, tagIds, tagNames, season, status: requestedStatus } = parsed.data;
+  const { name, description, imageUrl, difficulty, prepTime, servings, categoryId, ingredients, steps, tagIds, tagNames, season, status: requestedStatus, sponsorName, sponsorLogo, isSponsored } = parsed.data;
 
   const exists = await prisma.recipe.findUnique({ where: { id } });
   if (!exists) return notFound(res, 'Recette introuvable');
@@ -248,6 +258,11 @@ const updateRecipe = async (req, res, next) => {
           ...(categoryId  !== undefined && { categoryId: parseInt(categoryId) }),
           ...(season      !== undefined && { season: season || null }),
           ...(newStatus   !== undefined && { status: newStatus }),
+          ...(req.user.role === 'ADMIN' ? {
+            ...(isSponsored  !== undefined && { isSponsored }),
+            ...(sponsorName  !== undefined && { sponsorName }),
+            ...(sponsorLogo  !== undefined && { sponsorLogo }),
+          } : {}),
           ...(resolved    !== undefined && {
             ingredients: {
               create: resolved.map(({ id: ingId, quantity, unit }) => ({

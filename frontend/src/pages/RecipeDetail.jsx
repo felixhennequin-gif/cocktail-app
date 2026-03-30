@@ -166,6 +166,23 @@ export default function RecipeDetail() {
         </div>
       )}
 
+      {/* Bannière sponsoring */}
+      {recipe.isSponsored && recipe.sponsorName && (
+        <div className="mb-4 flex items-center gap-3 px-4 py-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg text-sm text-amber-700 dark:text-amber-400">
+          {recipe.sponsorLogo && (
+            <img
+              src={recipe.sponsorLogo}
+              alt={recipe.sponsorName}
+              rel="sponsored"
+              className="h-6 w-auto object-contain shrink-0"
+            />
+          )}
+          <span className="italic">
+            {t('recipes.sponsoredBy', { sponsor: recipe.sponsorName })}
+          </span>
+        </div>
+      )}
+
       {/* Layout 2 colonnes sur desktop */}
       <div className="lg:flex lg:gap-8">
         {/* Colonne gauche : image + ingrédients (sidebar) */}

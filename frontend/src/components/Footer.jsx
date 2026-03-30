@@ -14,6 +14,12 @@ export default function Footer() {
         <div className="flex flex-col items-center gap-3 sm:items-end">
           <nav className="flex gap-4">
             <Link
+              to="/blog"
+              className="text-sm text-gray-400 dark:text-gray-500 hover:text-gold-500 dark:hover:text-gold-400 transition-colors"
+            >
+              {t('blog.title')}
+            </Link>
+            <Link
               to="/legal"
               className="text-sm text-gray-400 dark:text-gray-500 hover:text-gold-500 dark:hover:text-gold-400 transition-colors"
             >

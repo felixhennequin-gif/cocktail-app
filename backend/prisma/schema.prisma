@@ -12,6 +12,7 @@ model User {
   pseudo       String    @unique
   passwordHash String
   role         Role      @default(USER)
+  plan         Plan      @default(FREE)
   avatar       String?
   bio          String?
   createdAt    DateTime  @default(now())
@@ -27,7 +28,34 @@ model User {
   refreshTokens  RefreshToken[]
   bar              UserIngredient[]
   badges           UserBadge[]
-  challengeEntries ChallengeEntry[]
+  challengeEntries  ChallengeEntry[]
+  pushSubscriptions PushSubscription[]
+  apiKeys           ApiKey[]
+  preferences       UserPreference?
+  articles          Article[]
+}
+
+model PushSubscription {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model UserPreference {
+  id                  Int    @id @default(autoincrement())
+  userId              Int    @unique
+  sweetness           Int    @default(3) // 1-5 : goût sucré
+  bitterness          Int    @default(3) // 1-5 : goût amer
+  sourness            Int    @default(3) // 1-5 : goût acide
+  strength            Int    @default(3) // 1-5 : force alcoolique
+  excludedIngredients Int[]  // IDs d'ingrédients à éviter
+  user                User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model RefreshToken {
@@ -66,6 +94,10 @@ model Recipe {
   comments      Comment[]
   searchVector  Unsupported("tsvector")?
   tags          RecipeTag[]
+  // Partenariat / sponsoring (champs réservés aux admins)
+  isSponsored    Boolean  @default(false)
+  sponsorName    String?
+  sponsorLogo    String?
   // Saison (null = toutes saisons)
   season         String?  // "spring", "summer", "autumn", "winter"
   // Variantes (Feature 4)
@@ -88,10 +120,11 @@ model Category {
 }
 
 model Ingredient {
-  id       Int                @id @default(autoincrement())
-  name     String             @unique
-  recipes  RecipeIngredient[]
-  userBars UserIngredient[]
+  id           Int                @id @default(autoincrement())
+  name         String             @unique
+  affiliateUrl String?            // Lien affilié pour acheter l'ingrédient (optionnel)
+  recipes      RecipeIngredient[]
+  userBars     UserIngredient[]
 }
 
 model RecipeIngredient {
@@ -190,6 +223,7 @@ model Tag {
   createdAt  DateTime    @default(now())
   recipes    RecipeTag[]
   challenges Challenge[]
+  articles   ArticleTag[]
 }
 
 model RecipeTag {
@@ -285,6 +319,63 @@ model ChallengeEntry {
   @@index([challengeId])
 }
 
+model Technique {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  slug        String   @unique
+  description String
+  videoUrl    String?
+  iconUrl     String?
+  createdAt   DateTime @default(now())
+}
+
+model ApiKey {
+  id         Int       @id @default(autoincrement())
+  userId     Int
+  key        String    @unique
+  name       String
+  createdAt  DateTime  @default(now())
+  lastUsedAt DateTime?
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// --- Blog / articles de mixologie ---
+
+model Article {
+  id          Int           @id @default(autoincrement())
+  title       String
+  slug        String        @unique
+  content     String        // Markdown
+  excerpt     String
+  coverImage  String?
+  authorId    Int
+  author      User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  status      ArticleStatus @default(DRAFT)
+  publishedAt DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  tags        ArticleTag[]
+
+  @@index([status, publishedAt])
+  @@index([authorId])
+}
+
+model ArticleTag {
+  articleId Int
+  tagId     Int
+  article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([articleId, tagId])
+}
+
+enum ArticleStatus {
+  PUBLISHED
+  DRAFT
+}
+
 enum NotificationType {
   NEW_RECIPE
   COMMENT_ON_RECIPE
@@ -302,6 +393,11 @@ enum Difficulty {
 enum Role {
   USER
   ADMIN
+}
+
+enum Plan {
+  FREE
+  PREMIUM
 }
 
 enum RecipeStatus {

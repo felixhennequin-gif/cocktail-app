@@ -10,6 +10,7 @@ import NotificationBell from './components/NotificationBell'
 import ThemeToggle      from './components/ThemeToggle'
 import LanguageToggle   from './components/LanguageToggle'
 import Footer           from './components/Footer'
+import OfflineBanner    from './components/OfflineBanner'
 
 // Pages d'entrée courantes — import statique
 import LandingPage      from './pages/LandingPage'
@@ -33,6 +34,13 @@ const lazyImports = {
   LegalPage:        () => import('./pages/LegalPage'),
   PartyMode:        () => import('./pages/PartyMode'),
   ChallengeDetail:  () => import('./pages/ChallengeDetail'),
+  TechniquesPage:   () => import('./pages/TechniquesPage'),
+  BlogList:         () => import('./pages/BlogList'),
+  BlogArticle:      () => import('./pages/BlogArticle'),
+  ApiDocs:          () => import('./pages/ApiDocs'),
+  PremiumPage:      () => import('./pages/PremiumPage'),
+  TasteProfile:     () => import('./pages/TasteProfile'),
+  CocktailQuiz:     () => import('./pages/CocktailQuiz'),
 }
 
 const RecipeDetail     = lazy(lazyImports.RecipeDetail)
@@ -48,6 +56,13 @@ const MyBar            = lazy(lazyImports.MyBar)
 const LegalPage        = lazy(lazyImports.LegalPage)
 const PartyMode        = lazy(lazyImports.PartyMode)
 const ChallengeDetail  = lazy(lazyImports.ChallengeDetail)
+const TechniquesPage   = lazy(lazyImports.TechniquesPage)
+const BlogList         = lazy(lazyImports.BlogList)
+const BlogArticle      = lazy(lazyImports.BlogArticle)
+const ApiDocs          = lazy(lazyImports.ApiDocs)
+const PremiumPage      = lazy(lazyImports.PremiumPage)
+const TasteProfile     = lazy(lazyImports.TasteProfile)
+const CocktailQuiz     = lazy(lazyImports.CocktailQuiz)
 
 // Préchargement des pages au survol des liens
 export const preload = (page) => { lazyImports[page]?.() }
@@ -107,7 +122,8 @@ function Header() {
               <Link to="/feed"        onMouseEnter={() => preload('Feed')} className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 transition-colors">{t('nav.feed')}</Link>
               <Link to="/recipes/new" onMouseEnter={() => preload('RecipeSubmit')} className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 transition-colors">{t('nav.propose')}</Link>
               <Link to="/favorites"   onMouseEnter={() => preload('Favorites')} className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 transition-colors">{t('nav.favorites')}</Link>
-              <Link to="/my-bar"     onMouseEnter={() => preload('MyBar')} className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 transition-colors">{t('nav.myBar')}</Link>
+              <Link to="/my-bar"         onMouseEnter={() => preload('MyBar')} className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 transition-colors">{t('nav.myBar')}</Link>
+              <Link to="/taste-profile"  onMouseEnter={() => preload('TasteProfile')} className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 transition-colors">{t('nav.tasteProfile')}</Link>
               <NotificationBell />
               <Link to={`/users/${user.id}`} className="font-medium text-gold-400 dark:text-gold-300 hover:text-gold-400 dark:hover:text-gold-300 transition-colors">
                 {user.pseudo}
@@ -167,7 +183,8 @@ function Header() {
               <Link to="/feed"        onClick={closeMenu} className="text-gray-700 dark:text-gray-300 hover:text-gold-400 dark:hover:text-gold-300 py-1">{t('nav.feedFull')}</Link>
               <Link to="/recipes/new" onClick={closeMenu} className="text-gray-700 dark:text-gray-300 hover:text-gold-400 dark:hover:text-gold-300 py-1">{t('nav.proposeFull')}</Link>
               <Link to="/favorites"   onClick={closeMenu} className="text-gray-700 dark:text-gray-300 hover:text-gold-400 dark:hover:text-gold-300 py-1">{t('nav.favoritesFull')}</Link>
-              <Link to="/my-bar"     onClick={closeMenu} className="text-gray-700 dark:text-gray-300 hover:text-gold-400 dark:hover:text-gold-300 py-1">{t('nav.myBarFull')}</Link>
+              <Link to="/my-bar"        onClick={closeMenu} className="text-gray-700 dark:text-gray-300 hover:text-gold-400 dark:hover:text-gold-300 py-1">{t('nav.myBarFull')}</Link>
+              <Link to="/taste-profile" onClick={closeMenu} className="text-gray-700 dark:text-gray-300 hover:text-gold-400 dark:hover:text-gold-300 py-1">{t('nav.tasteProfileFull')}</Link>
               <Link to={`/users/${user.id}`} onClick={closeMenu} className="font-medium text-gold-400 dark:text-gold-300 hover:text-gold-400 dark:hover:text-gold-300 py-1">
                 {t('nav.myProfile', { pseudo: user.pseudo })}
               </Link>
@@ -209,6 +226,7 @@ export default function App() {
         {t('common.skipToContent')}
       </a>
       <Header />
+      <OfflineBanner />
 
       <main id="main-content" role="main" className="max-w-5xl mx-auto px-4 py-6 md:py-8">
         <ErrorBoundary>
@@ -226,12 +244,19 @@ export default function App() {
             <Route path="/favorites"               element={<ProtectedRoute><Favorites /></ProtectedRoute>} />
             <Route path="/users/:id"               element={<UserProfile />} />
             <Route path="/my-bar"                    element={<ProtectedRoute><MyBar /></ProtectedRoute>} />
+            <Route path="/taste-profile"             element={<ProtectedRoute><TasteProfile /></ProtectedRoute>} />
             <Route path="/collections/:id"          element={<CollectionDetail />} />
             <Route path="/challenges/:id"           element={<ChallengeDetail />} />
             <Route path="/admin"                   element={<AdminRoute><AdminRecipeList /></AdminRoute>} />
             <Route path="/admin/pending"           element={<AdminRoute><AdminPendingList /></AdminRoute>} />
             <Route path="/admin/recipes/new"       element={<AdminRoute><AdminRecipeForm /></AdminRoute>} />
             <Route path="/admin/recipes/:id/edit"  element={<AdminRoute><AdminRecipeForm /></AdminRoute>} />
+            <Route path="/techniques"               element={<TechniquesPage />} />
+            <Route path="/blog"                    element={<BlogList />} />
+            <Route path="/blog/:slug"              element={<BlogArticle />} />
+            <Route path="/quiz"                    element={<CocktailQuiz />} />
+            <Route path="/premium"                 element={<PremiumPage />} />
+            <Route path="/api-docs"               element={<ApiDocs />} />
             <Route path="/legal"                   element={<LegalPage />} />
             <Route path="*"                        element={<NotFound />} />
           </Routes>

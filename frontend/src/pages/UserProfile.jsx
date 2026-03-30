@@ -208,6 +208,9 @@ export default function UserProfile() {
   const [badgesLoaded, setBadgesLoaded]         = useState(false)
   const [badgesLoading, setBadgesLoading]       = useState(false)
 
+  // Statistiques du profil
+  const [stats, setStats] = useState(null)
+
   const [loading, setLoading] = useState(true)
   const [error, setError]     = useState(null)
 
@@ -216,6 +219,7 @@ export default function UserProfile() {
     const controller = new AbortController()
     setLoading(true)
     setActiveTab('recipes')
+    setStats(null)
     setFollowers([])
     setFollowing([])
     setFollowersLoaded(false)
@@ -237,6 +241,16 @@ export default function UserProfile() {
       .finally(() => setLoading(false))
     return () => controller.abort()
   }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Chargement des statistiques du profil
+  useEffect(() => {
+    const controller = new AbortController()
+    fetch(`/api/users/${id}/stats`, { signal: controller.signal })
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => { if (data) setStats(data) })
+      .catch((err) => { if (err.name !== 'AbortError') console.error(err) })
+    return () => controller.abort()
+  }, [id])
 
   // Chargement des recettes paginées
   useEffect(() => {
@@ -371,6 +385,14 @@ export default function UserProfile() {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{profile.pseudo}</h1>
+            {profile.plan === 'PREMIUM' && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-700">
+                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+                Premium
+              </span>
+            )}
             {isOwnProfile ? (
               <button
                 onClick={() => setEditOpen(true)}
@@ -391,6 +413,31 @@ export default function UserProfile() {
           )}
         </div>
       </div>
+
+      {/* Statistiques du profil */}
+      {stats && (
+        <div className="grid grid-cols-4 sm:grid-cols-4 gap-3 mb-6">
+          {[
+            { emoji: '\u{1F379}', value: stats.recipesCount,          label: t('stats.recipes') },
+            { emoji: '\u2764\uFE0F',  value: stats.totalFavoritesReceived, label: t('stats.favoritesReceived') },
+            { emoji: '\u2B50', value: stats.averageRating !== null ? stats.averageRating.toFixed(1) : '\u2014', label: t('stats.avgRating') },
+            { emoji: '\u{1F465}', value: stats.followersCount,         label: t('stats.followers') },
+            { emoji: '\u2795', value: stats.followingCount,         label: t('stats.following') },
+            { emoji: '\u{1F4AC}', value: stats.commentsCount,          label: t('stats.comments') },
+            { emoji: '\u{1F3C5}', value: stats.badgesCount,            label: t('stats.badges') },
+            { emoji: '\u{1F4C2}', value: stats.collectionsCount,       label: t('stats.collections') },
+          ].map(({ emoji, value, label }) => (
+            <div
+              key={label}
+              className="flex flex-col items-center gap-1 p-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 text-center"
+            >
+              <span className="text-xl" role="img" aria-hidden="true">{emoji}</span>
+              <span className="text-lg font-bold text-gray-900 dark:text-gray-100 leading-tight">{value}</span>
+              <span className="text-[11px] text-gray-400 dark:text-gray-500 leading-tight">{label}</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Onglets */}
       <div className="flex gap-1 mb-6 border-b border-gray-200 dark:border-gray-700">

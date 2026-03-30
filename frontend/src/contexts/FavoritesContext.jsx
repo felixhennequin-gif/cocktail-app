@@ -1,12 +1,14 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { useAuth } from './AuthContext'
 import { useToast } from './ToastContext'
+import { useOfflineCache } from '../hooks/useOfflineCache'
 
 const FavoritesContext = createContext(null)
 
 export function FavoritesProvider({ children }) {
   const { user, authFetch } = useAuth()
   const { showToast } = useToast()
+  const { cacheFavorite, uncacheFavorite } = useOfflineCache()
   const [favoriteIds, setFavoriteIds] = useState(new Set())
   const [pendingIds, setPendingIds] = useState(new Set())
 
@@ -44,6 +46,13 @@ export function FavoritesProvider({ children }) {
           return next
         })
         showToast('Erreur lors de la mise à jour des favoris', 'error')
+      } else {
+        // Synchronise le cache offline avec l'état du favori
+        if (willFavorite) {
+          cacheFavorite(recipeId)
+        } else {
+          uncacheFavorite(recipeId)
+        }
       }
     } catch {
       // Rollback

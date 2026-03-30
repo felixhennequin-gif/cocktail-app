@@ -1,6 +1,6 @@
 const prisma = require('../prisma');
 const { parseId, badRequest, notFound, conflict } = require('../helpers');
-const { updateProfileSchema, formatZodError } = require('../schemas');
+const { updateProfileSchema, updateUserPlanSchema, formatZodError } = require('../schemas');
 const { enrichRecipes } = require('../helpers/recipe-helpers');
 
 // PUT /users/me — met à jour le profil de l'utilisateur connecté
@@ -23,7 +23,7 @@ const updateMyProfile = async (req, res, next) => {
     const user = await prisma.user.update({
       where: { id: userId },
       data,
-      select: { id: true, pseudo: true, email: true, avatar: true, bio: true, role: true, createdAt: true },
+      select: { id: true, pseudo: true, email: true, avatar: true, bio: true, role: true, plan: true, createdAt: true },
     });
 
     res.json(user);
@@ -51,6 +51,7 @@ const getUserProfile = async (req, res, next) => {
         pseudo: true,
         avatar: true,
         bio: true,
+        plan: true,
         createdAt: true,
         recipes: {
           where: { status: 'PUBLISHED' },
@@ -118,4 +119,83 @@ const getUserRecipes = async (req, res, next) => {
   }
 };
 
-module.exports = { updateMyProfile, getUserProfile, getUserRecipes };
+// PATCH /admin/users/:id/plan — met à jour le plan d'un utilisateur (admin uniquement)
+const updateUserPlan = async (req, res, next) => {
+  try {
+    const id = parseId(req.params.id);
+    if (!id) return badRequest(res, 'id invalide');
+
+    const parsed = updateUserPlanSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return badRequest(res, formatZodError(parsed.error));
+    }
+
+    const { plan } = parsed.data;
+
+    const user = await prisma.user.findUnique({ where: { id } });
+    if (!user) return notFound(res, 'Utilisateur introuvable');
+
+    const updated = await prisma.user.update({
+      where: { id },
+      data: { plan },
+      select: { id: true, pseudo: true, email: true, role: true, plan: true },
+    });
+
+    res.json(updated);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// GET /users/:id/stats — statistiques agrégées du profil public
+const getUserStats = async (req, res, next) => {
+  try {
+    const id = parseId(req.params.id);
+    if (!id) return badRequest(res, 'id invalide');
+
+    const exists = await prisma.user.findUnique({ where: { id }, select: { id: true } });
+    if (!exists) return notFound(res, 'Utilisateur introuvable');
+
+    const [
+      recipesCount,
+      totalFavoritesReceived,
+      avgRatingRaw,
+      followersCount,
+      followingCount,
+      commentsCount,
+      badgesCount,
+      collectionsCount,
+    ] = await Promise.all([
+      prisma.recipe.count({ where: { authorId: id, status: 'PUBLISHED' } }),
+      prisma.favorite.count({ where: { recipe: { authorId: id } } }),
+      prisma.$queryRaw`
+        SELECT AVG(r.score)::float AS avg
+        FROM "Rating" r
+        INNER JOIN "Recipe" rec ON rec.id = r."recipeId"
+        WHERE rec."authorId" = ${id}
+      `,
+      prisma.follow.count({ where: { followingId: id } }),
+      prisma.follow.count({ where: { followerId: id } }),
+      prisma.comment.count({ where: { userId: id } }),
+      prisma.userBadge.count({ where: { userId: id } }),
+      prisma.collection.count({ where: { userId: id, isPublic: true } }),
+    ]);
+
+    const averageRating = avgRatingRaw[0]?.avg ?? null;
+
+    res.json({
+      recipesCount,
+      totalFavoritesReceived,
+      averageRating: averageRating !== null ? parseFloat(averageRating.toFixed(2)) : null,
+      followersCount,
+      followingCount,
+      commentsCount,
+      badgesCount,
+      collectionsCount,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { updateMyProfile, getUserProfile, getUserRecipes, updateUserPlan, getUserStats };

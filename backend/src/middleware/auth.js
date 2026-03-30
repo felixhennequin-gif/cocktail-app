@@ -24,7 +24,7 @@ const requireAuth = async (req, res, next) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: decoded.id },
-      select: { id: true, pseudo: true, role: true, email: true },
+      select: { id: true, pseudo: true, role: true, email: true, plan: true },
     });
     if (!user) return res.status(401).json({ error: 'Utilisateur introuvable' });
     req.user = user;
@@ -56,7 +56,7 @@ const optionalAuth = async (req, res, next) => {
     try {
       const user = await prisma.user.findUnique({
         where: { id: decoded.id },
-        select: { id: true, pseudo: true, role: true, email: true },
+        select: { id: true, pseudo: true, role: true, email: true, plan: true },
       });
       if (user) req.user = user;
     } catch {

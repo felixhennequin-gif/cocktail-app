@@ -81,7 +81,7 @@ const register = async (req, res, next) => {
     }
     const user = await prisma.user.create({
       data: { email, pseudo, passwordHash },
-      select: { id: true, email: true, pseudo: true, role: true, createdAt: true },
+      select: { id: true, email: true, pseudo: true, role: true, plan: true, createdAt: true },
     });
 
     const token = jwt.sign({ id: user.id }, JWT_SECRET, {
@@ -127,7 +127,7 @@ const login = async (req, res, next) => {
     await cleanupRefreshTokens(user.id);
 
     res.json({
-      user: { id: user.id, email: user.email, pseudo: user.pseudo, role: user.role, avatar: user.avatar },
+      user: { id: user.id, email: user.email, pseudo: user.pseudo, role: user.role, plan: user.plan, avatar: user.avatar },
       token,
       refreshToken,
     });
@@ -141,7 +141,7 @@ const me = async (req, res, next) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.user.id },
-      select: { id: true, email: true, pseudo: true, role: true, avatar: true, createdAt: true },
+      select: { id: true, email: true, pseudo: true, role: true, plan: true, avatar: true, createdAt: true },
     });
     if (!user) return notFound(res, 'Utilisateur introuvable');
     res.json(user);

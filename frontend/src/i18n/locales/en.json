@@ -18,7 +18,9 @@
     "lightMode": "Light mode",
     "darkMode": "Dark mode",
     "myBar": "My Bar",
-    "myBarFull": "My Virtual Bar"
+    "myBarFull": "My Virtual Bar",
+    "tasteProfile": "Taste Profile",
+    "tasteProfileFull": "My Taste Profile"
   },
   "auth": {
     "loginTitle": "Log in",
@@ -161,7 +163,10 @@
     "timerDone": "Done!",
     "voiceSearch": "Voice search",
     "listening": "Listening...",
-    "voiceNotSupported": "Voice search not supported"
+    "voiceNotSupported": "Voice search not supported",
+    "sponsoredBy": "Presented by {{sponsor}}",
+    "sponsored": "Sponsored",
+    "buyIngredient": "Buy"
   },
   "favorites": {
     "title": "My favorites",
@@ -377,6 +382,16 @@
     "errorMessage": "An unexpected error occurred…",
     "edit": "Edit"
   },
+  "stats": {
+    "recipes": "Recipes",
+    "favoritesReceived": "Favorites received",
+    "avgRating": "Average rating",
+    "followers": "Followers",
+    "following": "Following",
+    "comments": "Comments",
+    "badges": "Badges",
+    "collections": "Collections"
+  },
   "badges": {
     "title": "Badges",
     "earned": "Earned on {{date}}",
@@ -412,6 +427,30 @@
     "popularTitle": "Popular recipes",
     "seeAllRecipes": "See all {{count}}+ recipes"
   },
+  "blog": {
+    "title": "Mixology Blog",
+    "subtitle": "Tips, techniques, and cocktail stories",
+    "readMore": "Read more",
+    "publishedOn": "Published on {{date}}",
+    "by": "by {{author}}",
+    "backToBlog": "\u2190 Back to blog",
+    "noArticles": "No articles yet.",
+    "relatedRecipes": "Related recipes"
+  },
+  "preferences": {
+    "title": "Taste Profile",
+    "subtitle": "Customize your cocktail preferences",
+    "sweetness": "Sweetness",
+    "bitterness": "Bitterness",
+    "sourness": "Sourness",
+    "strength": "Strength",
+    "excludedIngredients": "Ingredients to avoid",
+    "searchIngredient": "Search ingredient...",
+    "save": "Save preferences",
+    "saved": "Preferences saved!",
+    "forYou": "Recommended for you",
+    "noRecommendations": "Rate some recipes to get personalized recommendations"
+  },
   "footer": {
     "legal": "Legal notice",
     "contact": "Contact",
@@ -437,6 +476,62 @@
     "empty": "Add ingredients to your bar",
     "noResults": "No cocktails found with these ingredients"
   },
+  "techniques": {
+    "title": "Bar Techniques",
+    "subtitle": "Master the essential bartending techniques",
+    "searchPlaceholder": "Search a technique...",
+    "noResults": "No techniques found.",
+    "watchVideo": "Watch video"
+  },
+  "apiDocs": {
+    "title": "API Documentation",
+    "subtitle": "Build integrations with our public API",
+    "myKeys": "My API Keys",
+    "createKey": "Create API Key",
+    "keyName": "Key name",
+    "keyNamePlaceholder": "My Discord bot",
+    "created": "Key created!",
+    "copied": "Key copied!",
+    "revoke": "Revoke",
+    "revokeConfirm": "Revoke this API key? Apps using it will stop working.",
+    "noKeys": "No API keys yet.",
+    "maxKeys": "Maximum 5 API keys"
+  },
+  "quiz": {
+    "title": "What cocktail are you?",
+    "subtitle": "Answer 7 questions to find your cocktail personality",
+    "question": "Question {{current}} / {{total}}",
+    "next": "Next",
+    "seeResult": "See my result",
+    "resultTitle": "You are a {{cocktail}}!",
+    "seeRecipe": "See the recipe",
+    "share": "Share my result",
+    "copied": "Link copied!",
+    "retake": "Retake the quiz",
+    "startQuiz": "Start the quiz",
+    "q1": { "title": "How are you feeling right now?", "a": "Relaxed \u2014 I want to chill", "b": "Energetic \u2014 let's go!", "c": "Festive \u2014 party time", "d": "Romantic \u2014 intimate evening" },
+    "q2": { "title": "What flavour do you prefer?", "a": "Sweet and fruity", "b": "Bitter and complex", "c": "Sour and tangy", "d": "Balanced and smooth" },
+    "q3": { "title": "Which season suits you best?", "a": "Summer \u2014 sun and beaches", "b": "Winter \u2014 fireplace and warmth", "c": "Spring \u2014 freshness and flowers", "d": "Autumn \u2014 golden leaves and depth" },
+    "q4": { "title": "What's the occasion?", "a": "Ap\u00e9ritif with friends", "b": "Wild night out", "c": "After-dinner digestif", "d": "Sunday brunch" },
+    "q5": { "title": "Which spirit do you prefer?", "a": "Rum", "b": "Vodka", "c": "Gin", "d": "Whiskey", "e": "Tequila", "f": "None \u2014 I prefer non-alcoholic" },
+    "q6": { "title": "Simple or elaborate?", "a": "Simple \u2014 quick and easy", "b": "Elaborate \u2014 I like the ceremony" },
+    "q7": { "title": "Which vibe is yours?", "a": "Tropical \u2014 exotic and colourful", "b": "Classic \u2014 timeless elegance", "c": "Modern \u2014 urban and sophisticated", "d": "Exotic \u2014 bold and adventurous" },
+    "profiles": {
+      "mojito": { "name": "Mojito", "desc": "Fresh, light, and always in a good mood \u2014 you bring energy wherever you go." },
+      "margarita": { "name": "Margarita", "desc": "Bold and vibrant, you live intensely. You love new adventures." },
+      "oldFashioned": { "name": "Old Fashioned", "desc": "Classic and refined, you value depth over flashiness." },
+      "cosmo": { "name": "Cosmopolitan", "desc": "Charming and sociable, you're always the life of the party." },
+      "pinacol": { "name": "Pi\u00f1a Colada", "desc": "Dreamy and optimistic, you love tropical vibes and carefree moments." },
+      "negroni": { "name": "Negroni", "desc": "Sophisticated and discerning, you prefer quality over quantity." },
+      "espresso": { "name": "Espresso Martini", "desc": "Sharp and efficient, you balance energy with elegance." },
+      "virginMojito": { "name": "Virgin Mojito", "desc": "Clear-headed and authentic, you don't need alcohol to have fun." }
+    }
+  },
+  "offline": {
+    "banner": "Offline mode \u2014 showing cached data",
+    "backOnline": "Back online!",
+    "cachedData": "Last updated: {{date}}"
+  },
   "party": {
     "title": "Party mode",
     "start": "Let's go!",
@@ -448,5 +543,27 @@
     "exit": "Exit",
     "timer": "Timer",
     "timerDone": "Time's up!"
+  },
+  "push": {
+    "enable": "Enable push notifications",
+    "disable": "Disable push notifications",
+    "enabled": "Push notifications enabled",
+    "denied": "Notifications blocked by browser",
+    "unsupported": "Push notifications not supported"
+  },
+  "premium": {
+    "title": "Premium",
+    "hero": "Unlock the full experience",
+    "heroSubtitle": "Get unlimited collections, PDF exports, and more.",
+    "feature1": "Unlimited collections",
+    "feature2": "PDF export",
+    "feature3": "Premium badge",
+    "feature4": "Early access to new features",
+    "free": "Free",
+    "premiumPlan": "Premium",
+    "current": "Your current plan",
+    "comingSoon": "Coming soon",
+    "alreadyPremium": "You're a Premium member!",
+    "contactUs": "Contact us"
   }
 }

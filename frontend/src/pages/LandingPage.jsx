@@ -9,13 +9,14 @@ import { useAuth } from '../contexts/AuthContext'
 import useFavorites from '../hooks/useFavorites'
 
 export default function LandingPage() {
-  const { user } = useAuth()
+  const { user, authFetch } = useAuth()
   const { t } = useTranslation()
   const { favoriteIds, toggleFavorite } = useFavorites()
 
   const [dailyRecipe, setDailyRecipe] = useState(null)
   const [popularRecipes, setPopularRecipes] = useState([])
   const [seasonalRecipes, setSeasonalRecipes] = useState([])
+  const [recommendedRecipes, setRecommendedRecipes] = useState([])
   const [currentSeason, setCurrentSeason] = useState(null)
   const [totalRecipes, setTotalRecipes] = useState(0)
   const [categoryCount, setCategoryCount] = useState(0)
@@ -23,13 +24,15 @@ export default function LandingPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    Promise.allSettled([
+    const publicFetches = [
       fetch('/api/recipes/daily').then((r) => r.ok ? r.json() : null),
       fetch('/api/recipes?sortBy=avgRating&sortOrder=desc&limit=8').then((r) => r.ok ? r.json() : { data: [], total: 0 }),
       fetch('/api/categories').then((r) => r.ok ? r.json() : []),
       fetch('/api/recipes/seasonal?limit=4').then((r) => r.ok ? r.json() : { data: [], season: null }),
       fetch('/api/challenges/current').then((r) => r.ok ? r.json() : null),
-    ]).then(([dailyResult, recipesResult, categoriesResult, seasonalResult, challengeResult]) => {
+    ]
+
+    Promise.allSettled(publicFetches).then(([dailyResult, recipesResult, categoriesResult, seasonalResult, challengeResult]) => {
       if (dailyResult.status === 'fulfilled') setDailyRecipe(dailyResult.value)
       if (recipesResult.status === 'fulfilled') {
         setPopularRecipes(recipesResult.value.data ?? [])
@@ -43,6 +46,15 @@ export default function LandingPage() {
       if (challengeResult.status === 'fulfilled') setCurrentChallenge(challengeResult.value)
     }).finally(() => setLoading(false))
   }, [])
+
+  // Chargement des recommandations personnalisées pour l'utilisateur connecté
+  useEffect(() => {
+    if (!user) return
+    authFetch('/api/recipes/recommended')
+      .then((r) => r.ok ? r.json() : [])
+      .then((data) => setRecommendedRecipes(Array.isArray(data) ? data : []))
+      .catch(() => {})
+  }, [user, authFetch])
 
   return (
     <div>
@@ -182,6 +194,41 @@ export default function LandingPage() {
             </div>
           </div>
         </Link>
+      )}
+
+      {/* Recommandations personnalisées — visible uniquement pour les utilisateurs connectés */}
+      {user && (
+        <section className="mb-12">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-serif font-medium text-gray-900 dark:text-gray-100">
+              {t('preferences.forYou')}
+            </h2>
+            <Link
+              to="/taste-profile"
+              className="text-sm text-gold-500 hover:text-gold-600 dark:text-gold-400 dark:hover:text-gold-300 transition-colors"
+            >
+              {t('nav.tasteProfile')} &rarr;
+            </Link>
+          </div>
+
+          {recommendedRecipes.length === 0 ? (
+            <p className="text-sm text-gray-400 dark:text-gray-500 italic">
+              {t('preferences.noRecommendations')}
+            </p>
+          ) : (
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {recommendedRecipes.map((recipe) => (
+                <RecipeCardGrid
+                  key={recipe.id}
+                  recipe={recipe}
+                  isFavorited={favoriteIds.has(recipe.id)}
+                  onToggleFavorite={toggleFavorite}
+                  userId={user?.id}
+                />
+              ))}
+            </div>
+          )}
+        </section>
       )}
 
       {/* Recettes populaires */}

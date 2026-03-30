@@ -99,6 +99,13 @@ function RecipeCard({ recipe, isFavorited, onToggleFavorite, userId, showAuthorP
             </button>
           )}
         </div>
+
+        {/* Badge sponsoring */}
+        {recipe.isSponsored && recipe.sponsorName && (
+          <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1.5 italic">
+            {t('recipes.sponsoredBy', { sponsor: recipe.sponsorName })}
+          </p>
+        )}
       </div>
     </Link>
   )

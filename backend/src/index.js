@@ -24,6 +24,13 @@ const collectionRoutes   = require('./routes/collection-routes');
 const feedRoutes         = require('./routes/feed-routes');
 const notificationRoutes = require('./routes/notification-routes');
 const challengeRoutes    = require('./routes/challenge-routes');
+const techniqueRoutes    = require('./routes/technique-routes');
+const articleRoutes      = require('./routes/article-routes');
+const pushRoutes         = require('./routes/push-routes');
+const apiKeyRoutes       = require('./routes/api-key-routes');
+const apiV1Routes        = require('./routes/api-v1-routes');
+const apiDocsRoutes      = require('./routes/api-docs-routes');
+const ingredientRoutes   = require('./routes/ingredient-routes');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -176,6 +183,11 @@ apiRouter.use('/collections',   collectionRoutes);
 apiRouter.use('/feed',          feedRoutes);
 apiRouter.use('/notifications', notificationRoutes);
 apiRouter.use('/challenges',   challengeRoutes);
+apiRouter.use('/techniques',   techniqueRoutes);
+apiRouter.use('/articles',     articleRoutes);
+apiRouter.use('/push',         pushRoutes);
+apiRouter.use('/api-keys',     apiKeyRoutes);
+apiRouter.use('/ingredients',  ingredientRoutes);
 
 // Export routes (PDF, OG image) — montées sous /api/recipes
 const recipeExportRoutes = require('./routes/recipe-export-routes');
@@ -186,6 +198,12 @@ const barRoutes   = require('./routes/bar-routes');
 const badgeRoutes = require('./routes/badge-routes');
 apiRouter.use('/bar',    barRoutes);
 apiRouter.use('/badges', badgeRoutes);
+
+// API publique v1
+app.use('/api/v1', apiV1Routes);
+
+// Page de documentation API
+app.use(apiDocsRoutes);
 
 app.use('/api', apiRouter);
 

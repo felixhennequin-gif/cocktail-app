@@ -13,6 +13,7 @@
     "seed:realistic": "node prisma/seed-realistic.js",
     "tags:cleanup": "node prisma/cleanup-tags.js",
     "seed:badges": "node prisma/seed-badges.js",
+    "seed:techniques": "node prisma/seed-techniques.js",
     "test": "jest --runInBand --forceExit",
     "test:watch": "jest --watch --runInBand",
     "lint": "eslint src/",
@@ -42,6 +43,7 @@
     "multer": "^2.1.1",
     "pg": "^8.20.0",
     "prisma": "^7.5.0",
+    "web-push": "^3.6.7",
     "zod": "^4.3.6"
   },
   "devDependencies": {

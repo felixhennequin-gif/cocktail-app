@@ -44,4 +44,25 @@ const aiLimiter = rateLimit({
   message:         { error: "Limite d'appels IA atteinte, réessayez dans une minute." },
 });
 
-module.exports = { generalLimiter, authLimiter, pollingLimiter, aiLimiter };
+// API publique v1 — sans clé : 100 req/h, avec clé : 1000 req/h
+const apiV1AnonLimiter = rateLimit({
+  windowMs:        60 * 60 * 1000,
+  max:             100,
+  standardHeaders: true,
+  legacyHeaders:   false,
+  keyGenerator:    (req) => req.ip,
+  skip:            (req) => process.env.NODE_ENV === 'test' || !!req.apiKeyUser,
+  message:         { error: 'Limite atteinte. Créez une clé API pour 1000 req/h.' },
+});
+
+const apiV1KeyLimiter = rateLimit({
+  windowMs:        60 * 60 * 1000,
+  max:             1000,
+  standardHeaders: true,
+  legacyHeaders:   false,
+  keyGenerator:    (req) => (req.apiKeyUser ? `key:${req.apiKeyUser.id}` : req.ip),
+  skip:            (req) => process.env.NODE_ENV === 'test' || !req.apiKeyUser,
+  message:         { error: 'Limite de clé API atteinte. Réessayez dans une heure.' },
+});
+
+module.exports = { generalLimiter, authLimiter, pollingLimiter, aiLimiter, apiV1AnonLimiter, apiV1KeyLimiter };
