@@ -19,16 +19,32 @@ import Register         from './pages/Register'
 import NotFound         from './pages/NotFound'
 
 // Pages secondaires — lazy loading (code splitting)
-const RecipeDetail     = lazy(() => import('./pages/RecipeDetail'))
-const Favorites        = lazy(() => import('./pages/Favorites'))
-const Feed             = lazy(() => import('./pages/Feed'))
-const UserProfile      = lazy(() => import('./pages/UserProfile'))
-const RecipeSubmit     = lazy(() => import('./pages/RecipeSubmit'))
-const AdminRecipeList  = lazy(() => import('./pages/admin/AdminRecipeList'))
-const AdminRecipeForm  = lazy(() => import('./pages/admin/AdminRecipeForm'))
-const AdminPendingList = lazy(() => import('./pages/admin/AdminPendingList'))
-const CollectionDetail = lazy(() => import('./pages/CollectionDetail'))
-const LegalPage        = lazy(() => import('./pages/LegalPage'))
+const lazyImports = {
+  RecipeDetail:     () => import('./pages/RecipeDetail'),
+  Favorites:        () => import('./pages/Favorites'),
+  Feed:             () => import('./pages/Feed'),
+  UserProfile:      () => import('./pages/UserProfile'),
+  RecipeSubmit:     () => import('./pages/RecipeSubmit'),
+  AdminRecipeList:  () => import('./pages/admin/AdminRecipeList'),
+  AdminRecipeForm:  () => import('./pages/admin/AdminRecipeForm'),
+  AdminPendingList: () => import('./pages/admin/AdminPendingList'),
+  CollectionDetail: () => import('./pages/CollectionDetail'),
+  LegalPage:        () => import('./pages/LegalPage'),
+}
+
+const RecipeDetail     = lazy(lazyImports.RecipeDetail)
+const Favorites        = lazy(lazyImports.Favorites)
+const Feed             = lazy(lazyImports.Feed)
+const UserProfile      = lazy(lazyImports.UserProfile)
+const RecipeSubmit     = lazy(lazyImports.RecipeSubmit)
+const AdminRecipeList  = lazy(lazyImports.AdminRecipeList)
+const AdminRecipeForm  = lazy(lazyImports.AdminRecipeForm)
+const AdminPendingList = lazy(lazyImports.AdminPendingList)
+const CollectionDetail = lazy(lazyImports.CollectionDetail)
+const LegalPage        = lazy(lazyImports.LegalPage)
+
+// Préchargement des pages au survol des liens
+export const preload = (page) => { lazyImports[page]?.() }
 
 // Garde de route pour les pages nécessitant une authentification
 function ProtectedRoute({ children }) {
@@ -82,9 +98,9 @@ function Header() {
         <nav aria-label="Navigation principale" className="hidden md:flex items-center gap-4 text-sm ml-auto">
           {user ? (
             <>
-              <Link to="/feed"        className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 transition-colors">{t('nav.feed')}</Link>
-              <Link to="/recipes/new" className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 transition-colors">{t('nav.propose')}</Link>
-              <Link to="/favorites"   className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 transition-colors">{t('nav.favorites')}</Link>
+              <Link to="/feed"        onMouseEnter={() => preload('Feed')} className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 transition-colors">{t('nav.feed')}</Link>
+              <Link to="/recipes/new" onMouseEnter={() => preload('RecipeSubmit')} className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 transition-colors">{t('nav.propose')}</Link>
+              <Link to="/favorites"   onMouseEnter={() => preload('Favorites')} className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 transition-colors">{t('nav.favorites')}</Link>
               <NotificationBell />
               <Link to={`/users/${user.id}`} className="font-medium text-gold-400 dark:text-gold-300 hover:text-gold-400 dark:hover:text-gold-300 transition-colors">
                 {user.pseudo}
@@ -177,7 +193,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gold-50 dark:bg-ink-950 transition-colors">
-      <Helmet defaultTitle="Cocktails — Recettes & Inspiration" />
+      <Helmet defaultTitle={t('nav.brand') + ' — ' + t('recipes.heroTitle')} />
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2 focus:bg-gold-400 focus:text-ink-900 focus:rounded-lg focus:text-sm focus:font-medium"

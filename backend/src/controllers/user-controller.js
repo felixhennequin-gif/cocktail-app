@@ -4,7 +4,7 @@ const { updateProfileSchema, formatZodError } = require('../schemas');
 const { enrichRecipes } = require('../helpers/recipe-helpers');
 
 // PUT /users/me — met à jour le profil de l'utilisateur connecté
-const updateMyProfile = async (req, res) => {
+const updateMyProfile = async (req, res, next) => {
   const userId = req.user.id;
 
   const parsed = updateProfileSchema.safeParse(req.body);
@@ -31,7 +31,7 @@ const updateMyProfile = async (req, res) => {
     if (err.code === 'P2002') {
       return conflict(res, 'Ce pseudo est déjà utilisé');
     }
-    throw err;
+    next(err);
   }
 };
 

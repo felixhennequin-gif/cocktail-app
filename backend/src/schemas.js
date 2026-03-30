@@ -18,7 +18,7 @@ const createRecipeSchema = z.object({
   })).default([]),
   steps:          z.array(z.object({
     order:       z.coerce.number().int(),
-    description: z.string(),
+    description: z.string().max(2000, 'La description d\'une étape ne doit pas dépasser 2000 caractères'),
     imageUrl:    z.string().optional(),
   })).default([]),
   tagIds:         z.array(z.number()).optional(),
@@ -36,7 +36,7 @@ const updateRecipeSchema = createRecipeSchema.partial().omit({ ingredients: true
   })).optional(),
   steps: z.array(z.object({
     order:       z.coerce.number().int(),
-    description: z.string(),
+    description: z.string().max(2000, 'La description d\'une étape ne doit pas dépasser 2000 caractères'),
     imageUrl:    z.string().optional(),
   })).optional(),
 });
@@ -97,6 +97,12 @@ const refreshSchema = z.object({
   refreshToken: z.string().min(1, 'Refresh token requis'),
 });
 
+// --- Logout ---
+
+const logoutSchema = z.object({
+  refreshToken: z.string().min(1, 'Refresh token requis'),
+});
+
 // --- Rating ---
 
 const ratingSchema = z.object({
@@ -121,6 +127,7 @@ module.exports = {
   registerSchema,
   loginSchema,
   refreshSchema,
+  logoutSchema,
   ratingSchema,
   formatZodError,
 };

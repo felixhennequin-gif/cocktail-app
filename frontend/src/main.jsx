@@ -21,11 +21,11 @@ createRoot(document.getElementById('root')).render(
     <HelmetProvider>
       <BrowserRouter>
         <AuthProvider>
-          <FavoritesProvider>
-            <ToastProvider>
+          <ToastProvider>
+            <FavoritesProvider>
               <App />
-            </ToastProvider>
-          </FavoritesProvider>
+            </FavoritesProvider>
+          </ToastProvider>
         </AuthProvider>
       </BrowserRouter>
     </HelmetProvider>

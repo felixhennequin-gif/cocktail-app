@@ -5,7 +5,7 @@ import { getImageUrl } from '../utils/image'
 import DifficultyBadge from './DifficultyBadge'
 import Stars from './Stars'
 
-function RecipeCard({ recipe, isFavorited, onToggleFavorite, userId }) {
+function RecipeCard({ recipe, isFavorited, onToggleFavorite, userId, showAuthorProminent }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
 
@@ -37,6 +37,14 @@ function RecipeCard({ recipe, isFavorited, onToggleFavorite, userId }) {
       </div>
 
       <div className="flex flex-col justify-between min-w-0 flex-1">
+        {showAuthorProminent && recipe.author && (
+          <button
+            onClick={handleAuthorClick}
+            className="text-xs font-medium text-gold-500 dark:text-gold-400 hover:underline text-left mb-0.5"
+          >
+            {recipe.author.pseudo}
+          </button>
+        )}
         <div className="flex items-start justify-between gap-2">
           <h2 className="text-base font-serif font-medium text-gray-900 dark:text-gray-100 truncate">{recipe.name}</h2>
           <div className="flex items-center gap-2 shrink-0">
@@ -49,7 +57,7 @@ function RecipeCard({ recipe, isFavorited, onToggleFavorite, userId }) {
             {userId && (
               <button
                 onClick={handleFavorite}
-                className={`text-lg leading-none transition-colors ${isFavorited ? 'text-red-500' : 'text-gray-300 dark:text-gray-600 hover:text-red-400'}`}
+                className={`text-lg leading-none transition-all duration-200 active:scale-125 ${isFavorited ? 'text-red-500' : 'text-gray-300 dark:text-gray-600 hover:text-red-400'}`}
                 aria-label={isFavorited ? t('recipes.removeFavorite') : t('recipes.addFavorite')}
                 title={isFavorited ? t('recipes.removeFavorite') : t('recipes.addFavorite')}
               >
@@ -77,8 +85,8 @@ function RecipeCard({ recipe, isFavorited, onToggleFavorite, userId }) {
         )}
 
         <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-500 mt-2 min-w-0 overflow-hidden">
-          <span>⏱ {recipe.prepTime} min</span>
-          {recipe.category && <span>📂 {recipe.category.name}</span>}
+          <span><span role="img" aria-label={t('recipes.prepTimeLabel')}>⏱</span> {recipe.prepTime} min</span>
+          {recipe.category && <span><span role="img" aria-label={t('recipes.categoryLabel')}>📂</span> {recipe.category.name}</span>}
           {recipe.avgRating !== null && recipe.avgRating !== undefined && (
             <Stars value={recipe.avgRating} count={recipe.ratingsCount} />
           )}

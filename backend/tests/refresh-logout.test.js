@@ -108,13 +108,12 @@ describe('POST /api/auth/logout', () => {
     expect(res2.status).toBe(401);
   });
 
-  it('retourne ok même sans refresh token', async () => {
+  it('retourne 400 si pas de refresh token', async () => {
     const res = await request(app)
       .post('/api/auth/logout')
       .set('Authorization', `Bearer ${token}`)
       .send({});
 
-    expect(res.status).toBe(200);
-    expect(res.body.ok).toBe(true);
+    expect(res.status).toBe(400);
   });
 });

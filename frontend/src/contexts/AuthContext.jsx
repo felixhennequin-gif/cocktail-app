@@ -11,6 +11,7 @@ export function AuthProvider({ children }) {
   // Ref vers le refreshToken pour éviter les closures stale dans authFetch
   const refreshTokenRef = useRef(refreshToken)
   const tokenRef = useRef(token)
+  const refreshPromiseRef = useRef(null) // Déduplication des refresh parallèles
   useEffect(() => { refreshTokenRef.current = refreshToken }, [refreshToken])
   useEffect(() => { tokenRef.current = token }, [token])
 
@@ -110,34 +111,40 @@ export function AuthProvider({ children }) {
     })
 
     if (res.status === 401 && refreshTokenRef.current) {
-      // Tenter un refresh
-      const refreshRes = await fetch('/api/auth/refresh', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refreshToken: refreshTokenRef.current }),
-      })
-      if (refreshRes.ok) {
-        const data = await refreshRes.json()
-        const newToken = data.token
-        localStorage.setItem('token', newToken)
-        setToken(newToken)
-        tokenRef.current = newToken
-        // Sauvegarde le nouveau refresh token (rotation)
-        if (data.refreshToken) {
-          localStorage.setItem('refreshToken', data.refreshToken)
-          setRefreshToken(data.refreshToken)
-          refreshTokenRef.current = data.refreshToken
-        }
-        // Retry la requête originale avec le nouveau token
+      // Déduplication : si un refresh est déjà en cours, attendre le résultat
+      if (!refreshPromiseRef.current) {
+        refreshPromiseRef.current = fetch('/api/auth/refresh', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refreshToken: refreshTokenRef.current }),
+        })
+          .then(async (refreshRes) => {
+            if (refreshRes.ok) {
+              const data = await refreshRes.json()
+              localStorage.setItem('token', data.token)
+              setToken(data.token)
+              tokenRef.current = data.token
+              if (data.refreshToken) {
+                localStorage.setItem('refreshToken', data.refreshToken)
+                setRefreshToken(data.refreshToken)
+                refreshTokenRef.current = data.refreshToken
+              }
+              return data.token
+            } else {
+              await logout()
+              return null
+            }
+          })
+          .finally(() => { refreshPromiseRef.current = null })
+      }
+      const newToken = await refreshPromiseRef.current
+      if (newToken) {
         return fetch(url, {
           ...options,
           headers: { ...options.headers, Authorization: `Bearer ${newToken}` },
         })
-      } else {
-        // Refresh échoué → déconnexion
-        await logout()
-        return res
       }
+      return res
     }
     return res
   }, [])

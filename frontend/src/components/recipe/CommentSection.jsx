@@ -43,9 +43,7 @@ export default function CommentSection({ recipeId, isOwnRecipe, comments, setCom
       }
       setMyComment(saved)
       showToast(isEdit ? t('recipes.editComment') + ' !' : t('recipes.submitComment') + ' !', 'success')
-      fetch(`/api/comments/${recipeId}`, {
-        headers: user ? { Authorization: `Bearer ${localStorage.getItem('token')}` } : {},
-      })
+      authFetch(`/api/comments/${recipeId}`)
         .then((r) => r.ok ? r.json() : null)
         .then((data) => {
           if (data?.avgRating !== undefined) {

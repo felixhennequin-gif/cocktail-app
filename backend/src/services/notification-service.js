@@ -3,12 +3,26 @@ const prisma = require('../prisma');
 // Nombre maximum de notifications conservées par user
 const MAX_NOTIFICATIONS_PER_USER = 100;
 
+// Nettoie les chaînes dans un objet de données pour éviter le XSS
+const sanitizeData = (data) => {
+  if (!data || typeof data !== 'object') return data;
+  const sanitized = {};
+  for (const [key, value] of Object.entries(data)) {
+    if (typeof value === 'string') {
+      sanitized[key] = value.replace(/<[^>]*>/g, '');
+    } else {
+      sanitized[key] = value;
+    }
+  }
+  return sanitized;
+};
+
 /**
  * Crée une notification et supprime l'excédent au-delà de MAX_NOTIFICATIONS_PER_USER.
  * Fire and forget — à appeler sans await.
  */
 const createNotification = async ({ userId, type, data }) => {
-  const notif = await prisma.notification.create({ data: { userId, type, data } });
+  const notif = await prisma.notification.create({ data: { userId, type, data: sanitizeData(data) } });
 
   // Supprimer les notifications les plus anciennes si le seuil est dépassé
   const toDelete = await prisma.notification.findMany({

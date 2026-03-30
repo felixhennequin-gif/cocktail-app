@@ -41,9 +41,19 @@ const removeFavorite = async (req, res, next) => {
 };
 
 // GET /favorites — recettes favorites de l'utilisateur connecté (paginées)
+// ?idsOnly=true retourne uniquement les IDs des recettes (léger, pour le context)
 const getMyFavorites = async (req, res, next) => {
   try {
     const userId = req.user.id;
+
+    if (req.query.idsOnly === 'true') {
+      const favorites = await prisma.favorite.findMany({
+        where: { userId },
+        select: { recipeId: true },
+      });
+      return res.json({ ids: favorites.map((f) => f.recipeId) });
+    }
+
     const page  = Math.max(1, parseInt(req.query.page)  || 1);
     const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 20));
 

@@ -22,7 +22,8 @@ export default function Register() {
     if (!f.pseudo.trim())             errors.pseudo = t('auth.errors.pseudoRequired')
     else if (f.pseudo.length < 2)     errors.pseudo = t('auth.errors.pseudoTooShort')
     if (!f.password)                  errors.password = t('auth.errors.passwordRequired')
-    else if (f.password.length < 6)   errors.password = t('auth.errors.passwordTooShort')
+    else if (f.password.length < 8 || !/[a-zA-Z]/.test(f.password) || !/[0-9]/.test(f.password))
+      errors.password = t('auth.errors.passwordTooShort')
     if (!f.confirm)                   errors.confirm = t('auth.errors.confirmRequired')
     else if (f.confirm !== f.password) errors.confirm = t('auth.errors.confirmMismatch')
     return errors

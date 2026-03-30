@@ -46,6 +46,9 @@ export default function RecipeList() {
   // Clé de filtres : quand elle change, on repart de la page 1
   const filterKey = `${q}|${categoryId}|${minRating}|${maxTime}|${sortBy}|${sortOrder}|${tagIds.join(',')}`
 
+  const hasAdvancedFilters = !!(minRating || maxTime || tagIds.length > 0)
+  const hasActiveFilters = categoryId || hasAdvancedFilters
+
   // Met à jour un param URL — réinitialise la page
   const setParam = (key, value) => {
     setSearchParams((prev) => {
@@ -170,9 +173,6 @@ export default function RecipeList() {
   const currentSortIndex = SORT_OPTIONS.findIndex(
     (o) => o.sortBy === sortBy && o.sortOrder === sortOrder
   )
-
-  const hasAdvancedFilters = !!(minRating || maxTime || tagIds.length > 0)
-  const hasActiveFilters = categoryId || hasAdvancedFilters
 
   const toggleTag = (tagId) => {
     setSearchParams((prev) => {
@@ -414,7 +414,17 @@ export default function RecipeList() {
       ) : error ? (
         <p className="text-center text-red-500 py-16">{error}</p>
       ) : recipes.length === 0 ? (
-        <p className="text-center text-gray-400 dark:text-gray-500 py-16">{t('recipes.noResults')}</p>
+        <div className="text-center py-16">
+          <p className="text-gray-400 dark:text-gray-500 mb-4">{t('recipes.noResults')}</p>
+          {(q || hasActiveFilters) && (
+            <button
+              onClick={() => setSearchParams({})}
+              className="px-4 py-2 text-sm font-medium text-gold-500 dark:text-gold-400 border border-gold-300 dark:border-gold-600 rounded-lg hover:bg-gold-50 dark:hover:bg-gold-900/20 transition-colors"
+            >
+              {t('recipes.clearFilters')}
+            </button>
+          )}
+        </div>
       ) : (
         <>
           <div className={

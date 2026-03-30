@@ -1,20 +1,21 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { useAuth } from './AuthContext'
+import { useToast } from './ToastContext'
 
 const FavoritesContext = createContext(null)
 
 export function FavoritesProvider({ children }) {
   const { user, authFetch } = useAuth()
+  const { showToast } = useToast()
   const [favoriteIds, setFavoriteIds] = useState(new Set())
   const [pendingIds, setPendingIds] = useState(new Set())
 
   useEffect(() => {
     if (!user) { setFavoriteIds(new Set()); return }
-    authFetch('/api/favorites')
-      .then((r) => r.ok ? r.json() : { data: [] })
+    authFetch('/api/favorites?idsOnly=true')
+      .then((r) => r.ok ? r.json() : { ids: [] })
       .then((res) => {
-        const data = Array.isArray(res) ? res : res.data ?? []
-        setFavoriteIds(new Set(data.map((r) => r.id)))
+        setFavoriteIds(new Set(res.ids ?? []))
       })
   }, [user, authFetch])
 
@@ -42,6 +43,7 @@ export function FavoritesProvider({ children }) {
           willFavorite ? next.delete(recipeId) : next.add(recipeId)
           return next
         })
+        showToast('Erreur lors de la mise à jour des favoris', 'error')
       }
     } catch {
       // Rollback
@@ -50,6 +52,7 @@ export function FavoritesProvider({ children }) {
         willFavorite ? next.delete(recipeId) : next.add(recipeId)
         return next
       })
+      showToast('Erreur lors de la mise à jour des favoris', 'error')
     } finally {
       setPendingIds((prev) => {
         const next = new Set(prev)

@@ -4,7 +4,8 @@ const { parseId, badRequest, notFound, forbidden, conflict } = require('../helpe
 const { createCommentSchema, updateCommentSchema, formatZodError } = require('../schemas');
 
 // GET /comments/:recipeId — optionalAuth pour exposer myComment + avgRating
-const getComments = async (req, res) => {
+const getComments = async (req, res, next) => {
+  try {
   const recipeId = parseId(req.params.recipeId);
   if (!recipeId) return badRequest(res, 'recipeId invalide');
 
@@ -33,11 +34,15 @@ const getComments = async (req, res) => {
     : null;
 
   res.json({ comments, myComment, avgRating, ratingsCount });
+  } catch (err) {
+    next(err);
+  }
 };
 
 // POST /comments/:recipeId — auth requise
 // body: { content, score (1-5, obligatoire) }
-const createComment = async (req, res) => {
+const createComment = async (req, res, next) => {
+  try {
   const userId   = req.user.id;
   const recipeId = parseId(req.params.recipeId);
   if (!recipeId) return badRequest(res, 'recipeId invalide');
@@ -98,11 +103,15 @@ const createComment = async (req, res) => {
       },
     }).catch(console.error);
   }
+  } catch (err) {
+    next(err);
+  }
 };
 
 // PUT /comments/:id — auteur uniquement
 // body: { content, score? (1-5, optionnel) }
-const updateComment = async (req, res) => {
+const updateComment = async (req, res, next) => {
+  try {
   const id = parseId(req.params.id);
   if (!id) return badRequest(res, 'id invalide');
 
@@ -139,10 +148,14 @@ const updateComment = async (req, res) => {
   });
 
   res.json(updated);
+  } catch (err) {
+    next(err);
+  }
 };
 
 // DELETE /comments/:id — auteur du commentaire, auteur de la recette ou admin
-const deleteComment = async (req, res) => {
+const deleteComment = async (req, res, next) => {
+  try {
   const id = parseId(req.params.id);
   if (!id) return badRequest(res, 'id invalide');
 
@@ -166,6 +179,9 @@ const deleteComment = async (req, res) => {
     prisma.comment.delete({ where: { id } }),
   ]);
   res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
 };
 
 module.exports = { getComments, createComment, updateComment, deleteComment };

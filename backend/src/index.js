@@ -162,6 +162,7 @@ apiRouter.post('/upload/step/:recipeId', requireAuth, async (req, res, next) => 
 });
 apiRouter.use('/auth/login',    authLimiter);
 apiRouter.use('/auth/register', authLimiter);
+apiRouter.use('/auth/refresh',  authLimiter);
 apiRouter.use('/auth',          authRoutes);
 apiRouter.use('/recipes',       recipeRoutes);
 apiRouter.use('/categories',    categoryRoutes);
@@ -215,6 +216,14 @@ app.use((err, req, res, next) => {
   }
   res.status(err.status || 500).json({ error: 'Erreur interne du serveur' });
 });
+
+// Nettoyage périodique des refresh tokens expirés (toutes les 24h)
+const { cleanupAllExpiredRefreshTokens } = require('./controllers/auth-controller');
+setInterval(() => {
+  cleanupAllExpiredRefreshTokens().catch((err) => {
+    console.error('[cleanup] Erreur nettoyage refresh tokens:', err.message);
+  });
+}, 24 * 60 * 60 * 1000);
 
 // Démarrage du serveur (uniquement si exécuté directement, pas via require)
 if (require.main === module) {

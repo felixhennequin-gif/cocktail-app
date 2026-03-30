@@ -3,7 +3,8 @@ const { parseId, badRequest, notFound } = require('../helpers');
 const { ratingSchema, formatZodError } = require('../schemas');
 
 // POST /ratings/:recipeId — upsert (crée ou met à jour la note de l'user)
-const upsertRating = async (req, res) => {
+const upsertRating = async (req, res, next) => {
+  try {
   const userId   = req.user.id;
   const recipeId = parseId(req.params.recipeId);
   if (!recipeId) return badRequest(res, 'recipeId invalide');
@@ -35,10 +36,14 @@ const upsertRating = async (req, res) => {
     : null;
 
   res.json({ avgRating, ratingsCount: agg._count.score, userScore: score });
+  } catch (err) {
+    next(err);
+  }
 };
 
 // GET /ratings/:recipeId/me — note de l'utilisateur connecté pour cette recette
-const getMyRating = async (req, res) => {
+const getMyRating = async (req, res, next) => {
+  try {
   const userId   = req.user.id;
   const recipeId = parseId(req.params.recipeId);
   if (!recipeId) return badRequest(res, 'recipeId invalide');
@@ -48,6 +53,9 @@ const getMyRating = async (req, res) => {
   });
 
   res.json({ score: rating?.score ?? null });
+  } catch (err) {
+    next(err);
+  }
 };
 
 module.exports = { upsertRating, getMyRating };

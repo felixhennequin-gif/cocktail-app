@@ -4,7 +4,7 @@ const { randomUUID } = require('crypto');
 const prisma = require('../prisma');
 const logger = require('../logger');
 const { JWT_SECRET } = require('../middleware/auth');
-const { registerSchema, loginSchema, refreshSchema, formatZodError } = require('../schemas');
+const { registerSchema, loginSchema, refreshSchema, logoutSchema, formatZodError } = require('../schemas');
 const { badRequest, unauthorized, notFound, conflict } = require('../helpers');
 
 const SALT_ROUNDS = 10;
@@ -199,13 +199,15 @@ const refresh = async (req, res, next) => {
 // POST /auth/logout — invalide le refresh token en BDD
 const logout = async (req, res, next) => {
   try {
-    const { refreshToken } = req.body;
-    if (refreshToken) {
-      // Trouver le token et supprimer toute la famille
-      const stored = await prisma.refreshToken.findUnique({ where: { token: refreshToken } });
-      if (stored && stored.userId === req.user.id) {
-        await prisma.refreshToken.deleteMany({ where: { family: stored.family } });
-      }
+    const parsed = logoutSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return badRequest(res, formatZodError(parsed.error));
+    }
+    const { refreshToken } = parsed.data;
+    // Trouver le token et supprimer toute la famille
+    const stored = await prisma.refreshToken.findUnique({ where: { token: refreshToken } });
+    if (stored && stored.userId === req.user.id) {
+      await prisma.refreshToken.deleteMany({ where: { family: stored.family } });
     }
     res.json({ ok: true });
   } catch (err) {
@@ -213,4 +215,20 @@ const logout = async (req, res, next) => {
   }
 };
 
-module.exports = { register, login, me, refresh, logout };
+// Nettoyage global des refresh tokens expirés (tous les utilisateurs)
+const cleanupAllExpiredRefreshTokens = async () => {
+  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const result = await prisma.refreshToken.deleteMany({
+    where: {
+      OR: [
+        { expiresAt: { lt: new Date() } },
+        { consumed: true, createdAt: { lt: oneDayAgo } },
+      ],
+    },
+  });
+  if (result.count > 0) {
+    logger.info('auth', `Nettoyage : ${result.count} refresh tokens expirés supprimés`);
+  }
+};
+
+module.exports = { register, login, me, refresh, logout, cleanupAllExpiredRefreshTokens };

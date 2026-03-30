@@ -126,11 +126,26 @@ export default function AddToCollectionModal({ isOpen, onClose, recipeId }) {
   const modalRef = useRef(null)
 
   useEffect(() => {
-    if (isOpen && modalRef.current) {
+    if (!isOpen) return
+    if (modalRef.current) {
       const firstFocusable = modalRef.current.querySelector('button, input, [tabindex]:not([tabindex="-1"])')
       firstFocusable?.focus()
     }
-  }, [isOpen])
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') { onClose(); return }
+      if (e.key === 'Tab' && modalRef.current) {
+        const focusable = modalRef.current.querySelectorAll('button, input, [tabindex]:not([tabindex="-1"])')
+        if (focusable.length === 0) return
+        const first = focusable[0]
+        const last = focusable[focusable.length - 1]
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus() }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus() }
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, onClose])
 
   if (!isOpen) return null
 

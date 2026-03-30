@@ -79,7 +79,7 @@ const cacheMiddleware = (ttlSeconds) => async (req, res, next) => {
   // Désactivé en test et pour les admins (qui peuvent voir des données différentes)
   if (process.env.NODE_ENV === 'test' || req.user?.role === 'ADMIN') return next();
 
-  const key = `cocktail:${req.originalUrl}`;
+  const key = `cocktail:${req.originalUrl}:user:${req.user?.id || 'anon'}`;
   const cached = await getCache(key);
 
   if (cached !== null) {

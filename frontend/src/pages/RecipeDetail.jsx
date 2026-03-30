@@ -144,6 +144,7 @@ export default function RecipeDetail() {
             <img
               src={getImageUrl(recipe.imageUrl)}
               alt={recipe.name}
+              fetchpriority="high"
               className="w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />

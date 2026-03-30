@@ -85,6 +85,7 @@ const getRecipeById = async (req, res, next) => {
 // ingredients : [{ ingredientId, quantity, unit }] OU [{ name, quantity, unit }]
 // steps       : [{ order, description }]
 const createRecipe = async (req, res, next) => {
+  try {
   const parsed = createRecipeSchema.safeParse(req.body);
   if (!parsed.success) {
     return badRequest(res, formatZodError(parsed.error));
@@ -101,8 +102,6 @@ const createRecipe = async (req, res, next) => {
     status = requestedStatus === 'DRAFT' ? 'DRAFT' : 'PENDING';
   }
   const authorId = req.user.id;
-
-  try {
     const resolved = await resolveIngredients(ingredients);
 
     // Résoudre les tags (par ids ou par noms)
@@ -175,12 +174,12 @@ const createRecipe = async (req, res, next) => {
       }).catch(console.error);
     }
   } catch (err) {
-    handlePrismaError(err, res);
+    next(err);
   }
 };
 
 // PUT /recipes/:id — auth requise (auteur ou admin)
-const updateRecipe = async (req, res) => {
+const updateRecipe = async (req, res, next) => {
   const id = parseId(req.params.id);
   if (!id) return badRequest(res, 'id invalide');
 
@@ -275,7 +274,7 @@ const updateRecipe = async (req, res) => {
     res.json(enriched);
     bustRecipeCache();
   } catch (err) {
-    handlePrismaError(err, res);
+    next(err);
   }
 };
 

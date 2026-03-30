@@ -7,6 +7,7 @@ import FollowButton from '../components/FollowButton'
 import { SkeletonProfile, SkeletonCard, SkeletonList } from '../components/Skeleton'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
+import { useFavorites } from '../contexts/FavoritesContext'
 import { getImageUrl } from '../utils/image'
 
 const LIMIT = 20
@@ -58,7 +59,21 @@ function EditProfileModal({ profile, onClose, onSaved, authFetch }) {
       const firstFocusable = modalRef.current.querySelector('button, input, [tabindex]:not([tabindex="-1"])')
       firstFocusable?.focus()
     }
-  }, [])
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') { onClose(); return }
+      if (e.key === 'Tab' && modalRef.current) {
+        const focusable = modalRef.current.querySelectorAll('button, input, [tabindex]:not([tabindex="-1"])')
+        if (focusable.length === 0) return
+        const first = focusable[0]
+        const last = focusable[focusable.length - 1]
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus() }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus() }
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [onClose])
 
   const handleField = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }))
 
@@ -158,6 +173,7 @@ export default function UserProfile() {
   const { id }              = useParams()
   const { user, authFetch } = useAuth()
   const { t }               = useTranslation()
+  const { isFavorited, toggleFavorite } = useFavorites()
 
   const [profile, setProfile]     = useState(null)
   const [activeTab, setActiveTab] = useState('recipes')
@@ -168,7 +184,6 @@ export default function UserProfile() {
   const [total, setTotal]             = useState(0)
   const [page, setPage]               = useState(1)
   const [recipesLoading, setRecipesLoading] = useState(false)
-  const [favoriteIds, setFavoriteIds] = useState(new Set())
 
   // Abonnés
   const [followers, setFollowers]           = useState([])
@@ -229,17 +244,6 @@ export default function UserProfile() {
     return () => controller.abort()
   }, [id, page])
 
-  // Chargement des favoris si connecté
-  useEffect(() => {
-    if (!user) return
-    const controller = new AbortController()
-    authFetch('/api/favorites', { signal: controller.signal })
-      .then((r) => r.ok ? r.json() : [])
-      .then((data) => setFavoriteIds(new Set(data.map((r) => r.id))))
-      .catch(() => {})
-    return () => controller.abort()
-  }, [user]) // eslint-disable-line react-hooks/exhaustive-deps
-
   // Chargement lazy des abonnés quand l'onglet est activé
   useEffect(() => {
     if (activeTab !== 'followers' || followersLoaded) return
@@ -270,18 +274,6 @@ export default function UserProfile() {
       .then((data) => { setCollections(data); setCollectionsLoaded(true) })
       .finally(() => setCollectionsLoading(false))
   }, [activeTab, id]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  const handleToggleFavorite = async (recipeId) => {
-    if (!user) return
-    const res = await authFetch(`/api/favorites/${recipeId}`, { method: 'POST' })
-    if (!res.ok) return
-    const data = await res.json()
-    setFavoriteIds((prev) => {
-      const next = new Set(prev)
-      data.favorited ? next.add(recipeId) : next.delete(recipeId)
-      return next
-    })
-  }
 
   const totalPages = Math.ceil(total / LIMIT)
 
@@ -406,8 +398,8 @@ export default function UserProfile() {
                 <RecipeCard
                   key={recipe.id}
                   recipe={recipe}
-                  isFavorited={favoriteIds.has(recipe.id)}
-                  onToggleFavorite={handleToggleFavorite}
+                  isFavorited={isFavorited(recipe.id)}
+                  onToggleFavorite={toggleFavorite}
                 />
               ))}
             </div>

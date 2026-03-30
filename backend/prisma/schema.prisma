@@ -55,7 +55,7 @@ model Recipe {
   categoryId  Int
   category    Category           @relation(fields: [categoryId], references: [id])
   authorId    Int?
-  author      User?              @relation(fields: [authorId], references: [id])
+  author      User?              @relation(fields: [authorId], references: [id], onDelete: SetNull)
   ingredients RecipeIngredient[]
   steps       Step[]
   favorites     Favorite[]
@@ -199,7 +199,7 @@ model Collection {
   description String?
   isPublic    Boolean            @default(true)
   userId      Int
-  user        User               @relation(fields: [userId], references: [id])
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
   recipes     CollectionRecipe[]

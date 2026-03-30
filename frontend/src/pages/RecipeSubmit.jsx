@@ -25,12 +25,18 @@ export default function RecipeSubmit() {
   const [searchParams] = useSearchParams()
   const { id: editId } = useParams()
 
-  const [form, setForm]             = useState(defaultForm)
-  const [ingredients, setIngredients] = useState([{ ...EMPTY_INGREDIENT }])
-  const [steps, setSteps]           = useState([{ ...EMPTY_STEP }])
+  // Restaurer le brouillon depuis sessionStorage (seulement en mode création)
+  const draftKey = editId ? null : 'recipe-draft'
+  const savedDraft = !editId ? (() => {
+    try { return JSON.parse(sessionStorage.getItem('recipe-draft')) } catch { return null }
+  })() : null
+
+  const [form, setForm]             = useState(savedDraft?.form ?? defaultForm)
+  const [ingredients, setIngredients] = useState(savedDraft?.ingredients ?? [{ ...EMPTY_INGREDIENT }])
+  const [steps, setSteps]           = useState(savedDraft?.steps ?? [{ ...EMPTY_STEP }])
   const [categories, setCategories] = useState([])
   const [allTags, setAllTags]       = useState([])
-  const [selectedTags, setSelectedTags] = useState([])
+  const [selectedTags, setSelectedTags] = useState(savedDraft?.selectedTags ?? [])
   const [tagInput, setTagInput]     = useState('')
   const [saving, setSaving]         = useState(false)
   const [uploading, setUploading]   = useState(false)
@@ -96,6 +102,15 @@ export default function RecipeSubmit() {
       .catch(() => {})
   }, [editId]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Sauvegarder le brouillon en mode création
+  useEffect(() => {
+    if (!draftKey) return
+    const timer = setTimeout(() => {
+      sessionStorage.setItem(draftKey, JSON.stringify({ form, ingredients, steps, selectedTags }))
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [form, ingredients, steps, selectedTags, draftKey])
+
   const handleField = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }))
 
   const handleImageFile = async (e) => {
@@ -126,6 +141,13 @@ export default function RecipeSubmit() {
     setSteps((list) => list.map((s, i) => i === index ? { description: value } : s))
   const addStep    = () => setSteps((l) => [...l, { ...EMPTY_STEP }])
   const removeStep = (index) => setSteps((l) => l.filter((_, i) => i !== index))
+  const moveStep   = (index, dir) => setSteps((l) => {
+    const next = [...l]
+    const target = index + dir
+    if (target < 0 || target >= next.length) return next
+    ;[next[index], next[target]] = [next[target], next[index]]
+    return next
+  })
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -178,6 +200,7 @@ export default function RecipeSubmit() {
         showToast(t('submit.editSuccess'), 'success')
         navigate(`/recipes/${editId}`)
       } else {
+        sessionStorage.removeItem('recipe-draft')
         showToast(isAdmin ? t('submit.publishedToast') : t('submit.submittedToast'), 'success')
         navigate('/recipes')
       }
@@ -348,16 +371,19 @@ export default function RecipeSubmit() {
               <div key={i} className="flex gap-2 items-center">
                 <input
                   placeholder={t('submit.fields.ingredientName')} value={ing.name}
+                  aria-label={`${t('submit.fields.ingredientName')} ${i + 1}`}
                   onChange={(e) => updateIngredient(i, 'name', e.target.value)}
                   className={`flex-1 ${inputClass}`}
                 />
                 <input
                   placeholder={t('submit.fields.ingredientQty')} type="number" step="0.1" min="0" value={ing.quantity}
+                  aria-label={`${t('submit.fields.ingredientQty')} ${i + 1}`}
                   onChange={(e) => updateIngredient(i, 'quantity', e.target.value)}
                   className={`w-20 ${inputClass}`}
                 />
                 <input
                   placeholder={t('submit.fields.ingredientUnit')} value={ing.unit}
+                  aria-label={`${t('submit.fields.ingredientUnit')} ${i + 1}`}
                   onChange={(e) => updateIngredient(i, 'unit', e.target.value)}
                   className={`w-20 ${inputClass}`}
                 />
@@ -384,10 +410,25 @@ export default function RecipeSubmit() {
                   {i + 1}
                 </span>
                 <textarea
-                  placeholder={`Étape ${i + 1}`} value={step.description} rows={2}
+                  placeholder={t('recipes.stepAlt', { order: i + 1 })} value={step.description} rows={2}
+                  aria-label={t('recipes.stepAlt', { order: i + 1 })}
                   onChange={(e) => updateStep(i, e.target.value)}
                   className={`flex-1 ${inputClass} resize-none`}
                 />
+                <div className="flex flex-col gap-0.5 mt-1">
+                  <button
+                    type="button" onClick={() => moveStep(i, -1)}
+                    disabled={i === 0}
+                    className="text-gray-400 hover:text-gold-500 disabled:opacity-30 text-xs px-1"
+                    aria-label={`Move step ${i + 1} up`}
+                  >▲</button>
+                  <button
+                    type="button" onClick={() => moveStep(i, 1)}
+                    disabled={i === steps.length - 1}
+                    className="text-gray-400 hover:text-gold-500 disabled:opacity-30 text-xs px-1"
+                    aria-label={`Move step ${i + 1} down`}
+                  >▼</button>
+                </div>
                 <button
                   type="button" onClick={() => removeStep(i)}
                   disabled={steps.length === 1}
