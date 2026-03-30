@@ -107,6 +107,7 @@
     "modifyComment": "Modifier",
     "addFavorite": "Ajouter aux favoris",
     "removeFavorite": "Retirer des favoris",
+    "exportPdf": "Exporter en PDF",
     "prepTimeLabel": "Temps de préparation",
     "categoryLabel": "Catégorie",
     "deleteCommentMessage": "Supprimer ? Cette action est irréversible.",

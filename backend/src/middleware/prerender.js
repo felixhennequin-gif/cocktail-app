@@ -133,10 +133,12 @@ async function prerenderMiddleware(req, res, next) {
           _count: { score: true },
         });
         const jsonLd = buildRecipeJsonLd(recipe, siteUrl, agg._avg.score, agg._count.score);
+        // OG image dynamique générée par l'endpoint /api/recipes/:id/og-image
+        const ogImage = `${siteUrl}/api/recipes/${id}/og-image`;
         return res.send(renderMetaPage({
           title: `${recipe.name} — Cocktail App`,
           description: desc.substring(0, 160),
-          image: recipe.imageUrl,
+          image: ogImage,
           url: fullUrl,
           type: 'article',
           jsonLd,

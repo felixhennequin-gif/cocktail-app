@@ -107,6 +107,7 @@
     "modifyComment": "Edit",
     "addFavorite": "Add to favorites",
     "removeFavorite": "Remove from favorites",
+    "exportPdf": "Export as PDF",
     "prepTimeLabel": "Preparation time",
     "categoryLabel": "Category",
     "deleteCommentMessage": "Delete? This action is irreversible.",

@@ -175,6 +175,10 @@ apiRouter.use('/collections',   collectionRoutes);
 apiRouter.use('/feed',          feedRoutes);
 apiRouter.use('/notifications', notificationRoutes);
 
+// Export routes (PDF, OG image) — montées sous /api/recipes
+const recipeExportRoutes = require('./routes/recipe-export-routes');
+apiRouter.use('/recipes', recipeExportRoutes);
+
 app.use('/api', apiRouter);
 
 // Sitemap XML dynamique
