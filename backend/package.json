@@ -12,6 +12,7 @@
     "seed:big": "node prisma/seed-big.js",
     "seed:realistic": "node prisma/seed-realistic.js",
     "tags:cleanup": "node prisma/cleanup-tags.js",
+    "seed:badges": "node prisma/seed-badges.js",
     "test": "jest --runInBand --forceExit",
     "test:watch": "jest --watch --runInBand",
     "lint": "eslint src/"

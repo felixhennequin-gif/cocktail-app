@@ -1,6 +1,7 @@
 const prisma = require('../prisma');
 const { createNotification } = require('../services/notification-service');
 const { parseId, badRequest, notFound } = require('../helpers');
+const { checkAndAwardBadges } = require('../services/badge-service');
 
 // POST /users/:id/follow — JWT requis
 const followUser = async (req, res, next) => {
@@ -42,6 +43,9 @@ const followUser = async (req, res, next) => {
         },
       }).catch(console.error);
     }
+
+    // Vérifier les badges "followers" pour l'utilisateur suivi — fire and forget
+    checkAndAwardBadges(targetId).catch(console.error);
   } catch (err) {
     next(err);
   }

@@ -270,6 +270,22 @@ export default function RecipeDetail() {
               </Link>
             </div>
           )}
+
+          {/* Bouton mode soirée */}
+          {recipe.steps?.length > 0 && (
+            <div className="mb-8">
+              <Link
+                to={`/recipes/${recipe.id}/party`}
+                onMouseEnter={() => { import('../pages/PartyMode') }}
+                className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-700 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                {t('party.title')}
+              </Link>
+            </div>
+          )}
         </div>
       </div>
 

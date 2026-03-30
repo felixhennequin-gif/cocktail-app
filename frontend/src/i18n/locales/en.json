@@ -16,7 +16,9 @@
     "menu": "Menu",
     "toggleTheme": "Toggle theme",
     "lightMode": "Light mode",
-    "darkMode": "Dark mode"
+    "darkMode": "Dark mode",
+    "myBar": "My Bar",
+    "myBarFull": "My Virtual Bar"
   },
   "auth": {
     "loginTitle": "Log in",
@@ -348,6 +350,7 @@
     "notifComment": "{{commenter}} commented on \"{{recipe}}\": {{preview}}",
     "notifApproved": "Your recipe \"{{recipe}}\" has been published!",
     "notifNewFollower": "{{follower}} is now following you",
+    "notifNewBadge": "New badge unlocked: {{badge}}",
     "skipToContent": "Skip to main content",
     "notFound404": "404",
     "notFoundTitle": "Page not found",
@@ -357,6 +360,13 @@
     "errorTitle": "Oops! Something went wrong",
     "errorMessage": "An unexpected error occurred…",
     "edit": "Edit"
+  },
+  "badges": {
+    "title": "Badges",
+    "earned": "Earned on {{date}}",
+    "locked": "Locked",
+    "progress": "{{current}}/{{target}}",
+    "noBadges": "No badges unlocked yet."
   },
   "landing": {
     "popularTitle": "Popular recipes",
@@ -374,5 +384,29 @@
     "hosting": "Hosting",
     "editorInfo": "Personal project — cocktail-app.fr",
     "hostingInfo": "Self-hosted server — Debian"
+  },
+  "bar": {
+    "title": "My Virtual Bar",
+    "subtitle": "Select your ingredients to see what you can make",
+    "search": "Search ingredient...",
+    "save": "Save",
+    "saved": "Saved!",
+    "makeable": "Makeable cocktails",
+    "almostMakeable": "Almost makeable",
+    "missingCount": "{{count}} missing ingredient(s)",
+    "empty": "Add ingredients to your bar",
+    "noResults": "No cocktails found with these ingredients"
+  },
+  "party": {
+    "title": "Party mode",
+    "start": "Let's go!",
+    "ingredients": "Ingredients",
+    "step": "Step {{current}} / {{total}}",
+    "prev": "Previous",
+    "next": "Next",
+    "done": "Ready! 🍹",
+    "exit": "Exit",
+    "timer": "Timer",
+    "timerDone": "Time's up!"
   }
 }

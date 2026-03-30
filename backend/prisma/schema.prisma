@@ -25,6 +25,8 @@ model User {
   notifications  Notification[]
   collections    Collection[]
   refreshTokens  RefreshToken[]
+  bar            UserIngredient[]
+  badges         UserBadge[]
 }
 
 model RefreshToken {
@@ -82,9 +84,10 @@ model Category {
 }
 
 model Ingredient {
-  id      Int                @id @default(autoincrement())
-  name    String             @unique
-  recipes RecipeIngredient[]
+  id       Int                @id @default(autoincrement())
+  name     String             @unique
+  recipes  RecipeIngredient[]
+  userBars UserIngredient[]
 }
 
 model RecipeIngredient {
@@ -217,11 +220,43 @@ model CollectionRecipe {
   @@id([collectionId, recipeId])
 }
 
+model UserIngredient {
+  userId       Int
+  ingredientId Int
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+
+  @@id([userId, ingredientId])
+}
+
+model Badge {
+  id          Int         @id @default(autoincrement())
+  code        String      @unique
+  name        String
+  description String
+  icon        String
+  condition   String
+  threshold   Int
+  createdAt   DateTime    @default(now())
+  users       UserBadge[]
+}
+
+model UserBadge {
+  userId     Int
+  badgeId    Int
+  unlockedAt DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge      Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@id([userId, badgeId])
+}
+
 enum NotificationType {
   NEW_RECIPE
   COMMENT_ON_RECIPE
   RECIPE_APPROVED
   NEW_FOLLOWER
+  NEW_BADGE
 }
 
 enum Difficulty {

@@ -1,6 +1,7 @@
 const prisma = require('../prisma');
 const { parseId, badRequest, notFound } = require('../helpers');
 const { enrichRecipes } = require('../helpers/recipe-helpers');
+const { checkAndAwardBadges } = require('../services/badge-service');
 
 // POST /favorites/:recipeId — ajouter (idempotent)
 const addFavorite = async (req, res, next) => {
@@ -19,6 +20,11 @@ const addFavorite = async (req, res, next) => {
 
     await prisma.favorite.create({ data: { userId, recipeId } });
     res.json({ favorited: true });
+
+    // Vérifier les badges "favoris reçus" pour l'auteur de la recette — fire and forget
+    if (recipe.authorId) {
+      checkAndAwardBadges(recipe.authorId).catch(console.error);
+    }
   } catch (err) {
     next(err);
   }

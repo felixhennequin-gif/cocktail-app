@@ -172,7 +172,7 @@ function EditProfileModal({ profile, onClose, onSaved, authFetch }) {
 export default function UserProfile() {
   const { id }              = useParams()
   const { user, authFetch } = useAuth()
-  const { t }               = useTranslation()
+  const { t, i18n }         = useTranslation()
   const { isFavorited, toggleFavorite } = useFavorites()
 
   const [profile, setProfile]     = useState(null)
@@ -202,6 +202,12 @@ export default function UserProfile() {
   const [collectionsLoaded, setCollectionsLoaded] = useState(false)
   const [collectionsLoading, setCollectionsLoading] = useState(false)
 
+  // Badges
+  const [allBadges, setAllBadges]               = useState([])
+  const [userBadges, setUserBadges]             = useState([])
+  const [badgesLoaded, setBadgesLoaded]         = useState(false)
+  const [badgesLoading, setBadgesLoading]       = useState(false)
+
   const [loading, setLoading] = useState(true)
   const [error, setError]     = useState(null)
 
@@ -216,6 +222,9 @@ export default function UserProfile() {
     setFollowingLoaded(false)
     setCollections([])
     setCollectionsLoaded(false)
+    setAllBadges([])
+    setUserBadges([])
+    setBadgesLoaded(false)
     authFetch(`/api/users/${id}`, { signal: controller.signal })
       .then((r) => {
         if (!r.ok) throw new Error('Utilisateur introuvable')
@@ -264,6 +273,22 @@ export default function UserProfile() {
       .finally(() => setFollowingLoading(false))
   }, [activeTab, id]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Chargement lazy des badges quand l'onglet est activé
+  useEffect(() => {
+    if (activeTab !== 'badges' || badgesLoaded) return
+    setBadgesLoading(true)
+    Promise.all([
+      fetch('/api/badges').then((r) => r.ok ? r.json() : []),
+      fetch(`/api/badges/user/${id}`).then((r) => r.ok ? r.json() : []),
+    ])
+      .then(([all, earned]) => {
+        setAllBadges(all)
+        setUserBadges(earned)
+        setBadgesLoaded(true)
+      })
+      .finally(() => setBadgesLoading(false))
+  }, [activeTab, id]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // Chargement lazy des collections (propre profil uniquement)
   useEffect(() => {
     if (activeTab !== 'collections' || collectionsLoaded) return
@@ -295,6 +320,7 @@ export default function UserProfile() {
     { key: 'recipes',   label: t('profile.tabs.recipes', { count: total }) },
     { key: 'followers', label: t('profile.tabs.followers', { count: profile.followersCount }) },
     { key: 'following', label: t('profile.tabs.following', { count: profile.followingCount }) },
+    { key: 'badges', label: t('badges.title') },
     // Onglet collections uniquement sur son propre profil
     ...(user?.id === parseInt(id) ? [{ key: 'collections', label: t('collections.title') }] : []),
   ]
@@ -465,6 +491,42 @@ export default function UserProfile() {
                 {t('profile.firstOf', { shown: following.length, total: followingTotal })}
               </p>
             )}
+          </div>
+        )
+      )}
+
+      {/* Onglet Badges */}
+      {activeTab === 'badges' && (
+        badgesLoading ? (
+          <SkeletonList count={4} />
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {allBadges.map((badge) => {
+              const earned = userBadges.find((ub) => ub.badgeId === badge.id)
+              return (
+                <div
+                  key={badge.id}
+                  className={`flex flex-col items-center gap-2 p-4 rounded-xl border text-center transition-all ${
+                    earned
+                      ? 'bg-white dark:bg-gray-800 border-gold-300 dark:border-gold-600 shadow-sm'
+                      : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 opacity-50 grayscale'
+                  }`}
+                >
+                  <span className="text-3xl" role="img" aria-label={badge.name}>{badge.icon}</span>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{badge.name}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{badge.description}</p>
+                  </div>
+                  {earned ? (
+                    <p className="text-[10px] text-gold-500 dark:text-gold-400 font-medium">
+                      {t('badges.earned', { date: new Date(earned.unlockedAt).toLocaleDateString(i18n.language) })}
+                    </p>
+                  ) : (
+                    <p className="text-[10px] text-gray-400 dark:text-gray-500">{t('badges.locked')}</p>
+                  )}
+                </div>
+              )
+            })}
           </div>
         )
       )}

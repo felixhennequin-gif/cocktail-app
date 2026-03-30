@@ -2,6 +2,7 @@ const prisma = require('../prisma');
 const { createNotification } = require('../services/notification-service');
 const { parseId, badRequest, notFound, forbidden, conflict } = require('../helpers');
 const { createCommentSchema, updateCommentSchema, formatZodError } = require('../schemas');
+const { checkAndAwardBadges } = require('../services/badge-service');
 
 // GET /comments/:recipeId — optionalAuth pour exposer myComment + avgRating
 const getComments = async (req, res, next) => {
@@ -103,6 +104,9 @@ const createComment = async (req, res, next) => {
       },
     }).catch(console.error);
   }
+
+  // Vérifier les badges liés aux commentaires — fire and forget
+  checkAndAwardBadges(userId).catch(console.error);
   } catch (err) {
     next(err);
   }

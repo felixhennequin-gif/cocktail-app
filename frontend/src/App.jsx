@@ -29,7 +29,9 @@ const lazyImports = {
   AdminRecipeForm:  () => import('./pages/admin/AdminRecipeForm'),
   AdminPendingList: () => import('./pages/admin/AdminPendingList'),
   CollectionDetail: () => import('./pages/CollectionDetail'),
+  MyBar:            () => import('./pages/MyBar'),
   LegalPage:        () => import('./pages/LegalPage'),
+  PartyMode:        () => import('./pages/PartyMode'),
 }
 
 const RecipeDetail     = lazy(lazyImports.RecipeDetail)
@@ -41,7 +43,9 @@ const AdminRecipeList  = lazy(lazyImports.AdminRecipeList)
 const AdminRecipeForm  = lazy(lazyImports.AdminRecipeForm)
 const AdminPendingList = lazy(lazyImports.AdminPendingList)
 const CollectionDetail = lazy(lazyImports.CollectionDetail)
+const MyBar            = lazy(lazyImports.MyBar)
 const LegalPage        = lazy(lazyImports.LegalPage)
+const PartyMode        = lazy(lazyImports.PartyMode)
 
 // Préchargement des pages au survol des liens
 export const preload = (page) => { lazyImports[page]?.() }
@@ -101,6 +105,7 @@ function Header() {
               <Link to="/feed"        onMouseEnter={() => preload('Feed')} className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 transition-colors">{t('nav.feed')}</Link>
               <Link to="/recipes/new" onMouseEnter={() => preload('RecipeSubmit')} className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 transition-colors">{t('nav.propose')}</Link>
               <Link to="/favorites"   onMouseEnter={() => preload('Favorites')} className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 transition-colors">{t('nav.favorites')}</Link>
+              <Link to="/my-bar"     onMouseEnter={() => preload('MyBar')} className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 transition-colors">{t('nav.myBar')}</Link>
               <NotificationBell />
               <Link to={`/users/${user.id}`} className="font-medium text-gold-400 dark:text-gold-300 hover:text-gold-400 dark:hover:text-gold-300 transition-colors">
                 {user.pseudo}
@@ -160,6 +165,7 @@ function Header() {
               <Link to="/feed"        onClick={closeMenu} className="text-gray-700 dark:text-gray-300 hover:text-gold-400 dark:hover:text-gold-300 py-1">{t('nav.feedFull')}</Link>
               <Link to="/recipes/new" onClick={closeMenu} className="text-gray-700 dark:text-gray-300 hover:text-gold-400 dark:hover:text-gold-300 py-1">{t('nav.proposeFull')}</Link>
               <Link to="/favorites"   onClick={closeMenu} className="text-gray-700 dark:text-gray-300 hover:text-gold-400 dark:hover:text-gold-300 py-1">{t('nav.favoritesFull')}</Link>
+              <Link to="/my-bar"     onClick={closeMenu} className="text-gray-700 dark:text-gray-300 hover:text-gold-400 dark:hover:text-gold-300 py-1">{t('nav.myBarFull')}</Link>
               <Link to={`/users/${user.id}`} onClick={closeMenu} className="font-medium text-gold-400 dark:text-gold-300 hover:text-gold-400 dark:hover:text-gold-300 py-1">
                 {t('nav.myProfile', { pseudo: user.pseudo })}
               </Link>
@@ -211,11 +217,13 @@ export default function App() {
             <Route path="/feed"                    element={<ProtectedRoute><Feed /></ProtectedRoute>} />
             <Route path="/recipes/new"             element={<ProtectedRoute><RecipeSubmit /></ProtectedRoute>} />
             <Route path="/recipes/:id/edit"        element={<ProtectedRoute><RecipeSubmit /></ProtectedRoute>} />
+            <Route path="/recipes/:id/party"       element={<PartyMode />} />
             <Route path="/recipes/:id"             element={<RecipeDetail />} />
             <Route path="/login"                   element={<Login />} />
             <Route path="/register"                element={<Register />} />
             <Route path="/favorites"               element={<ProtectedRoute><Favorites /></ProtectedRoute>} />
             <Route path="/users/:id"               element={<UserProfile />} />
+            <Route path="/my-bar"                    element={<ProtectedRoute><MyBar /></ProtectedRoute>} />
             <Route path="/collections/:id"          element={<CollectionDetail />} />
             <Route path="/admin"                   element={<AdminRoute><AdminRecipeList /></AdminRoute>} />
             <Route path="/admin/pending"           element={<AdminRoute><AdminPendingList /></AdminRoute>} />

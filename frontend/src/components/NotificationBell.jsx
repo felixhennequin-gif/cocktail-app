@@ -15,6 +15,8 @@ const formatNotif = (notif, t) => {
       return t('common.notifApproved', { recipe: d.recipeName })
     case 'NEW_FOLLOWER':
       return t('common.notifNewFollower', { follower: d.followerPseudo })
+    case 'NEW_BADGE':
+      return t('common.notifNewBadge', { badge: `${d.badgeIcon || ''} ${d.badgeName || ''}`.trim() })
     default:
       return notif.type
   }

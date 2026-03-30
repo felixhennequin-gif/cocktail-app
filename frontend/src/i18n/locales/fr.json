@@ -16,7 +16,9 @@
     "menu": "Menu",
     "toggleTheme": "Basculer le thème",
     "lightMode": "Mode clair",
-    "darkMode": "Mode sombre"
+    "darkMode": "Mode sombre",
+    "myBar": "Mon bar",
+    "myBarFull": "Mon bar virtuel"
   },
   "auth": {
     "loginTitle": "Connexion",
@@ -348,6 +350,7 @@
     "notifComment": "{{commenter}} a commenté \"{{recipe}}\" : {{preview}}",
     "notifApproved": "Votre recette \"{{recipe}}\" a été publiée !",
     "notifNewFollower": "{{follower}} vous suit maintenant",
+    "notifNewBadge": "Nouveau badge débloqué : {{badge}}",
     "skipToContent": "Aller au contenu principal",
     "notFound404": "404",
     "notFoundTitle": "Page introuvable",
@@ -357,6 +360,13 @@
     "errorTitle": "Oops ! Une erreur est survenue",
     "errorMessage": "Quelque chose s'est mal passé…",
     "edit": "Modifier"
+  },
+  "badges": {
+    "title": "Badges",
+    "earned": "Obtenu le {{date}}",
+    "locked": "Non débloqué",
+    "progress": "{{current}}/{{target}}",
+    "noBadges": "Aucun badge débloqué pour le moment."
   },
   "landing": {
     "popularTitle": "Recettes populaires",
@@ -374,5 +384,29 @@
     "hosting": "Hébergement",
     "editorInfo": "Projet personnel — cocktail-app.fr",
     "hostingInfo": "Serveur auto-hébergé — Debian"
+  },
+  "bar": {
+    "title": "Mon bar virtuel",
+    "subtitle": "Sélectionnez vos ingrédients pour voir ce que vous pouvez préparer",
+    "search": "Rechercher un ingrédient...",
+    "save": "Sauvegarder",
+    "saved": "Sauvegardé !",
+    "makeable": "Cocktails réalisables",
+    "almostMakeable": "Presque réalisables",
+    "missingCount": "{{count}} ingrédient(s) manquant(s)",
+    "empty": "Ajoutez des ingrédients à votre bar",
+    "noResults": "Aucun cocktail trouvé avec ces ingrédients"
+  },
+  "party": {
+    "title": "Mode soirée",
+    "start": "C'est parti !",
+    "ingredients": "Ingrédients",
+    "step": "Étape {{current}} / {{total}}",
+    "prev": "Précédent",
+    "next": "Suivant",
+    "done": "C'est prêt ! 🍹",
+    "exit": "Quitter",
+    "timer": "Minuteur",
+    "timerDone": "Temps écoulé !"
   }
 }

@@ -8,6 +8,7 @@ const { resolveTagNames } = require('./tag-controller');
 const { parseId, badRequest, notFound, forbidden } = require('../helpers');
 const { includeDetail, enrichRecipes, flattenRecipe, handlePrismaError } = require('../helpers/recipe-helpers');
 const { createRecipeSchema, updateRecipeSchema, formatZodError } = require('../schemas');
+const { checkAndAwardBadges } = require('../services/badge-service');
 const { recipeListSchema, search } = require('../services/recipe-search-service');
 const { resolveIngredients } = require('../services/ingredient-resolver');
 
@@ -173,6 +174,9 @@ const createRecipe = async (req, res, next) => {
         },
       }).catch(console.error);
     }
+
+    // Vérifier les badges liés aux recettes — fire and forget
+    checkAndAwardBadges(authorId).catch(console.error);
   } catch (err) {
     next(err);
   }

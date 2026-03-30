@@ -179,6 +179,12 @@ apiRouter.use('/notifications', notificationRoutes);
 const recipeExportRoutes = require('./routes/recipe-export-routes');
 apiRouter.use('/recipes', recipeExportRoutes);
 
+// Bar virtuel et badges
+const barRoutes   = require('./routes/bar-routes');
+const badgeRoutes = require('./routes/badge-routes');
+apiRouter.use('/bar',    barRoutes);
+apiRouter.use('/badges', badgeRoutes);
+
 app.use('/api', apiRouter);
 
 // Sitemap XML dynamique
