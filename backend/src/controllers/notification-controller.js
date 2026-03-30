@@ -1,10 +1,16 @@
 const prisma = require('../prisma');
 const { parseId, badRequest, notFound, forbidden } = require('../helpers');
 
-// GET /notifications — 20 dernières + unreadCount
+// GET /notifications?countOnly=true — 20 dernières + unreadCount (ou juste le count)
 const getNotifications = async (req, res, next) => {
   try {
     const userId = req.user.id;
+
+    // Mode léger pour le polling : ne renvoyer que le compteur
+    if (req.query.countOnly === 'true') {
+      const unreadCount = await prisma.notification.count({ where: { userId, read: false } });
+      return res.json({ unreadCount });
+    }
 
     const [notifications, unreadCount] = await Promise.all([
       prisma.notification.findMany({

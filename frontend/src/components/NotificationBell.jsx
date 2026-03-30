@@ -29,28 +29,23 @@ export default function NotificationBell() {
   const containerRef                  = useRef(null)
   const navigate                      = useNavigate()
 
-  // Polling toutes les 60s, uniquement si l'onglet est actif
+  // Polling léger : ne charge que le compteur non lu (pas les notifications complètes)
   useEffect(() => {
     if (!user) return
 
-    const load = () => {
+    const loadCount = () => {
       if (document.visibilityState !== 'visible') return
-      authFetch('/api/notifications')
+      authFetch('/api/notifications?countOnly=true')
         .then((r) => r.ok ? r.json() : null)
-        .then((data) => {
-          if (!data) return
-          setNotifications(data.data)
-          setUnreadCount(data.unreadCount)
-        })
+        .then((data) => { if (data) setUnreadCount(data.unreadCount) })
         .catch(() => {})
     }
 
-    load()
-    const interval = setInterval(load, 60_000)
+    loadCount()
+    const interval = setInterval(loadCount, 60_000)
 
-    // Reprendre le polling dès que l'onglet redevient visible
     const handleVisibility = () => {
-      if (document.visibilityState === 'visible') load()
+      if (document.visibilityState === 'visible') loadCount()
     }
     document.addEventListener('visibilitychange', handleVisibility)
 
@@ -74,10 +69,17 @@ export default function NotificationBell() {
   const handleToggle = () => {
     const next = !open
     setOpen(next)
-    // À l'ouverture, marquer tout comme lu
-    if (next && unreadCount > 0) {
-      setUnreadCount(0)
-      authFetch('/api/notifications/read-all', { method: 'PUT' }).catch(() => {})
+    if (next) {
+      // À l'ouverture : charger les notifications complètes
+      authFetch('/api/notifications')
+        .then((r) => r.ok ? r.json() : null)
+        .then((data) => { if (data) setNotifications(data.data) })
+        .catch(() => {})
+      // Marquer tout comme lu
+      if (unreadCount > 0) {
+        setUnreadCount(0)
+        authFetch('/api/notifications/read-all', { method: 'PUT' }).catch(() => {})
+      }
     }
   }
 
