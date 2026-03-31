@@ -50,6 +50,11 @@ const lazyImports = {
   ShoppingList:       () => import('./pages/ShoppingList'),
   CategoryPage:       () => import('./pages/CategoryPage'),
   TagPage:            () => import('./pages/TagPage'),
+  AdventCalendar:     () => import('./pages/AdventCalendar'),
+  Leaderboard:        () => import('./pages/Leaderboard'),
+  MenuBuilder:        () => import('./pages/MenuBuilder'),
+  Glossary:           () => import('./pages/Glossary'),
+  GlossaryEntry:      () => import('./pages/GlossaryEntry'),
 }
 
 const RecipeDetail     = lazy(lazyImports.RecipeDetail)
@@ -81,6 +86,11 @@ const MyTastings       = lazy(lazyImports.MyTastings)
 const ShoppingList     = lazy(lazyImports.ShoppingList)
 const CategoryPage     = lazy(lazyImports.CategoryPage)
 const TagPage          = lazy(lazyImports.TagPage)
+const AdventCalendar   = lazy(lazyImports.AdventCalendar)
+const Leaderboard      = lazy(lazyImports.Leaderboard)
+const MenuBuilder      = lazy(lazyImports.MenuBuilder)
+const Glossary         = lazy(lazyImports.Glossary)
+const GlossaryEntry    = lazy(lazyImports.GlossaryEntry)
 
 // Préchargement des pages au survol des liens
 export const preload = (page) => { lazyImports[page]?.() }
@@ -281,6 +291,11 @@ export default function App() {
             <Route path="/shopping-list"             element={<ProtectedRoute><ShoppingList /></ProtectedRoute>} />
             <Route path="/roulette"                 element={<CocktailRoulette />} />
             <Route path="/compare"                  element={<CompareCocktails />} />
+            <Route path="/advent"                  element={<AdventCalendar />} />
+            <Route path="/leaderboard"             element={<Leaderboard />} />
+            <Route path="/menu-builder"            element={<ProtectedRoute><MenuBuilder /></ProtectedRoute>} />
+            <Route path="/glossary"                element={<Glossary />} />
+            <Route path="/glossary/:slug"          element={<GlossaryEntry />} />
             <Route path="/quiz"                    element={<CocktailQuiz />} />
             <Route path="/premium"                 element={<PremiumPage />} />
             <Route path="/api-docs"               element={<ApiDocs />} />

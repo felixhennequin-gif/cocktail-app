@@ -725,5 +725,108 @@
     "comingSoon": "Bientôt disponible",
     "alreadyPremium": "Vous êtes membre Premium !",
     "contactUs": "Contactez-nous"
+  },
+  "advent": {
+    "title": "Calendrier de l'Avent Cocktails",
+    "subtitle": "24 cocktails à découvrir en décembre {{year}}",
+    "notAvailable": "Le calendrier de l'avent est disponible en décembre. Rendez-vous bientôt !",
+    "dayLabel": "Case n°{{day}}",
+    "viewRecipe": "Voir la recette",
+    "locked": "Pas encore disponible"
+  },
+  "leaderboard": {
+    "title": "Classement",
+    "subtitle": "Les contributeurs les plus actifs de la communauté",
+    "recipes": "Meilleur barman",
+    "ratings": "Critique prolifique",
+    "followers": "Populaire",
+    "comments": "Social",
+    "period": {
+      "week": "Semaine",
+      "month": "Mois",
+      "all": "Tout temps"
+    },
+    "rank": "#{{rank}}",
+    "score": "{{count}} pts",
+    "empty": "Pas encore de données pour cette période",
+    "you": "Vous"
+  },
+  "cost": {
+    "perGlass": "~{{cost}} € / verre",
+    "budgetFilter": "Budget max / verre",
+    "noPriceData": "Prix non disponible"
+  },
+  "substitution": {
+    "title": "Substituts possibles",
+    "ratio": "Ratio : {{ratio}}x",
+    "inStock": "Dans votre bar",
+    "noSubstitutes": "Aucun substitut connu"
+  },
+  "streak": {
+    "title": "Série d'activité",
+    "days": "{{count}} jour",
+    "days_plural": "{{count}} jours",
+    "best": "Record : {{count}} jours",
+    "keepGoing": "Continuez comme ça !",
+    "broken": "Série perdue — recommencez aujourd'hui !"
+  },
+  "embed": {
+    "title": "Intégrer cette recette",
+    "copy": "Copier le code",
+    "copied": "Code copié !",
+    "preview": "Aperçu"
+  },
+  "menu": {
+    "title": "Créer un menu cocktails",
+    "subtitle": "Générez un menu imprimable pour vos événements",
+    "selectRecipes": "Sélectionnez vos cocktails",
+    "template": "Template",
+    "elegant": "Élégant",
+    "tropical": "Tropical",
+    "minimal": "Minimal",
+    "menuTitle": "Titre du menu",
+    "showIngredients": "Afficher les ingrédients",
+    "generate": "Générer le PDF",
+    "generating": "Génération en cours...",
+    "download": "Télécharger le menu"
+  },
+  "glossary": {
+    "title": "Glossaire du cocktail",
+    "subtitle": "Tout le vocabulaire de la mixologie",
+    "categories": {
+      "all": "Toutes",
+      "technique": "Techniques",
+      "ingredient": "Ingrédients",
+      "glass": "Verres",
+      "style": "Styles",
+      "history": "Histoire"
+    },
+    "relatedRecipes": "Recettes liées",
+    "relatedTerms": "Termes connexes",
+    "searchPlaceholder": "Rechercher un terme..."
+  },
+  "versioning": {
+    "history": "Historique",
+    "versions": "{{count}} version",
+    "versions_plural": "{{count}} versions",
+    "revert": "Restaurer cette version",
+    "reverted": "Version restaurée",
+    "by": "par {{author}}",
+    "current": "Version actuelle"
+  },
+  "curated": {
+    "title": "Sélections d'experts",
+    "subtitle": "Des collections créées par des mixologues professionnels",
+    "by": "Par {{name}}",
+    "unlockWithPremium": "Débloquez cette collection avec Premium",
+    "recipesCount": "{{count}} recette",
+    "recipesCount_plural": "{{count}} recettes"
+  },
+  "newsletter": {
+    "title": "Newsletter",
+    "subscribe": "S'abonner à la newsletter",
+    "subscribed": "Vous êtes inscrit à la newsletter !",
+    "unsubscribe": "Se désinscrire",
+    "unsubscribed": "Vous êtes désinscrit de la newsletter"
   }
 }

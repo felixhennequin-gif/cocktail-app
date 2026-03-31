@@ -725,5 +725,108 @@
     "comingSoon": "Coming soon",
     "alreadyPremium": "You're a Premium member!",
     "contactUs": "Contact us"
+  },
+  "advent": {
+    "title": "Cocktail Advent Calendar",
+    "subtitle": "24 cocktails to discover in December {{year}}",
+    "notAvailable": "The advent calendar is available in December. See you soon!",
+    "dayLabel": "Day #{{day}}",
+    "viewRecipe": "View recipe",
+    "locked": "Not yet available"
+  },
+  "leaderboard": {
+    "title": "Leaderboard",
+    "subtitle": "The most active community contributors",
+    "recipes": "Best bartender",
+    "ratings": "Prolific critic",
+    "followers": "Popular",
+    "comments": "Social",
+    "period": {
+      "week": "Week",
+      "month": "Month",
+      "all": "All time"
+    },
+    "rank": "#{{rank}}",
+    "score": "{{count}} pts",
+    "empty": "No data for this period yet",
+    "you": "You"
+  },
+  "cost": {
+    "perGlass": "~€{{cost}} / glass",
+    "budgetFilter": "Max budget / glass",
+    "noPriceData": "Price not available"
+  },
+  "substitution": {
+    "title": "Possible substitutes",
+    "ratio": "Ratio: {{ratio}}x",
+    "inStock": "In your bar",
+    "noSubstitutes": "No known substitute"
+  },
+  "streak": {
+    "title": "Activity streak",
+    "days": "{{count}} day",
+    "days_plural": "{{count}} days",
+    "best": "Best: {{count}} days",
+    "keepGoing": "Keep it up!",
+    "broken": "Streak lost — start again today!"
+  },
+  "embed": {
+    "title": "Embed this recipe",
+    "copy": "Copy code",
+    "copied": "Code copied!",
+    "preview": "Preview"
+  },
+  "menu": {
+    "title": "Create a cocktail menu",
+    "subtitle": "Generate a printable menu for your events",
+    "selectRecipes": "Select your cocktails",
+    "template": "Template",
+    "elegant": "Elegant",
+    "tropical": "Tropical",
+    "minimal": "Minimal",
+    "menuTitle": "Menu title",
+    "showIngredients": "Show ingredients",
+    "generate": "Generate PDF",
+    "generating": "Generating...",
+    "download": "Download menu"
+  },
+  "glossary": {
+    "title": "Cocktail Glossary",
+    "subtitle": "All the mixology vocabulary",
+    "categories": {
+      "all": "All",
+      "technique": "Techniques",
+      "ingredient": "Ingredients",
+      "glass": "Glasses",
+      "style": "Styles",
+      "history": "History"
+    },
+    "relatedRecipes": "Related recipes",
+    "relatedTerms": "Related terms",
+    "searchPlaceholder": "Search a term..."
+  },
+  "versioning": {
+    "history": "History",
+    "versions": "{{count}} version",
+    "versions_plural": "{{count}} versions",
+    "revert": "Restore this version",
+    "reverted": "Version restored",
+    "by": "by {{author}}",
+    "current": "Current version"
+  },
+  "curated": {
+    "title": "Expert picks",
+    "subtitle": "Collections curated by professional mixologists",
+    "by": "By {{name}}",
+    "unlockWithPremium": "Unlock this collection with Premium",
+    "recipesCount": "{{count}} recipe",
+    "recipesCount_plural": "{{count}} recipes"
+  },
+  "newsletter": {
+    "title": "Newsletter",
+    "subscribe": "Subscribe to newsletter",
+    "subscribed": "You're subscribed to the newsletter!",
+    "unsubscribe": "Unsubscribe",
+    "unsubscribed": "You've been unsubscribed from the newsletter"
   }
 }
