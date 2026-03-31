@@ -35,6 +35,7 @@ const tastingRoutes      = require('./routes/tasting-routes');
 const shoppingListRoutes = require('./routes/shopping-list-routes');
 const leaderboardRoutes  = require('./routes/leaderboard-routes');
 const streakRoutes       = require('./routes/streak-routes');
+const menuRoutes         = require('./routes/menu-routes');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -196,6 +197,7 @@ apiRouter.use('/tastings',      tastingRoutes);
 apiRouter.use('/shopping-list', shoppingListRoutes);
 apiRouter.use('/leaderboard',  leaderboardRoutes);
 apiRouter.use('/streak',       streakRoutes);
+apiRouter.use('/menus',        menuRoutes);
 
 // Export routes (PDF, OG image) — montées sous /api/recipes
 const recipeExportRoutes = require('./routes/recipe-export-routes');
