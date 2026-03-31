@@ -43,6 +43,14 @@ const app = express();
 app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3000;
 
+// Redirection www → non-www (Cloudflare Tunnel envoie les deux sur le port 3000)
+app.use((req, res, next) => {
+  if (req.hostname === 'www.cocktail-app.fr') {
+    return res.redirect(301, `https://cocktail-app.fr${req.originalUrl}`);
+  }
+  next();
+});
+
 // Middlewares
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },

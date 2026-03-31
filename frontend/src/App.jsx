@@ -1,5 +1,5 @@
 import { useState, lazy, Suspense } from 'react'
-import { Routes, Route, Link, Navigate, useNavigate } from 'react-router-dom'
+import { Routes, Route, Link, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import Logo from './components/Logo'
 import ErrorBoundary from './components/ErrorBoundary'
@@ -241,6 +241,7 @@ function Header() {
 export default function App() {
   const { loading } = useAuth()
   const { t } = useTranslation()
+  const location = useLocation()
 
   if (loading) return null
 
@@ -257,7 +258,7 @@ export default function App() {
       <OfflineBanner />
 
       <main id="main-content" role="main" className="max-w-5xl mx-auto px-4 py-6 md:py-8">
-        <ErrorBoundary>
+        <ErrorBoundary key={location.pathname}>
           <Suspense fallback={<div className="flex justify-center py-16"><div className="w-6 h-6 border-2 border-gold-400 border-t-transparent rounded-full animate-spin" /></div>}>
           <Routes>
             <Route path="/"                        element={<LandingPage />} />
