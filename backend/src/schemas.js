@@ -197,6 +197,13 @@ const preferencesSchema = z.object({
   excludedIngredients: z.array(z.number().int().positive()).optional(),
 });
 
+// --- Shopping List ---
+
+const createShoppingListSchema = z.object({
+  recipeIds: z.array(z.coerce.number().int().positive()).min(1, 'Au moins une recette est requise').max(20, 'Maximum 20 recettes'),
+  servingsMultiplier: z.record(z.string(), z.coerce.number().positive()).optional(),
+});
+
 // --- Tasting Log ---
 
 const createTastingLogSchema = z.object({
@@ -222,6 +229,7 @@ const formatZodError = (error) => {
 };
 
 module.exports = {
+  createShoppingListSchema,
   createTastingLogSchema,
   createRecipeSchema,
   updateRecipeSchema,

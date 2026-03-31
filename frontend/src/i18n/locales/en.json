@@ -600,6 +600,26 @@
     "denied": "Notifications blocked by browser",
     "unsupported": "Push notifications not supported"
   },
+  "shoppingList": {
+    "title": "Shopping List",
+    "subtitle_one": "{{count}} recipe selected",
+    "subtitle_other": "{{count}} recipes selected",
+    "empty": "Your shopping list is empty.",
+    "browseRecipes": "Browse recipes",
+    "addToList": "Shopping list",
+    "inCart": "In list",
+    "cartCount_one": "{{count}} recipe",
+    "cartCount_other": "{{count}} recipes",
+    "viewList": "View list",
+    "inStock": "In stock",
+    "inStockCount_one": "{{count}} in stock",
+    "inStockCount_other": "{{count}} in stock",
+    "toBuy_one": "{{count}} ingredient to buy",
+    "toBuy_other": "{{count}} ingredients to buy",
+    "share": "Share list",
+    "clearAll": "Clear list",
+    "copiedToast": "List copied!"
+  },
   "tastings": {
     "title": "My Tasting Journal",
     "subtitle": "Track the cocktails you've made and your impressions",

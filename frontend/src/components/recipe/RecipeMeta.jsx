@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import DifficultyBadge from '../DifficultyBadge'
 import PortionSelector from './PortionSelector'
 
-export default function RecipeMeta({ recipe, avgRating, ratingsCount, isFavorited, onToggleFavorite, onAddToCollection, onLogTasting, portionCount, onPortionChange, user }) {
+export default function RecipeMeta({ recipe, avgRating, ratingsCount, isFavorited, onToggleFavorite, onAddToCollection, onLogTasting, onAddToShoppingList, isInShoppingCart, portionCount, onPortionChange, user }) {
   const { t } = useTranslation()
 
   return (
@@ -38,6 +38,19 @@ export default function RecipeMeta({ recipe, avgRating, ratingsCount, isFavorite
               title={t('tastings.logButton')}
             >
               {t('tastings.iMadeThis')}
+            </button>
+          )}
+          {user && onAddToShoppingList && (
+            <button
+              onClick={onAddToShoppingList}
+              className={`text-xs px-2.5 py-1 rounded-full border font-medium transition-colors ${
+                isInShoppingCart
+                  ? 'border-gold-400 dark:border-gold-600 text-gold-600 dark:text-gold-400 bg-gold-50 dark:bg-gold-900/20'
+                  : 'border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-gold-400 hover:text-gold-500'
+              }`}
+              title={t('shoppingList.addToList')}
+            >
+              {isInShoppingCart ? t('shoppingList.inCart') : t('shoppingList.addToList')}
             </button>
           )}
           <a

@@ -13,6 +13,7 @@ import RecipeIngredients from '../components/recipe/RecipeIngredients'
 import CommentSection from '../components/recipe/CommentSection'
 import StepTimer, { extractDuration } from '../components/recipe/StepTimer'
 import TastingModal from '../components/TastingModal'
+import useShoppingCart from '../hooks/useShoppingCart'
 
 export default function RecipeDetail() {
   const { id }              = useParams()
@@ -32,6 +33,7 @@ export default function RecipeDetail() {
   const [portionCount, setPortionCount] = useState(1)
   const [collectionModalOpen, setCollectionModalOpen] = useState(false)
   const [tastingModalOpen, setTastingModalOpen] = useState(false)
+  const { toggle: toggleShoppingCart, has: isInCart } = useShoppingCart()
 
   // Chargement de la recette et des commentaires
   useEffect(() => {
@@ -128,6 +130,8 @@ export default function RecipeDetail() {
     onToggleFavorite: handleToggleFavorite,
     onAddToCollection: () => setCollectionModalOpen(true),
     onLogTasting: () => setTastingModalOpen(true),
+    onAddToShoppingList: () => toggleShoppingCart(parseInt(id)),
+    isInShoppingCart: isInCart(parseInt(id)),
     portionCount, onPortionChange: setPortionCount, user,
   }
 
