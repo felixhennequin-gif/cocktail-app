@@ -99,7 +99,7 @@ function generateHtml({ pseudo, dailyRecipe, newRecipes, currentChallenge, users
 <body style="margin:0;padding:0;background:#f5f0e8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
   <div style="max-width:600px;margin:0 auto;padding:20px">
     <div style="background:#1a1a2e;color:#d4a047;text-align:center;padding:30px;border-radius:12px 12px 0 0">
-      <h1 style="margin:0;font-size:24px">🍸 cocktail-app</h1>
+      <h1 style="margin:0;font-size:24px">🍸 Écume</h1>
       <p style="margin:8px 0 0;color:#aaa;font-size:14px">Bonjour ${pseudo} !</p>
     </div>
     <div style="background:white;padding:30px;border-radius:0 0 12px 12px">

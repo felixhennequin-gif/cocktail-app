@@ -87,7 +87,7 @@ function renderMetaPage({ title, description, image, url, type = 'website', json
   <meta property="og:image" content="${safeImage}">
   <meta property="og:url" content="${safeUrl}">
   <meta property="og:type" content="${safeType}">
-  <meta property="og:site_name" content="Cocktail App">
+  <meta property="og:site_name" content="Écume">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="${safeTitle}">
   <meta name="twitter:description" content="${safeDescription}">
@@ -136,7 +136,7 @@ async function prerenderMiddleware(req, res, next) {
         // OG image dynamique générée par l'endpoint /api/recipes/:id/og-image
         const ogImage = `${siteUrl}/api/recipes/${id}/og-image`;
         return res.send(renderMetaPage({
-          title: `${recipe.name} — Cocktail App`,
+          title: `${recipe.name} — Écume`,
           description: desc.substring(0, 160),
           image: ogImage,
           url: fullUrl,
@@ -153,8 +153,8 @@ async function prerenderMiddleware(req, res, next) {
       const user = await prisma.user.findUnique({ where: { id } });
       if (user) {
         return res.send(renderMetaPage({
-          title: `${user.pseudo} — Cocktail App`,
-          description: user.bio || `Profil de ${user.pseudo} sur Cocktail App`,
+          title: `${user.pseudo} — Écume`,
+          description: user.bio || `Profil de ${user.pseudo} sur Écume`,
           image: user.avatar,
           url: fullUrl,
         }));
@@ -181,7 +181,7 @@ async function prerenderMiddleware(req, res, next) {
     // Page d'accueil
     if (req.path === '/' || req.path === '') {
       return res.send(renderMetaPage({
-        title: 'Cocktail App — Recettes & Inspiration',
+        title: 'Écume — Recettes & Inspiration',
         description: 'Découvrez des centaines de recettes de cocktails. Recherchez, filtrez, notez et partagez vos cocktails préférés.',
         url: fullUrl,
       }));
@@ -196,7 +196,7 @@ async function prerenderMiddleware(req, res, next) {
         const recipesCount = await prisma.recipe.count({
           where: { categoryId: category.id, status: 'PUBLISHED' },
         });
-        const title = `Cocktails ${category.name} — Cocktail App`;
+        const title = `Cocktails ${category.name} — Écume`;
         const description = category.description
           || `Découvrez nos ${recipesCount} recettes de cocktails ${category.name}. Filtrez, notez et partagez vos cocktails préférés.`;
         const breadcrumbJsonLd = JSON.stringify({
@@ -235,7 +235,7 @@ async function prerenderMiddleware(req, res, next) {
         const recipesCount = await prisma.recipeTag.count({
           where: { tagId: tag.id, recipe: { status: 'PUBLISHED' } },
         });
-        const title = `Cocktails ${tag.name} — Cocktail App`;
+        const title = `Cocktails ${tag.name} — Écume`;
         const description = `Découvrez nos ${recipesCount} recettes de cocktails ${tag.name}. Filtrez, notez et partagez vos cocktails préférés.`;
         const breadcrumbJsonLd = JSON.stringify({
           '@context': 'https://schema.org',
@@ -276,7 +276,7 @@ async function prerenderMiddleware(req, res, next) {
           const category = await prisma.category.findUnique({ where: { id: catId } });
           if (category) {
             return res.send(renderMetaPage({
-              title: `Cocktails ${category.name} — Cocktail App`,
+              title: `Cocktails ${category.name} — Écume`,
               description: `Découvrez nos recettes de cocktails ${category.name}. Filtrez, notez et partagez vos cocktails préférés.`,
               url: fullUrl,
             }));
@@ -291,7 +291,7 @@ async function prerenderMiddleware(req, res, next) {
           const tag = await prisma.tag.findUnique({ where: { id: tagId } });
           if (tag) {
             return res.send(renderMetaPage({
-              title: `Cocktails ${tag.name} — Cocktail App`,
+              title: `Cocktails ${tag.name} — Écume`,
               description: `Découvrez nos recettes de cocktails ${tag.name}. Filtrez, notez et partagez vos cocktails préférés.`,
               url: fullUrl,
             }));
@@ -301,7 +301,7 @@ async function prerenderMiddleware(req, res, next) {
 
       // Catalogue générique
       return res.send(renderMetaPage({
-        title: 'Catalogue de cocktails — Cocktail App',
+        title: 'Catalogue de cocktails — Écume',
         description: 'Explorez notre catalogue complet de recettes de cocktails. Filtrez par catégorie, difficulté et tags.',
         url: fullUrl,
       }));

@@ -117,7 +117,7 @@ export default function TechniquesPage() {
   return (
     <>
       <Helmet>
-        <title>{t('techniques.title')} — Cocktail App</title>
+        <title>{t('techniques.title')} — Écume</title>
         <meta name="description" content={t('techniques.subtitle')} />
       </Helmet>
 

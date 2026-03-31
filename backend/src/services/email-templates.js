@@ -14,13 +14,13 @@ function layout(content) {
     <tr><td align="center">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background-color:#2a2a2a;border-radius:12px;overflow:hidden;">
         <tr><td style="padding:32px 28px 0;text-align:center;">
-          <span style="font-size:28px;font-weight:700;color:${BRAND_COLOR};letter-spacing:0.5px;">Cocktail App</span>
+          <span style="font-size:28px;font-weight:700;color:${BRAND_COLOR};letter-spacing:0.5px;">Écume</span>
         </td></tr>
         <tr><td style="padding:24px 28px 32px;color:#e0e0e0;font-size:15px;line-height:1.6;">
           ${content}
         </td></tr>
         <tr><td style="padding:20px 28px;border-top:1px solid #3a3a3a;text-align:center;color:#888;font-size:12px;">
-          Cocktail App &mdash; cocktail-app.fr
+          Écume &mdash; cocktail-app.fr
         </td></tr>
       </table>
     </td></tr>
@@ -38,10 +38,10 @@ function button(url, label) {
 }
 
 function verifyEmailTemplate({ pseudo, verifyUrl }) {
-  const subject = 'Confirme ton adresse email — Cocktail App';
+  const subject = 'Confirme ton adresse email — Écume';
   const html = layout(`
     <p style="margin:0 0 16px;">Salut <strong>${pseudo}</strong>,</p>
-    <p style="margin:0 0 8px;">Bienvenue sur Cocktail App ! Clique sur le bouton ci-dessous pour confirmer ton adresse email :</p>
+    <p style="margin:0 0 8px;">Bienvenue sur Écume ! Clique sur le bouton ci-dessous pour confirmer ton adresse email :</p>
     ${button(verifyUrl, 'Confirmer mon email')}
     <p style="margin:0 0 8px;color:#aaa;font-size:13px;">Ce lien expire dans <strong>24 heures</strong>.</p>
     <p style="margin:16px 0 0;color:#aaa;font-size:13px;">Si le bouton ne fonctionne pas, copie-colle ce lien dans ton navigateur :</p>
@@ -51,7 +51,7 @@ function verifyEmailTemplate({ pseudo, verifyUrl }) {
 }
 
 function resetPasswordTemplate({ pseudo, resetUrl }) {
-  const subject = 'Réinitialisation de ton mot de passe — Cocktail App';
+  const subject = 'Réinitialisation de ton mot de passe — Écume';
   const html = layout(`
     <p style="margin:0 0 16px;">Salut <strong>${pseudo}</strong>,</p>
     <p style="margin:0 0 8px;">Tu as demandé la réinitialisation de ton mot de passe. Clique sur le bouton ci-dessous pour en choisir un nouveau :</p>

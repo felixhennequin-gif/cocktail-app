@@ -41,7 +41,7 @@ const buildPushPayload = (type, data = {}) => {
         url:   '/',
       };
     default:
-      return { title: 'Cocktail App', body: 'Vous avez une nouvelle notification', url: '/' };
+      return { title: 'Écume', body: 'Vous avez une nouvelle notification', url: '/' };
   }
 };
 

@@ -207,7 +207,7 @@ self.addEventListener('fetch', (event) => {
 
 // Réception d'un événement push depuis le serveur
 self.addEventListener('push', (event) => {
-  let payload = { title: 'Cocktail App', body: 'Vous avez une nouvelle notification', url: '/' }
+  let payload = { title: 'Écume', body: 'Vous avez une nouvelle notification', url: '/' }
 
   if (event.data) {
     try {

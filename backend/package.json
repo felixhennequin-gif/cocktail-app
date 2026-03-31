@@ -1,7 +1,7 @@
 {
-  "name": "cocktail-app-backend",
+  "name": "ecume-backend",
   "version": "1.0.0",
-  "description": "API backend pour l'application de recettes de cocktails",
+  "description": "API backend pour Écume — application de recettes de cocktails",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",

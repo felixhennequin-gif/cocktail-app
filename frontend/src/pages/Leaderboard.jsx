@@ -34,7 +34,7 @@ export default function Leaderboard() {
 
   return (
     <div className="max-w-3xl mx-auto">
-      <Helmet><title>{t('leaderboard.title')} — cocktail-app</title></Helmet>
+      <Helmet><title>{t('leaderboard.title')} — Écume</title></Helmet>
 
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">{t('leaderboard.title')}</h1>

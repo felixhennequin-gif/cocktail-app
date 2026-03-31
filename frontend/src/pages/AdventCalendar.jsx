@@ -66,7 +66,7 @@ export default function AdventCalendar() {
   if (!data?.available) {
     return (
       <div className="max-w-2xl mx-auto text-center py-16">
-        <Helmet><title>{t('advent.title')} — cocktail-app</title></Helmet>
+        <Helmet><title>{t('advent.title')} — Écume</title></Helmet>
         <div className="text-6xl mb-6">🎄</div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">{t('advent.title')}</h1>
         <p className="text-gray-500 dark:text-gray-400 text-lg">{t('advent.notAvailable')}</p>
@@ -79,7 +79,7 @@ export default function AdventCalendar() {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <Helmet><title>{t('advent.title')} — cocktail-app</title></Helmet>
+      <Helmet><title>{t('advent.title')} — Écume</title></Helmet>
 
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">

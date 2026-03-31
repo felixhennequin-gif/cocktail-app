@@ -89,7 +89,7 @@ const generateMenu = async (req, res, next) => {
     doc.moveDown(1);
     doc.fillColor(t.accent).fontSize(10).text('───────────────────────', { align: 'center' });
     doc.moveDown(0.3);
-    doc.fillColor(t.accent).fontSize(8).text('Recettes sur cocktail-app.fr', { align: 'center' });
+    doc.fillColor(t.accent).fontSize(8).text('Recettes sur Écume — cocktail-app.fr', { align: 'center' });
 
     doc.end();
   } catch (err) {

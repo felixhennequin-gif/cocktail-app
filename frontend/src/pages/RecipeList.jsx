@@ -215,9 +215,9 @@ export default function RecipeList() {
         : t('recipes.pageTitle')
 
   const pageDescription = activeCategoryName
-    ? t('recipes.categoryPageTitle', { category: activeCategoryName }) + ' — Cocktail App'
+    ? t('recipes.categoryPageTitle', { category: activeCategoryName }) + ' — Écume'
     : activeTagName
-      ? t('recipes.tagPageTitle', { tag: activeTagName }) + ' — Cocktail App'
+      ? t('recipes.tagPageTitle', { tag: activeTagName }) + ' — Écume'
       : t('recipes.pageTitle')
 
   return (

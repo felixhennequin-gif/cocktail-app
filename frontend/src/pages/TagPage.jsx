@@ -131,7 +131,7 @@ export default function TagPage() {
           <meta property="og:description" content={pageDescription} />
           <meta property="og:url" content={`${SITE_URL}/tags/${encodeURIComponent(tag.name)}`} />
           <meta property="og:type" content="website" />
-          <meta property="og:site_name" content="Cocktail App" />
+          <meta property="og:site_name" content="Écume" />
           <meta name="twitter:card" content="summary" />
           <meta name="twitter:title" content={pageTitle} />
           <meta name="twitter:description" content={pageDescription} />

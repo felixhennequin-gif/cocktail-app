@@ -45,7 +45,7 @@ export default function Glossary() {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <Helmet><title>{t('glossary.title')} — cocktail-app</title></Helmet>
+      <Helmet><title>{t('glossary.title')} — Écume</title></Helmet>
 
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">{t('glossary.title')}</h1>

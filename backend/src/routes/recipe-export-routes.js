@@ -106,7 +106,7 @@ router.get('/:id/pdf', async (req, res) => {
     doc.moveTo(50, doc.y).lineTo(545, doc.y).strokeColor('#E5E5E5').stroke();
     doc.moveDown(0.5);
     doc.fontSize(9).fillColor('#999999').text(
-      `${SITE_URL}/recipes/${recipe.id}  •  Cocktail App`,
+      `${SITE_URL}/recipes/${recipe.id}  •  Écume`,
       { align: 'center' }
     );
 
@@ -192,7 +192,7 @@ router.get('/:id/og-image', async (req, res) => {
         <text x="60" y="420" font-family="sans-serif" font-size="56" font-weight="bold" fill="white">${name}</text>
         ${stars ? `<text x="60" y="480" font-family="sans-serif" font-size="32" fill="#FFD700">${stars}  <tspan fill="#cccccc" font-size="24">${ratingText}</tspan></text>` : ''}
         <text x="60" y="530" font-family="sans-serif" font-size="24" fill="#cccccc">${escapeSvg(meta)}</text>
-        <text x="60" y="590" font-family="sans-serif" font-size="20" fill="#B8860B">cocktail-app.fr</text>
+        <text x="60" y="590" font-family="sans-serif" font-size="20" fill="#B8860B">Écume — cocktail-app.fr</text>
         ${recipe.author ? `<text x="${WIDTH - 60}" y="590" font-family="sans-serif" font-size="20" fill="#999999" text-anchor="end">par ${escapeSvg(recipe.author.pseudo)}</text>` : ''}
       </svg>
     `);

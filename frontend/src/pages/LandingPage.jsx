@@ -64,7 +64,7 @@ export default function LandingPage() {
       <Helmet>
         <title>Cocktails — Recettes & Inspiration</title>
         <meta name="description" content="Découvrez des centaines de recettes de cocktails. Recherchez, filtrez, notez et partagez vos cocktails préférés." />
-        <meta property="og:site_name" content="Cocktail App" />
+        <meta property="og:site_name" content="Écume" />
         <meta property="og:title" content="Cocktails — Recettes & Inspiration" />
         <meta property="og:description" content="Découvrez des centaines de recettes de cocktails artisanales." />
         <meta property="og:image" content="https://cocktail-app.fr/og-default.png" />

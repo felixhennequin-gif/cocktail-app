@@ -382,7 +382,7 @@ r.raise_for_status()
 recipe = r.json()</pre>
 
   <footer>
-    Cocktails API &mdash; <a href="https://cocktail-app.fr">cocktail-app.fr</a>
+    Écume API &mdash; <a href="https://cocktail-app.fr">cocktail-app.fr</a>
   </footer>
 </div>
 </body>

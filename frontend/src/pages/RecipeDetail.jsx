@@ -140,7 +140,7 @@ export default function RecipeDetail() {
       <Helmet>
         <title>{recipe.name} — Cocktails</title>
         <meta name="description" content={metaDescription} />
-        <meta property="og:site_name" content="Cocktail App" />
+        <meta property="og:site_name" content="Écume" />
         <meta property="og:title" content={recipe.name} />
         <meta property="og:description" content={metaDescription} />
         <meta property="og:type" content="article" />

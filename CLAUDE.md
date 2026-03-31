@@ -1,4 +1,4 @@
-# Cocktail App — Contexte Claude Code
+# Écume — Contexte Claude Code
 
 ## Stack technique
 
@@ -9,7 +9,8 @@
 | ORM | Prisma 7 + `@prisma/adapter-pg` |
 | BDD | PostgreSQL (`cocktails_db`) |
 | Cache | Redis via `ioredis` |
-| Auth | JWT (`jsonwebtoken` + `bcrypt`) + refresh token rotation |
+| Auth | JWT (`jsonwebtoken` + `bcrypt`) + refresh token rotation + email verification |
+| Email | `nodemailer` (vérification email, reset password, newsletter) |
 | Tests | Jest + Supertest |
 | Validation | Zod (`backend/src/schemas.js`) |
 | Rate limiting | `express-rate-limit` (auth strict, general souple, API v1 tiered) |
@@ -28,17 +29,20 @@ Serveur Debian local : `192.168.1.85`
 cocktail-app/
 ├── backend/
 │   ├── prisma/
-│   │   ├── schema.prisma        # Schéma BDD (29 modèles, 6 enums)
+│   │   ├── schema.prisma        # Schéma BDD (33 modèles, 6 enums)
 │   │   ├── seed.js              # 10 cocktails + tags de base
 │   │   ├── seed-big.js          # Gros dataset
 │   │   ├── seed-realistic.js    # Données réalistes
 │   │   ├── seed-badges.js       # Badges et achievements
 │   │   ├── seed-techniques.js   # Techniques de bar
+│   │   ├── seed-catalog.js      # Catalogue complet
+│   │   ├── seed-substitutions.js # Substitutions d'ingrédients
+│   │   ├── seed-glossary.js     # Entrées du glossaire
 │   │   ├── cleanup-tags.js      # Nettoyage tags dupliqués
-│   │   └── migrations/          # Migrations Prisma auto-générées
+│   │   └── migrations/          # Migrations Prisma auto-générées (25 migrations)
 │   ├── scripts/
 │   │   └── import-cocktaildb.js # Import depuis TheCocktailDB API
-│   ├── tests/                   # Tests Jest + Supertest
+│   ├── tests/                   # Tests Jest + Supertest (23 fichiers)
 │   └── src/
 │       ├── index.js             # Entrée Express — monte toutes les routes
 │       ├── prisma.js            # Singleton PrismaClient (adapter pg)
@@ -46,20 +50,26 @@ cocktail-app/
 │       ├── rateLimiter.js       # Rate limiting (auth, général, API v1)
 │       ├── schemas.js           # Schémas Zod pour validation
 │       ├── logger.js            # Logging structuré
+│       ├── config/
+│       │   └── plans.js         # Configuration des limites par plan (FREE/PREMIUM)
 │       ├── middleware/
 │       │   ├── auth.js          # requireAuth, requireAdmin, optionalAuth
 │       │   ├── api-key.js       # Validation clé API publique v1
 │       │   ├── premium.js       # Vérification plan premium
+│       │   ├── plan-limits.js   # Limites par plan (collections, etc.)
 │       │   └── prerender.js     # SSR meta tags (OG, Twitter, Schema.org)
-│       ├── routes/              # 23 fichiers — un par domaine
-│       ├── controllers/         # 23 fichiers — logique métier par domaine
+│       ├── routes/              # 31 fichiers — un par domaine
+│       ├── controllers/         # 34 fichiers — logique métier par domaine
 │       ├── services/
 │       │   ├── notification-service.js
 │       │   ├── recipe-cache-service.js
 │       │   ├── recipe-search-service.js
 │       │   ├── badge-service.js
 │       │   ├── push-service.js
-│       │   └── ingredient-resolver.js
+│       │   ├── ingredient-resolver.js
+│       │   ├── email-service.js      # Envoi emails (vérification, reset, newsletter)
+│       │   ├── email-templates.js    # Templates HTML pour emails
+│       │   └── streak-service.js     # Calcul et mise à jour des streaks
 │       └── helpers/
 │           ├── recipe-helpers.js
 │           ├── errors.js        # Erreurs standardisées
@@ -77,10 +87,12 @@ cocktail-app/
 │       │   ├── usePushNotifications.js
 │       │   ├── useOfflineCache.js
 │       │   ├── useRecipeFilters.js
-│       │   └── useRecipeList.js
+│       │   ├── useRecipeList.js
+│       │   ├── useCompare.js        # Comparaison de cocktails (panier max 2)
+│       │   └── useShoppingCart.js   # Panier liste de courses
 │       ├── utils/
 │       │   └── image.js             # Utilitaires image
-│       ├── components/              # ~25 composants
+│       ├── components/              # 23 composants racine + 7 sous-composants recipe/
 │       │   ├── RecipeCard.jsx, RecipeCardGrid.jsx  # Cards recettes (memoized)
 │       │   ├── SearchBar.jsx        # Recherche avec navigation clavier + ARIA
 │       │   ├── FilterPanel.jsx      # Filtres avancés recettes
@@ -92,17 +104,22 @@ cocktail-app/
 │       │   ├── DifficultyBadge.jsx, Stars.jsx
 │       │   ├── Skeleton.jsx, ErrorBoundary.jsx
 │       │   ├── OfflineBanner.jsx    # Indicateur hors-ligne PWA
-│       │   ├── RecipeIngredients.jsx, RecipeMeta.jsx
-│       │   ├── PartyTimer.jsx, StepTimer.jsx, PortionSelector.jsx
-│       │   ├── RatingStars.jsx      # Widget notation interactif
-│       │   └── CommentSection.jsx
-│       └── pages/                   # ~25 pages + admin/
+│       │   ├── PartyTimer.jsx
+│       │   ├── CompareBar.jsx       # Barre flottante de comparaison
+│       │   ├── TastingModal.jsx     # Modale "j'ai fait ce cocktail"
+│       │   ├── ShoppingCartBar.jsx  # Barre flottante liste de courses
+│       │   ├── ChangePasswordForm.jsx
+│       │   └── recipe/              # Sous-composants fiche recette
+│       │       ├── CommentSection.jsx, RatingStars.jsx
+│       │       ├── RecipeIngredients.jsx, RecipeMeta.jsx
+│       │       ├── PortionSelector.jsx, StepTimer.jsx
+│       └── pages/                   # 35 pages + admin/
 │           ├── LandingPage.jsx      # "/" — hero + cocktail du jour + populaires + CTA
 │           ├── RecipeList.jsx       # "/recipes" — catalogue filtres, tri, tags, pagination
 │           ├── RecipeDetail.jsx     # Fiche + notes + commentaires + collections + variantes
 │           ├── RecipeSubmit.jsx     # Soumission recette (tags, variantes)
 │           ├── CollectionDetail.jsx # Détail collection utilisateur
-│           ├── UserProfile.jsx      # Profil + collections + stats
+│           ├── UserProfile.jsx      # Profil + collections + stats + badges
 │           ├── Feed.jsx             # Fil d'actualité (recettes des users suivis)
 │           ├── Favorites.jsx        # Recettes favorites
 │           ├── MyBar.jsx            # Bar virtuel + recettes réalisables
@@ -117,6 +134,20 @@ cocktail-app/
 │           ├── ApiDocs.jsx          # Documentation API publique interactive
 │           ├── LegalPage.jsx        # Mentions légales / CGU
 │           ├── Login.jsx, Register.jsx
+│           ├── VerifyEmail.jsx      # Vérification email par lien
+│           ├── ForgotPassword.jsx   # Demande de réinitialisation mot de passe
+│           ├── ResetPassword.jsx    # Réinitialisation mot de passe
+│           ├── CocktailRoulette.jsx # Roulette aléatoire avec filtres
+│           ├── CompareCocktails.jsx # Comparaison côte à côte
+│           ├── MyTastings.jsx       # Journal de dégustation personnel
+│           ├── ShoppingList.jsx     # Liste de courses multi-recettes
+│           ├── CategoryPage.jsx     # Landing page SEO par catégorie
+│           ├── TagPage.jsx          # Landing page SEO par tag
+│           ├── AdventCalendar.jsx   # Calendrier de l'avent cocktails
+│           ├── Leaderboard.jsx      # Classement communautaire
+│           ├── MenuBuilder.jsx      # Générateur de menu cocktail imprimable
+│           ├── Glossary.jsx         # Glossaire / encyclopédie
+│           ├── GlossaryEntry.jsx    # Entrée du glossaire
 │           ├── NotFound.jsx         # Page 404
 │           └── admin/               # AdminRecipeList, AdminRecipeForm, AdminPendingList
 ├── scripts/
@@ -126,6 +157,7 @@ cocktail-app/
 ├── docs/
 │   ├── architecture.md          # Schéma des couches
 │   └── decisions/               # ADRs
+├── ecosystem.config.js          # Configuration pm2
 └── dev.sh                       # Lance backend + frontend en concurrent
 ```
 
@@ -168,6 +200,17 @@ cocktail-app/
 | Article | id, title, slug, content (markdown), excerpt, coverImage, authorId, status (DRAFT/PUBLISHED), publishedAt |
 | ArticleTag | articleId, tagId — PK composite |
 
+### Modèles ajoutés (P6)
+
+| Modèle | Champs clés |
+|--------|-------------|
+| TastingLog | id, userId, recipeId, notes?, photoUrl?, personalRating? (1-5), adjustments?, madeAt (journal de dégustation) |
+| IngredientSubstitution | id, ingredientId, substituteId, ratio (Float), notes? (suggestions de substitution) |
+| UserStreak | id, userId (unique), currentStreak, longestStreak, lastActiveDate?, streakFreezeAvailable (streaks d'activité) |
+| RecipeRevision | id, recipeId, version, data (Json snapshot), authorId, message? (historique des versions) |
+| NewsletterSubscription | id, userId (unique), email, active, unsubscribeToken (newsletter hebdomadaire) |
+| GlossaryEntry | id, term (unique), slug (unique), definition, longDescription?, category, relatedRecipeIds, relatedEntryIds (glossaire) |
+
 ### Enums
 `Role` (USER/ADMIN), `Plan` (FREE/PREMIUM), `RecipeStatus` (PUBLISHED/PENDING/DRAFT), `Difficulty` (EASY/MEDIUM/HARD), `NotificationType` (NEW_RECIPE/COMMENT_ON_RECIPE/RECIPE_APPROVED/NEW_FOLLOWER/NEW_BADGE), `ArticleStatus` (PUBLISHED/DRAFT)
 
@@ -175,9 +218,12 @@ cocktail-app/
 
 ## Routes API complètes
 
+Toutes les routes data sont montées sous `/api` (proxy Vite retire le préfixe `/api`).
+
 ```
 GET    /health
-POST   /upload                         image → /uploads/filename
+POST   /upload                         [auth] image → /uploads/filename
+POST   /upload/step/:recipeId          [auth] image étape → /uploads/recipes/{id}/steps/
 GET    /sitemap.xml                    Sitemap XML dynamique
 
 # Auth
@@ -186,14 +232,22 @@ POST   /auth/login                     { email, password }
 POST   /auth/logout                    [auth] invalidation refresh token
 POST   /auth/refresh                   { refreshToken } → rotation token family
 GET    /auth/me                        [auth]
+GET    /auth/verify-email              ?token= vérification email
+POST   /auth/resend-verification       [auth] renvoyer email de vérification
+POST   /auth/forgot-password           { email } → envoie email reset
+POST   /auth/reset-password            { token, password }
+PUT    /auth/change-password           [auth] { currentPassword, newPassword }
 
 # Recettes
 GET    /recipes                        [optionalAuth] ?page&limit&search&category&status&tags (cached)
-GET    /recipes/search                 (cached)
-GET    /recipes/daily                  [optionalAuth] cocktail du jour (cached 300s)
-GET    /recipes/seasonal               [optionalAuth] recettes de saison (cached)
+GET    /recipes/daily                  [optionalAuth] cocktail du jour (cache manuelle)
+GET    /recipes/seasonal               [optionalAuth] recettes de saison (cached 1h)
 GET    /recipes/recommended            [auth] recommandations basées sur le profil goût
+GET    /recipes/advent                 calendrier de l'avent — résumé (cached 1h)
+GET    /recipes/advent/:day            calendrier de l'avent — recette du jour (cached 1h)
 GET    /recipes/:id                    [optionalAuth] (cached) — inclut tags, variantes, parentRecipe
+GET    /recipes/:id/history            historique des versions de la recette
+GET    /recipes/:id/revisions/:version version spécifique d'une recette
 POST   /recipes                        [auth] → PENDING si USER, PUBLISHED si ADMIN
 PUT    /recipes/:id                    [auth] auteur ou admin
 DELETE /recipes/:id                    [auth] auteur ou admin (cascade complète)
@@ -205,12 +259,15 @@ GET    /recipes/:id/og-image           Génération image OG dynamique
 # Tags, Catégories, Ingrédients
 GET    /tags                           (cached 120s) — triés par popularité
 GET    /categories                     (cached 300s)
-GET    /ingredients                    Liste des ingrédients
-GET    /ingredients/search             ?q= recherche ingrédients
+GET    /ingredients                    (cached 120s) Liste des ingrédients
+GET    /ingredients/:id/substitutes    [optionalAuth] (cached 300s) substitutions possibles
+PATCH  /ingredients/:id               [admin] modifier un ingrédient
 
 # Collections
-GET    /collections                    [auth] mes collections (preview 4 recettes)
-GET    /collections/:id                collection publique ou propre
+GET    /collections/curated            collections curées par des experts (cached 1h)
+GET    /collections/curated/:id        [optionalAuth] détail collection curée (cached 300s)
+GET    /collections/me                 [auth] mes collections (preview 4 recettes)
+GET    /collections/:id                [optionalAuth] collection publique ou propre
 POST   /collections                    [auth] { name, description?, isPublic? } — max 20/user
 PUT    /collections/:id                [auth] propriétaire
 DELETE /collections/:id                [auth] propriétaire
@@ -230,7 +287,7 @@ DELETE /comments/:id                   [auth] auteur ou admin
 # Users & Social
 GET    /users/:id                      [optionalAuth]
 GET    /users/:id/recipes
-GET    /users/:id/stats                [optionalAuth] statistiques profil
+GET    /users/:id/stats                [optionalAuth] statistiques profil (cached 60s)
 GET    /users/:id/followers            [optionalAuth]
 GET    /users/:id/following            [optionalAuth]
 POST   /users/:id/follow               [auth]
@@ -279,6 +336,38 @@ PUT    /techniques/:slug               [admin] modifier technique
 GET    /push/vapid-key                 clé publique VAPID
 POST   /push/subscribe                 [auth] s'abonner push
 DELETE /push/subscribe                 [auth] se désabonner
+
+# Journal de dégustation
+POST   /tastings                       [auth] { recipeId, notes?, photoUrl?, personalRating?, adjustments? }
+GET    /tastings                       [auth] mes dégustations (paginé, cached 30s)
+GET    /tastings/stats                 [auth] statistiques dégustations (cached 60s)
+DELETE /tastings/:id                   [auth]
+
+# Liste de courses
+POST   /shopping-list                  [auth] { recipeIds, servingsMultiplier? } → liste consolidée
+
+# Leaderboard
+GET    /leaderboard                    [optionalAuth] classement communautaire (cached 1h)
+
+# Streaks
+GET    /streak                         [auth] streak d'activité de l'utilisateur
+
+# Menu imprimable
+POST   /menus/generate                 [auth] générer un menu cocktail
+
+# Glossaire
+GET    /glossary                       (cached 1h) liste des entrées
+GET    /glossary/:slug                 (cached 1h) entrée du glossaire
+POST   /glossary                       [admin] créer une entrée
+
+# Newsletter
+GET    /newsletter/status              [auth] statut d'abonnement
+POST   /newsletter/subscribe           [auth] s'abonner
+DELETE /newsletter/subscribe           [auth] se désabonner
+GET    /newsletter/unsubscribe/:token  désabonnement par lien email
+
+# Widget embeddable (hors /api — HTML direct)
+GET    /embed/recipes/:id              widget recette embeddable (cached 1h)
 
 # API publique v1 (rate limited, clé API optionnelle)
 GET    /api/v1/recipes                 100/min anon, 500/min avec clé
@@ -373,10 +462,34 @@ GET    /api-docs                       page documentation interactive
 - [x] Sélecteur de portions (PortionSelector)
 - [x] Statistiques profil utilisateur
 
-### P6 — Planifié
+### P6 — Engagement & Contenu avancé
+- [x] Vérification email + reset password + changement mot de passe
+- [x] Journal de dégustation personnel (TastingLog, MyTastings)
+- [x] Roulette à cocktails avec filtres (CocktailRoulette)
+- [x] Liste de courses multi-recettes consolidée (ShoppingList)
+- [x] Suggestions de substitution d'ingrédients (IngredientSubstitution)
+- [x] Calendrier de l'avent cocktails (AdventCalendar)
+- [x] Système de streaks d'activité (UserStreak)
+- [x] Comparaison de cocktails côte à côte (CompareCocktails)
+- [x] Leaderboard communautaire
+- [x] Landing pages SEO par catégorie et tag (CategoryPage, TagPage)
+- [x] Estimation du coût d'une recette
+- [x] Menu cocktail imprimable pour événements (MenuBuilder)
+- [x] Widget recette embeddable (/embed/recipes/:id)
+- [x] Glossaire et encyclopédie du cocktail (GlossaryEntry)
+- [x] Historique et versioning des recettes (RecipeRevision)
+- [x] Collections curées par des experts
+- [x] Newsletter hebdomadaire automatique (NewsletterSubscription)
+- [ ] Couverture tests à compléter
+
+### P7 — Planifié
 - [ ] Vision API pour identifier cocktails depuis une photo
-- [ ] Génération IA de recettes
+- [ ] Génération IA de recettes (Claude API)
+- [ ] Scan de bouteille pour ajout au bar virtuel
 - [ ] Annuaire de bars
+- [ ] Notifications temps réel via WebSocket
+- [ ] Mode déconnecté intelligent (PWA avancé)
+- [ ] Application mobile React Native
 
 ## Commandes utiles
 
@@ -419,9 +532,11 @@ psql -h localhost -U cocktail_user -d cocktails_db
 ## Points d'attention
 
 - **Routing frontend** : `/` → `LandingPage` (hero + découverte), `/recipes` → `RecipeList` (catalogue complet avec filtres). La search bar du header redirige vers `/recipes?q=xxx` depuis la landing, filtre en temps réel sur le catalogue.
+- **Montage des routes** : toutes les routes data sous `/api` via `apiRouter`, sauf `/embed/*` (HTML direct), `/api/v1/*`, `/api-docs`, `/sitemap.xml`
 - `GET /recipes` ne renvoie que `PUBLISHED` aux non-admins (filtre automatique dans le controller)
 - `deleteRecipe` supprime en cascade : collectionRecipes → recipeTag → comments → ratings → favorites → ingredients → steps → détache variantes → recipe
-- Images stockées dans `backend/uploads/`, exclues du git
+- Images stockées dans `backend/uploads/`, images d'étapes dans `uploads/recipes/{id}/steps/`, exclues du git
+- Upload : validation MIME type + magic bytes (JPEG/PNG/WebP/GIF uniquement, pas de SVG — vecteur XSS)
 - Proxy Vite : `/api/*` → `http://192.168.1.85:3000` (retire le préfixe `/api`)
 - Warning `pg DeprecationWarning` sur `client.query()` : vient de `@prisma/adapter-pg`, pas actionnable
 - Compte admin : felix.hennequin1@gmail.com / pseudo "felix"
@@ -429,6 +544,9 @@ psql -h localhost -U cocktail_user -d cocktails_db
 - Cocktail du jour : déterministe via `SHA-256(YYYY-MM-DD)` modulo nombre de recettes publiées, cache Redis jusqu'à minuit
 - Variantes : max 1 niveau (pas de variante de variante), `parentRecipeId` nullable
 - Collections : max 20/user, max 100 recettes/collection, isPublic par défaut true
-- Refresh tokens : rotation par famille, détection de réutilisation invalide toute la famille
+- Refresh tokens : rotation par famille, détection de réutilisation invalide toute la famille. Nettoyage périodique (24h) des tokens expirés via `setInterval`
 - Rate limiting API v1 : 100/min anonyme, 500/min avec clé API
+- Rate limiting auth : limiters dédiés sur login, register, refresh, forgot-password, resend-verification, change-password
 - Prerender : détection bot via User-Agent, injecte meta OG/Twitter/Schema.org
+- Arrêt gracieux du serveur : SIGTERM/SIGINT → fermeture HTTP, déconnexion Prisma + Redis, timeout 10s
+- Config plans : limites par plan définies dans `backend/src/config/plans.js`, middleware `plan-limits.js`

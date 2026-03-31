@@ -41,7 +41,7 @@ const getRecipeEmbed = async (req, res, next) => {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${escapeHtml(recipe.name)} — cocktail-app</title>
+  <title>${escapeHtml(recipe.name)} — Écume</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -81,7 +81,7 @@ const getRecipeEmbed = async (req, res, next) => {
       ` : ''}
     </div>
     <div class="footer">
-      <a href="${baseUrl}/recipes/${recipe.id}" target="_blank" rel="noopener">Voir sur cocktail-app.fr →</a>
+      <a href="${baseUrl}/recipes/${recipe.id}" target="_blank" rel="noopener">Voir sur Écume →</a>
     </div>
   </div>
 </body>

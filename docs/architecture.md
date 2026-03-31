@@ -1,4 +1,4 @@
-# Architecture — Cocktail App
+# Architecture — Écume
 
 ## Schéma des couches
 
