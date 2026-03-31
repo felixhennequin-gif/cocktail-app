@@ -3,6 +3,7 @@ const { getAllRecipes, getRecipeById, getSeasonalRecipes, createRecipe, updateRe
 const { getDailyRecipe } = require('../controllers/daily-controller');
 const { getAdventRecipe, getAdventSummary } = require('../controllers/advent-controller');
 const { getRecommendedRecipes } = require('../controllers/recommendation-controller');
+const { getRecipeHistory, getRevision } = require('../controllers/revision-controller');
 const { requireAuth, requireAdmin, optionalAuth } = require('../middleware/auth');
 const { cacheMiddleware } = require('../cache');
 
@@ -14,6 +15,8 @@ router.get('/seasonal',   optionalAuth, cacheMiddleware(3600), getSeasonalRecipe
 router.get('/recommended', requireAuth, getRecommendedRecipes);
 router.get('/advent',     cacheMiddleware(3600), getAdventSummary);
 router.get('/advent/:day', cacheMiddleware(3600), getAdventRecipe);
+router.get('/:id/history',           getRecipeHistory);
+router.get('/:id/revisions/:version', getRevision);
 router.get('/:id',        optionalAuth, getRecipeById);
 router.post('/',         requireAuth,  createRecipe);
 router.put('/:id',       requireAuth,  updateRecipe);

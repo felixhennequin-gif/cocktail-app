@@ -234,6 +234,49 @@ const updateRecipe = async (req, res, next) => {
       resolvedTagIds = await resolveTagNames(tagNames);
     }
 
+    // Sauvegarder une révision avant la mise à jour (versioning #229)
+    try {
+      const snapshot = await prisma.recipe.findUnique({
+        where: { id },
+        include: { ingredients: { include: { ingredient: true } }, steps: true, tags: { include: { tag: true } } },
+      });
+      if (snapshot) {
+        const lastRevision = await prisma.recipeRevision.findFirst({
+          where: { recipeId: id },
+          orderBy: { version: 'desc' },
+          select: { version: true },
+        });
+        const nextVersion = (lastRevision?.version || 0) + 1;
+        await prisma.recipeRevision.create({
+          data: {
+            recipeId: id,
+            version: nextVersion,
+            authorId: req.user.id,
+            message: req.body.revisionMessage || null,
+            data: {
+              name: snapshot.name,
+              description: snapshot.description,
+              difficulty: snapshot.difficulty,
+              prepTime: snapshot.prepTime,
+              servings: snapshot.servings,
+              categoryId: snapshot.categoryId,
+              season: snapshot.season,
+              ingredients: snapshot.ingredients.map((ri) => ({
+                name: ri.ingredient.name,
+                quantity: ri.quantity,
+                unit: ri.unit,
+              })),
+              steps: snapshot.steps.map((s) => ({ order: s.order, description: s.description })),
+              tags: snapshot.tags.map((rt) => rt.tag.name),
+            },
+          },
+        });
+      }
+    } catch (revErr) {
+      // Ne pas bloquer la mise à jour si le versioning échoue
+      logger.error('versioning', 'Erreur sauvegarde révision', { error: revErr.message });
+    }
+
     const recipe = await prisma.$transaction(async (tx) => {
       if (resolved !== undefined) {
         await tx.recipeIngredient.deleteMany({ where: { recipeId: id } });
