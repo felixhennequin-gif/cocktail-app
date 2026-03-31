@@ -12,6 +12,7 @@ import RecipeMeta from '../components/recipe/RecipeMeta'
 import RecipeIngredients from '../components/recipe/RecipeIngredients'
 import CommentSection from '../components/recipe/CommentSection'
 import StepTimer, { extractDuration } from '../components/recipe/StepTimer'
+import TastingModal from '../components/TastingModal'
 
 export default function RecipeDetail() {
   const { id }              = useParams()
@@ -30,6 +31,7 @@ export default function RecipeDetail() {
   const [commentScore, setCommentScore] = useState(null)
   const [portionCount, setPortionCount] = useState(1)
   const [collectionModalOpen, setCollectionModalOpen] = useState(false)
+  const [tastingModalOpen, setTastingModalOpen] = useState(false)
 
   // Chargement de la recette et des commentaires
   useEffect(() => {
@@ -125,6 +127,7 @@ export default function RecipeDetail() {
     recipe, avgRating, ratingsCount, isFavorited,
     onToggleFavorite: handleToggleFavorite,
     onAddToCollection: () => setCollectionModalOpen(true),
+    onLogTasting: () => setTastingModalOpen(true),
     portionCount, onPortionChange: setPortionCount, user,
   }
 
@@ -150,6 +153,12 @@ export default function RecipeDetail() {
         isOpen={collectionModalOpen}
         onClose={() => setCollectionModalOpen(false)}
         recipeId={id}
+      />
+      <TastingModal
+        recipeId={parseInt(id)}
+        recipeName={recipe?.name}
+        isOpen={tastingModalOpen}
+        onClose={() => setTastingModalOpen(false)}
       />
 
       <Link to="/recipes" className="text-sm text-gold-500 dark:text-gold-400 hover:underline mb-6 inline-block">

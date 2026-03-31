@@ -38,6 +38,7 @@ model User {
   apiKeys           ApiKey[]
   preferences       UserPreference?
   articles          Article[]
+  tastingLogs       TastingLog[]
 }
 
 model PushSubscription {
@@ -112,6 +113,7 @@ model Recipe {
   // Collections (Feature 2)
   collections    CollectionRecipe[]
   challengeEntries ChallengeEntry[]
+  tastingLogs      TastingLog[]
 
   @@index([categoryId])
   @@index([authorId])
@@ -332,6 +334,23 @@ model Technique {
   videoUrl    String?
   iconUrl     String?
   createdAt   DateTime @default(now())
+}
+
+model TastingLog {
+  id             Int      @id @default(autoincrement())
+  userId         Int
+  recipeId       Int
+  notes          String?
+  photoUrl       String?
+  personalRating Int?     // 1-5 — distinct de la note publique
+  adjustments    String?  // modifications perso
+  madeAt         DateTime @default(now())
+  createdAt      DateTime @default(now())
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe         Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@index([userId, madeAt])
+  @@index([recipeId])
 }
 
 model ApiKey {

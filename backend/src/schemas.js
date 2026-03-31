@@ -197,6 +197,17 @@ const preferencesSchema = z.object({
   excludedIngredients: z.array(z.number().int().positive()).optional(),
 });
 
+// --- Tasting Log ---
+
+const createTastingLogSchema = z.object({
+  recipeId:       z.coerce.number().int().positive('recipeId est requis'),
+  notes:          z.string().max(2000, 'Les notes ne doivent pas dépasser 2000 caractères').optional().nullable().transform(s => s?.trim() || null),
+  photoUrl:       z.string().optional().nullable(),
+  personalRating: z.coerce.number().int().min(1).max(5).optional().nullable(),
+  adjustments:    z.string().max(2000, 'Les ajustements ne doivent pas dépasser 2000 caractères').optional().nullable().transform(s => s?.trim() || null),
+  madeAt:         z.string().datetime().optional(),
+});
+
 // --- Rating ---
 
 const ratingSchema = z.object({
@@ -211,6 +222,7 @@ const formatZodError = (error) => {
 };
 
 module.exports = {
+  createTastingLogSchema,
   createRecipeSchema,
   updateRecipeSchema,
   createCommentSchema,

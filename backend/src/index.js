@@ -31,6 +31,7 @@ const apiKeyRoutes       = require('./routes/api-key-routes');
 const apiV1Routes        = require('./routes/api-v1-routes');
 const apiDocsRoutes      = require('./routes/api-docs-routes');
 const ingredientRoutes   = require('./routes/ingredient-routes');
+const tastingRoutes      = require('./routes/tasting-routes');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -188,6 +189,7 @@ apiRouter.use('/articles',     articleRoutes);
 apiRouter.use('/push',         pushRoutes);
 apiRouter.use('/api-keys',     apiKeyRoutes);
 apiRouter.use('/ingredients',  ingredientRoutes);
+apiRouter.use('/tastings',     tastingRoutes);
 
 // Export routes (PDF, OG image) — montées sous /api/recipes
 const recipeExportRoutes = require('./routes/recipe-export-routes');

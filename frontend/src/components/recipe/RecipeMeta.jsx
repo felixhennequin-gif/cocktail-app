@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import DifficultyBadge from '../DifficultyBadge'
 import PortionSelector from './PortionSelector'
 
-export default function RecipeMeta({ recipe, avgRating, ratingsCount, isFavorited, onToggleFavorite, onAddToCollection, portionCount, onPortionChange, user }) {
+export default function RecipeMeta({ recipe, avgRating, ratingsCount, isFavorited, onToggleFavorite, onAddToCollection, onLogTasting, portionCount, onPortionChange, user }) {
   const { t } = useTranslation()
 
   return (
@@ -29,6 +29,15 @@ export default function RecipeMeta({ recipe, avgRating, ratingsCount, isFavorite
               title={t('collections.addRecipe')}
             >
               +
+            </button>
+          )}
+          {user && onLogTasting && (
+            <button
+              onClick={onLogTasting}
+              className="text-xs px-2.5 py-1 rounded-full border border-green-300 dark:border-green-700 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors font-medium"
+              title={t('tastings.logButton')}
+            >
+              {t('tastings.iMadeThis')}
             </button>
           )}
           <a

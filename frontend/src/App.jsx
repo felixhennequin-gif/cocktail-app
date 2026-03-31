@@ -46,6 +46,7 @@ const lazyImports = {
   ResetPassword:      () => import('./pages/ResetPassword'),
   CocktailRoulette:   () => import('./pages/CocktailRoulette'),
   CompareCocktails:   () => import('./pages/CompareCocktails'),
+  MyTastings:         () => import('./pages/MyTastings'),
 }
 
 const RecipeDetail     = lazy(lazyImports.RecipeDetail)
@@ -73,6 +74,7 @@ const ForgotPassword   = lazy(lazyImports.ForgotPassword)
 const ResetPassword    = lazy(lazyImports.ResetPassword)
 const CocktailRoulette = lazy(lazyImports.CocktailRoulette)
 const CompareCocktails = lazy(lazyImports.CompareCocktails)
+const MyTastings       = lazy(lazyImports.MyTastings)
 
 // Préchargement des pages au survol des liens
 export const preload = (page) => { lazyImports[page]?.() }
@@ -267,6 +269,7 @@ export default function App() {
             <Route path="/techniques"               element={<TechniquesPage />} />
             <Route path="/blog"                    element={<BlogList />} />
             <Route path="/blog/:slug"              element={<BlogArticle />} />
+            <Route path="/my-tastings"               element={<ProtectedRoute><MyTastings /></ProtectedRoute>} />
             <Route path="/roulette"                 element={<CocktailRoulette />} />
             <Route path="/compare"                  element={<CompareCocktails />} />
             <Route path="/quiz"                    element={<CocktailQuiz />} />

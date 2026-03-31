@@ -23,6 +23,10 @@ const conditionCounters = {
   followers_count: (userId) =>
     prisma.follow.count({ where: { followingId: userId } }),
 
+  // Nombre de cocktails réalisés (journal de dégustation)
+  tastings_logged: (userId) =>
+    prisma.tastingLog.count({ where: { userId } }),
+
   // Nombre total de favoris reçus sur les recettes de l'utilisateur
   favorites_received: async (userId) => {
     const result = await prisma.favorite.count({
