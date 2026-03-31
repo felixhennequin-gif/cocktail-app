@@ -5,13 +5,19 @@ import { getImageUrl } from '../utils/image'
 import DifficultyBadge from './DifficultyBadge'
 import Stars from './Stars'
 
-function RecipeCardGrid({ recipe, isFavorited, onToggleFavorite, userId }) {
+function RecipeCardGrid({ recipe, isFavorited, onToggleFavorite, userId, compareSelected, onToggleCompare }) {
   const { t } = useTranslation()
 
   const handleFavorite = (e) => {
     e.preventDefault()
     e.stopPropagation()
     if (onToggleFavorite) onToggleFavorite(recipe.id)
+  }
+
+  const handleCompare = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (onToggleCompare) onToggleCompare(recipe.id)
   }
 
   return (
@@ -32,6 +38,17 @@ function RecipeCardGrid({ recipe, isFavorited, onToggleFavorite, userId }) {
         <div className="absolute top-2 left-2">
           <DifficultyBadge difficulty={recipe.difficulty} />
         </div>
+        {/* Comparer en overlay */}
+        {onToggleCompare && (
+          <button
+            onClick={handleCompare}
+            className={`absolute bottom-2 right-2 w-7 h-7 flex items-center justify-center rounded-full text-xs font-bold transition-colors drop-shadow ${compareSelected ? 'bg-gold-400 text-ink-900' : 'bg-black/40 text-white/80 hover:bg-gold-400 hover:text-ink-900'}`}
+            aria-label={t('compare.toggle')}
+            title={t('compare.toggle')}
+          >
+            ⇄
+          </button>
+        )}
         {/* Favori en overlay */}
         {userId && (
           <button

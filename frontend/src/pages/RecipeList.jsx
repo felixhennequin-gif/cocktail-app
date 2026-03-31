@@ -7,6 +7,8 @@ import RecipeCardGrid from '../components/RecipeCardGrid'
 import { SkeletonCard, SkeletonCardGrid } from '../components/Skeleton'
 import { useAuth } from '../contexts/AuthContext'
 import useFavorites from '../hooks/useFavorites'
+import useCompare from '../hooks/useCompare'
+import CompareBar from '../components/CompareBar'
 
 const LIMIT = 12
 
@@ -14,6 +16,7 @@ export default function RecipeList() {
   const { user }                           = useAuth()
   const { t }                             = useTranslation()
   const { favoriteIds, toggleFavorite }   = useFavorites()
+  const { toggle: toggleCompare, isSelected: isCompareSelected } = useCompare()
   const [searchParams, setSearchParams]   = useSearchParams()
 
   // L'URL est la source de vérité pour les filtres
@@ -472,6 +475,8 @@ export default function RecipeList() {
                   isFavorited={favoriteIds.has(recipe.id)}
                   onToggleFavorite={toggleFavorite}
                   userId={user?.id}
+                  compareSelected={isCompareSelected(recipe.id)}
+                  onToggleCompare={toggleCompare}
                 />
               ) : (
                 <RecipeCard
@@ -516,6 +521,8 @@ export default function RecipeList() {
           {t('recipes.totalCount', { count: total })}
         </p>
       )}
+
+      <CompareBar />
     </div>
   )
 }
