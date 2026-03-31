@@ -36,6 +36,7 @@ const shoppingListRoutes = require('./routes/shopping-list-routes');
 const leaderboardRoutes  = require('./routes/leaderboard-routes');
 const streakRoutes       = require('./routes/streak-routes');
 const menuRoutes         = require('./routes/menu-routes');
+const glossaryRoutes     = require('./routes/glossary-routes');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -198,6 +199,7 @@ apiRouter.use('/shopping-list', shoppingListRoutes);
 apiRouter.use('/leaderboard',  leaderboardRoutes);
 apiRouter.use('/streak',       streakRoutes);
 apiRouter.use('/menus',        menuRoutes);
+apiRouter.use('/glossary',     glossaryRoutes);
 
 // Export routes (PDF, OG image) — montées sous /api/recipes
 const recipeExportRoutes = require('./routes/recipe-export-routes');
