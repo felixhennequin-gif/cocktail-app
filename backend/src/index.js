@@ -52,8 +52,8 @@ app.use(helmet({
       scriptSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
-      imgSrc: ["'self'", "data:", "https://placehold.co", "https://*.thecocktaildb.com"],
-      connectSrc: ["'self'"],
+      imgSrc: ["'self'", "data:", "https://placehold.co", "https://*.thecocktaildb.com", "https://cocktail-app.fr"],
+      connectSrc: ["'self'", "https://cocktail-app.fr"],
     },
   },
 }));
@@ -72,8 +72,12 @@ app.use(generalLimiter);
 const uploadsDir = path.join(__dirname, '..', 'uploads');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 app.use('/uploads', express.static(uploadsDir, {
+  maxAge: '7d',
+  etag: true,
+  lastModified: true,
   setHeaders: (res) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Cache-Control', 'public, max-age=604800, immutable');
   },
 }));
 
