@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 50" fill="none">
+  <text
+    x="0" y="36"
+    style="font-family: 'Cormorant Garamond', Georgia, serif; font-size: 36px; font-weight: 500; fill: #eef0f4; letter-spacing: 2.8px;"
+  >Écume</text>
+  <!-- Primary star -->
+  <path d="M154,18 L155.8,8 L157.6,18 L165,20.5 L157.6,23 L155.8,33 L154,23 L146.6,20.5 Z" fill="#D4A852" opacity="0.85"/>
+  <!-- Accent star -->
+  <path d="M172,4 L173,0 L174,4 L178,5.5 L174,7 L173,11 L172,7 L168,5.5 Z" fill="#D4A852" opacity="0.42"/>
+</svg>

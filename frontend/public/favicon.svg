@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <rect width="32" height="32" rx="7" fill="#1a1f2e"/>
+  <text
+    x="3.5" y="25"
+    style="font-family: 'Cormorant Garamond', Georgia, serif; font-size: 23px; font-weight: 600; fill: #eef0f4;"
+  >É</text>
+  <path d="M22,5 L23,1 L24,5 L28,6.5 L24,8 L23,12 L22,8 L18,6.5 Z" fill="#D4A852" opacity="0.85"/>
+</svg>
