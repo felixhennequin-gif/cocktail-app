@@ -2,6 +2,7 @@ const prisma = require('../prisma');
 const { parseId, badRequest, notFound } = require('../helpers');
 const { createTastingLogSchema, formatZodError } = require('../schemas');
 const { checkAndAwardBadges } = require('../services/badge-service');
+const { recordActivity } = require('../services/streak-service');
 
 // POST /tastings — créer une entrée de dégustation
 const createTasting = async (req, res, next) => {
@@ -34,6 +35,7 @@ const createTasting = async (req, res, next) => {
 
     // Vérification des badges (fire and forget)
     checkAndAwardBadges(req.user.id).catch(() => {});
+    recordActivity(req.user.id).catch(() => {});
 
     res.status(201).json(tasting);
   } catch (err) {

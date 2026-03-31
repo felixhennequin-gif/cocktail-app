@@ -2,6 +2,7 @@ const prisma = require('../prisma');
 const { parseId, badRequest, notFound } = require('../helpers');
 const { ratingSchema, formatZodError } = require('../schemas');
 const { checkAndAwardBadges } = require('../services/badge-service');
+const { recordActivity } = require('../services/streak-service');
 
 // POST /ratings/:recipeId — upsert (crée ou met à jour la note de l'user)
 const upsertRating = async (req, res, next) => {
@@ -40,6 +41,7 @@ const upsertRating = async (req, res, next) => {
 
   // Vérifier les badges liés aux notes — fire and forget
   checkAndAwardBadges(userId).catch(console.error);
+  recordActivity(userId).catch(() => {});
   // Vérifier aussi les badges "favoris reçus" pour l'auteur de la recette
   if (recipe.authorId && recipe.authorId !== userId) {
     checkAndAwardBadges(recipe.authorId).catch(console.error);

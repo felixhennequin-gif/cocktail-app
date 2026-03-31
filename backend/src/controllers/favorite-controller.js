@@ -2,6 +2,7 @@ const prisma = require('../prisma');
 const { parseId, badRequest, notFound } = require('../helpers');
 const { enrichRecipes } = require('../helpers/recipe-helpers');
 const { checkAndAwardBadges } = require('../services/badge-service');
+const { recordActivity } = require('../services/streak-service');
 
 // POST /favorites/:recipeId — ajouter (idempotent)
 const addFavorite = async (req, res, next) => {
@@ -25,6 +26,7 @@ const addFavorite = async (req, res, next) => {
     if (recipe.authorId) {
       checkAndAwardBadges(recipe.authorId).catch(console.error);
     }
+    recordActivity(req.user.id).catch(() => {});
   } catch (err) {
     next(err);
   }
