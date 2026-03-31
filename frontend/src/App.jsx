@@ -48,6 +48,8 @@ const lazyImports = {
   CompareCocktails:   () => import('./pages/CompareCocktails'),
   MyTastings:         () => import('./pages/MyTastings'),
   ShoppingList:       () => import('./pages/ShoppingList'),
+  CategoryPage:       () => import('./pages/CategoryPage'),
+  TagPage:            () => import('./pages/TagPage'),
 }
 
 const RecipeDetail     = lazy(lazyImports.RecipeDetail)
@@ -77,6 +79,8 @@ const CocktailRoulette = lazy(lazyImports.CocktailRoulette)
 const CompareCocktails = lazy(lazyImports.CompareCocktails)
 const MyTastings       = lazy(lazyImports.MyTastings)
 const ShoppingList     = lazy(lazyImports.ShoppingList)
+const CategoryPage     = lazy(lazyImports.CategoryPage)
+const TagPage          = lazy(lazyImports.TagPage)
 
 // Préchargement des pages au survol des liens
 export const preload = (page) => { lazyImports[page]?.() }
@@ -248,6 +252,8 @@ export default function App() {
           <Routes>
             <Route path="/"                        element={<LandingPage />} />
             <Route path="/recipes"                  element={<RecipeList />} />
+            <Route path="/categories/:slug"          element={<CategoryPage />} />
+            <Route path="/tags/:name"                element={<TagPage />} />
             <Route path="/feed"                    element={<ProtectedRoute><Feed /></ProtectedRoute>} />
             <Route path="/recipes/new"             element={<ProtectedRoute><RecipeSubmit /></ProtectedRoute>} />
             <Route path="/recipes/:id/edit"        element={<ProtectedRoute><RecipeSubmit /></ProtectedRoute>} />

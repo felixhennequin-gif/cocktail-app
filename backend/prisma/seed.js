@@ -18,7 +18,8 @@ async function seed() {
   // Créer toutes les catégories et les indexer par nom
   const categoryMap = {};
   for (const name of data.categories) {
-    const category = await prisma.category.create({ data: { name } });
+    const slug = name.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9 -]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-');
+    const category = await prisma.category.create({ data: { name, slug } });
     categoryMap[name] = category.id;
   }
 

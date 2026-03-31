@@ -126,7 +126,7 @@ describe('DELETE /api/recipes/:id — suppression en cascade', () => {
 
   it('l\'auteur peut supprimer sa propre recette', async () => {
     // Créer une recette par Alice
-    const category2 = await prisma.category.create({ data: { name: 'TestCatDel' } });
+    const category2 = await prisma.category.create({ data: { name: 'TestCatDel', slug: 'testcatdel' } });
     const adminRecipe = await request(app)
       .post('/api/recipes')
       .set(getAuthHeader(adminToken))

@@ -43,4 +43,46 @@ const resolveTagNames = async (tagNames) => {
   return tags.map((t) => t.id);
 };
 
-module.exports = { getAllTags, resolveTagNames, normalizeTagName };
+// GET /tags/:name — détail tag avec nombre de recettes et catégories associées
+const getTagByName = async (req, res, next) => {
+  try {
+    const name = normalizeTagName(req.params.name);
+
+    const tag = await prisma.tag.findUnique({
+      where: { name },
+    });
+
+    if (!tag) {
+      return res.status(404).json({ error: 'Tag non trouvé' });
+    }
+
+    // Compter les recettes publiées avec ce tag
+    const recipesCount = await prisma.recipeTag.count({
+      where: {
+        tagId: tag.id,
+        recipe: { status: 'PUBLISHED' },
+      },
+    });
+
+    // Catégories associées à ce tag (avec nombre de recettes)
+    const relatedCategories = await prisma.$queryRaw`
+      SELECT c.id, c.name, c.slug, COUNT(*)::int AS "recipesCount"
+      FROM "Category" c
+      JOIN "Recipe" r ON r."categoryId" = c.id
+      JOIN "RecipeTag" rt ON rt."recipeId" = r.id
+      WHERE rt."tagId" = ${tag.id} AND r.status = 'PUBLISHED'
+      GROUP BY c.id, c.name, c.slug
+      ORDER BY COUNT(*) DESC
+    `;
+
+    res.json({
+      ...tag,
+      recipesCount,
+      relatedCategories,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { getAllTags, getTagByName, resolveTagNames, normalizeTagName };

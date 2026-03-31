@@ -34,11 +34,19 @@ const createTestUser = async ({ pseudo, email, password = 'test1234', role = 'US
   return { user, token };
 };
 
+// Génère un slug à partir d'un nom
+const slugify = (name) =>
+  name.trim().toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9 -]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-');
+
 // Crée ou récupère une catégorie de test
 const createTestCategory = async (name = 'Cocktails') => {
   return prisma.category.upsert({
     where:  { name },
-    create: { name },
+    create: { name, slug: slugify(name) },
     update: {},
   });
 };

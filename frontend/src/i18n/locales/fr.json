@@ -474,7 +474,32 @@
   },
   "landing": {
     "popularTitle": "Recettes populaires",
-    "seeAllRecipes": "Voir les {{count}}+ recettes"
+    "seeAllRecipes": "Voir les {{count}}+ recettes",
+    "exploreByCategory": "Explorer par catégorie",
+    "exploreByCategorySubtitle": "Trouvez l'inspiration selon vos envies",
+    "recipesCount_one": "{{count}} recette",
+    "recipesCount_other": "{{count}} recettes",
+    "popularTags": "Tags populaires",
+    "popularTagsSubtitle": "Les tendances du moment",
+    "seeAll": "Voir tout"
+  },
+  "categoryPage": {
+    "title": "Cocktails {{category}}",
+    "description": "Découvrez nos {{count}} recettes de cocktails {{category}}. Filtrez, notez et partagez vos cocktails préférés.",
+    "popularTags": "Tags populaires dans cette catégorie",
+    "allRecipes": "Toutes les recettes {{category}}",
+    "noRecipes": "Aucune recette dans cette catégorie pour le moment.",
+    "breadcrumbHome": "Accueil",
+    "breadcrumbCategories": "Catégories"
+  },
+  "tagPage": {
+    "title": "Cocktails {{tag}}",
+    "description": "Découvrez nos {{count}} recettes de cocktails {{tag}}. Filtrez, notez et partagez vos cocktails préférés.",
+    "relatedCategories": "Catégories associées",
+    "allRecipes": "Toutes les recettes {{tag}}",
+    "noRecipes": "Aucune recette avec ce tag pour le moment.",
+    "breadcrumbHome": "Accueil",
+    "breadcrumbTags": "Tags"
   },
   "blog": {
     "title": "Blog Mixologie",

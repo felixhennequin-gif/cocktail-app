@@ -327,9 +327,10 @@ async function seedRecipes(cocktails) {
   const categoryNames = [...new Set(cocktails.map(c => c.categoryName))];
   const categoryMap = {};
   for (const name of categoryNames) {
+    const slug = name.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9 -]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-');
     const cat = await prisma.category.upsert({
       where: { name },
-      create: { name },
+      create: { name, slug },
       update: {},
     });
     categoryMap[name] = cat.id;

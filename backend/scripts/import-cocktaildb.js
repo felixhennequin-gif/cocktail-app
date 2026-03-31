@@ -143,10 +143,11 @@ async function importAll() {
         const categoryName = drink.strCategory?.trim() || 'Other / Unknown';
         let categoryId = categoryCache.get(categoryName);
         if (!categoryId) {
+          const slug = categoryName.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9 -]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-');
           const category = await prisma.category.upsert({
             where: { name: categoryName },
             update: {},
-            create: { name: categoryName },
+            create: { name: categoryName, slug },
           });
           categoryId = category.id;
           categoryCache.set(categoryName, categoryId);

@@ -146,7 +146,7 @@ describe('PUT /api/notifications/read-all', () => {
 
 describe('Création automatique de notifications', () => {
   it('crée une notification COMMENT_ON_RECIPE lors d\'un commentaire sur une recette', async () => {
-    const category = await require('../src/prisma').category.create({ data: { name: 'TestCat' } });
+    const category = await require('../src/prisma').category.create({ data: { name: 'TestCat', slug: 'testcat' } });
     // Alice crée une recette, Bob la commente
     const recipe = await createTestRecipe({ authorId: alice.id, categoryId: category.id });
 

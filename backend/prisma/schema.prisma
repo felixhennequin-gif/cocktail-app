@@ -121,9 +121,11 @@ model Recipe {
 }
 
 model Category {
-  id      Int      @id @default(autoincrement())
-  name    String   @unique
-  recipes Recipe[]
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  recipes     Recipe[]
 }
 
 model Ingredient {

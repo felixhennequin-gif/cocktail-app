@@ -977,9 +977,10 @@ async function main() {
   console.log('📂 Création des catégories...');
   const categoryMap = {};
   for (const name of CATEGORIES) {
+    const slug = name.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9 -]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-');
     const cat = await prisma.category.upsert({
       where: { name },
-      create: { name },
+      create: { name, slug },
       update: {},
     });
     categoryMap[name] = cat.id;

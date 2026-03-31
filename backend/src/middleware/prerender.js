@@ -187,6 +187,83 @@ async function prerenderMiddleware(req, res, next) {
       }));
     }
 
+    // Page catégorie : /categories/:slug
+    const catMatch = req.path.match(/^\/categories\/([^/]+)$/);
+    if (catMatch) {
+      const slug = decodeURIComponent(catMatch[1]);
+      const category = await prisma.category.findUnique({ where: { slug } });
+      if (category) {
+        const recipesCount = await prisma.recipe.count({
+          where: { categoryId: category.id, status: 'PUBLISHED' },
+        });
+        const title = `Cocktails ${category.name} — Cocktail App`;
+        const description = category.description
+          || `Découvrez nos ${recipesCount} recettes de cocktails ${category.name}. Filtrez, notez et partagez vos cocktails préférés.`;
+        const breadcrumbJsonLd = JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Accueil', item: siteUrl },
+            { '@type': 'ListItem', position: 2, name: 'Catégories', item: `${siteUrl}/recipes` },
+            { '@type': 'ListItem', position: 3, name: category.name, item: `${siteUrl}/categories/${category.slug}` },
+          ],
+        });
+        const collectionJsonLd = JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'CollectionPage',
+          name: title,
+          description,
+          url: `${siteUrl}/categories/${category.slug}`,
+          numberOfItems: recipesCount,
+        });
+        const combinedJsonLd = `${breadcrumbJsonLd}</script>\n  <script type="application/ld+json">${collectionJsonLd}`;
+        return res.send(renderMetaPage({
+          title,
+          description: description.substring(0, 160),
+          url: fullUrl,
+          jsonLd: combinedJsonLd,
+        }));
+      }
+    }
+
+    // Page tag : /tags/:name
+    const tagMatch = req.path.match(/^\/tags\/([^/]+)$/);
+    if (tagMatch) {
+      const tagName = decodeURIComponent(tagMatch[1]).trim().toLowerCase();
+      const tag = await prisma.tag.findUnique({ where: { name: tagName } });
+      if (tag) {
+        const recipesCount = await prisma.recipeTag.count({
+          where: { tagId: tag.id, recipe: { status: 'PUBLISHED' } },
+        });
+        const title = `Cocktails ${tag.name} — Cocktail App`;
+        const description = `Découvrez nos ${recipesCount} recettes de cocktails ${tag.name}. Filtrez, notez et partagez vos cocktails préférés.`;
+        const breadcrumbJsonLd = JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Accueil', item: siteUrl },
+            { '@type': 'ListItem', position: 2, name: 'Tags', item: `${siteUrl}/recipes` },
+            { '@type': 'ListItem', position: 3, name: tag.name, item: `${siteUrl}/tags/${encodeURIComponent(tag.name)}` },
+          ],
+        });
+        const collectionJsonLd = JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'CollectionPage',
+          name: title,
+          description,
+          url: `${siteUrl}/tags/${encodeURIComponent(tag.name)}`,
+          numberOfItems: recipesCount,
+        });
+        const combinedJsonLd = `${breadcrumbJsonLd}</script>\n  <script type="application/ld+json">${collectionJsonLd}`;
+        return res.send(renderMetaPage({
+          title,
+          description: description.substring(0, 160),
+          url: fullUrl,
+          jsonLd: combinedJsonLd,
+        }));
+      }
+    }
+
     // Catalogue recettes — avec support catégorie et tag
     if (req.path === '/recipes') {
       const categoryParam = req.query.category || req.query.categoryId;

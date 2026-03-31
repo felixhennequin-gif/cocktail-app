@@ -30,10 +30,10 @@ router.get('/sitemap.xml', async (req, res) => {
         select: { id: true, createdAt: true },
       }),
       prisma.category.findMany({
-        select: { id: true },
+        select: { id: true, slug: true },
       }),
       prisma.tag.findMany({
-        select: { id: true },
+        select: { id: true, name: true },
       }),
     ]);
 
@@ -51,14 +51,14 @@ router.get('/sitemap.xml', async (req, res) => {
       urls += url(`${SITE_URL}/recipes/${r.id}`, lastmod, 'weekly', '0.8');
     }
 
-    // Catégories (page catalogue filtrée)
+    // Pages catégories SEO
     for (const c of categories) {
-      urls += url(`${SITE_URL}/recipes?category=${c.id}`, now, 'weekly', '0.6');
+      urls += url(`${SITE_URL}/categories/${c.slug}`, now, 'weekly', '0.7');
     }
 
-    // Tags (page catalogue filtrée par tag)
+    // Pages tags SEO
     for (const t of tags) {
-      urls += url(`${SITE_URL}/recipes?tags=${t.id}`, now, 'weekly', '0.5');
+      urls += url(`${SITE_URL}/tags/${encodeURIComponent(t.name)}`, now, 'weekly', '0.7');
     }
 
     // Profils utilisateurs

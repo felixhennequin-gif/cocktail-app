@@ -19,7 +19,8 @@ export default function LandingPage() {
   const [recommendedRecipes, setRecommendedRecipes] = useState([])
   const [currentSeason, setCurrentSeason] = useState(null)
   const [totalRecipes, setTotalRecipes] = useState(0)
-  const [categoryCount, setCategoryCount] = useState(0)
+  const [categories, setCategories] = useState([])
+  const [tags, setTags] = useState([])
   const [currentChallenge, setCurrentChallenge] = useState(null)
   const [loading, setLoading] = useState(true)
 
@@ -30,20 +31,22 @@ export default function LandingPage() {
       fetch('/api/categories').then((r) => r.ok ? r.json() : []),
       fetch('/api/recipes/seasonal?limit=4').then((r) => r.ok ? r.json() : { data: [], season: null }),
       fetch('/api/challenges/current').then((r) => r.ok ? r.json() : null),
+      fetch('/api/tags').then((r) => r.ok ? r.json() : []),
     ]
 
-    Promise.allSettled(publicFetches).then(([dailyResult, recipesResult, categoriesResult, seasonalResult, challengeResult]) => {
+    Promise.allSettled(publicFetches).then(([dailyResult, recipesResult, categoriesResult, seasonalResult, challengeResult, tagsResult]) => {
       if (dailyResult.status === 'fulfilled') setDailyRecipe(dailyResult.value)
       if (recipesResult.status === 'fulfilled') {
         setPopularRecipes(recipesResult.value.data ?? [])
         setTotalRecipes(recipesResult.value.total ?? 0)
       }
-      if (categoriesResult.status === 'fulfilled') setCategoryCount(categoriesResult.value.length)
+      if (categoriesResult.status === 'fulfilled') setCategories(categoriesResult.value)
       if (seasonalResult.status === 'fulfilled') {
         setSeasonalRecipes(seasonalResult.value.data ?? [])
         setCurrentSeason(seasonalResult.value.season ?? null)
       }
       if (challengeResult.status === 'fulfilled') setCurrentChallenge(challengeResult.value)
+      if (tagsResult.status === 'fulfilled') setTags(tagsResult.value)
     }).finally(() => setLoading(false))
   }, [])
 
@@ -88,9 +91,9 @@ export default function LandingPage() {
         <p className="text-base sm:text-lg text-gray-500 dark:text-gray-400 max-w-lg mx-auto mb-4">
           {t('recipes.heroSubtitle')}
         </p>
-        {totalRecipes > 0 && categoryCount > 0 && (
+        {totalRecipes > 0 && categories.length > 0 && (
           <p className="text-sm text-gray-400 dark:text-gray-500 mb-8">
-            {t('recipes.heroSocialProof', { recipes: totalRecipes, categories: categoryCount })}
+            {t('recipes.heroSocialProof', { recipes: totalRecipes, categories: categories.length })}
           </p>
         )}
         <div className="flex justify-center gap-3">
@@ -200,6 +203,76 @@ export default function LandingPage() {
             </div>
           </div>
         </Link>
+      )}
+
+      {/* Explorer par catégorie */}
+      {categories.length > 0 && (
+        <section className="mb-12">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-2xl font-serif font-medium text-gray-900 dark:text-gray-100">
+              {t('landing.exploreByCategory')}
+            </h2>
+            <Link
+              to="/recipes"
+              className="text-sm text-gold-500 hover:text-gold-600 dark:text-gold-400 dark:hover:text-gold-300 transition-colors"
+            >
+              {t('landing.seeAll')} &rarr;
+            </Link>
+          </div>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+            {t('landing.exploreByCategorySubtitle')}
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {categories.map((cat) => (
+              <Link
+                key={cat.id}
+                to={`/categories/${cat.slug}`}
+                className="group relative rounded-xl overflow-hidden bg-gradient-to-br from-gold-100 to-gold-50 dark:from-ink-800 dark:to-ink-900 border border-gold-200 dark:border-gold-700/30 p-5 hover:shadow-lg hover:border-gold-300 dark:hover:border-gold-600 transition-all"
+              >
+                <h3 className="text-lg font-serif font-medium text-gray-900 dark:text-gray-100 mb-1 group-hover:text-gold-600 dark:group-hover:text-gold-400 transition-colors">
+                  {cat.name}
+                </h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {t('landing.recipesCount', { count: cat.recipesCount ?? 0 })}
+                </p>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Tags populaires — nuage de tags */}
+      {tags.length > 0 && (
+        <section className="mb-12">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-2xl font-serif font-medium text-gray-900 dark:text-gray-100">
+              {t('landing.popularTags')}
+            </h2>
+          </div>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+            {t('landing.popularTagsSubtitle')}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {tags.filter((tag) => tag.recipesCount > 0).slice(0, 20).map((tag) => {
+              // Taille proportionnelle au nombre de recettes
+              const maxCount = Math.max(...tags.map((t2) => t2.recipesCount || 0), 1)
+              const ratio = (tag.recipesCount || 0) / maxCount
+              const sizeClass = ratio > 0.7 ? 'text-base px-4 py-1.5'
+                : ratio > 0.4 ? 'text-sm px-3 py-1'
+                : 'text-xs px-2.5 py-0.5'
+              return (
+                <Link
+                  key={tag.id}
+                  to={`/tags/${encodeURIComponent(tag.name)}`}
+                  className={`${sizeClass} rounded-full font-medium bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-gold-300 dark:hover:border-gold-500 hover:text-gold-600 dark:hover:text-gold-400 transition-colors`}
+                >
+                  {tag.name}
+                  <span className="ml-1 opacity-50">{tag.recipesCount}</span>
+                </Link>
+              )
+            })}
+          </div>
+        </section>
       )}
 
       {/* Recommandations personnalisées — visible uniquement pour les utilisateurs connectés */}
