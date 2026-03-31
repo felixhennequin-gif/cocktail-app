@@ -600,6 +600,23 @@
     "denied": "Notifications bloquées par le navigateur",
     "unsupported": "Notifications push non supportées"
   },
+  "roulette": {
+    "title": "Roulette à cocktails",
+    "subtitle": "Pas d'idée ? Laissez le hasard choisir pour vous !",
+    "spin": "Tourner la roue",
+    "spinAgain": "Tourner à nouveau",
+    "spinning": "La roue tourne...",
+    "yourCocktail": "La roue a parlé !",
+    "seeRecipe": "Voir la recette",
+    "partyMode": "Mode soirée",
+    "noRecipes": "Aucune recette trouvée avec ces filtres.",
+    "error": "Erreur lors du chargement des recettes.",
+    "allDifficulties": "Toutes difficultés",
+    "allCategories": "Toutes catégories",
+    "allSeasons": "Toutes saisons",
+    "onlyMyBar": "Mon bar uniquement",
+    "landingCta": "Tenter la roulette"
+  },
   "premium": {
     "title": "Premium",
     "hero": "Débloquez l'expérience complète",

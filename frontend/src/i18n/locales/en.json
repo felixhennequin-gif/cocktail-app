@@ -600,6 +600,23 @@
     "denied": "Notifications blocked by browser",
     "unsupported": "Push notifications not supported"
   },
+  "roulette": {
+    "title": "Cocktail Roulette",
+    "subtitle": "Can't decide? Let the wheel choose for you!",
+    "spin": "Spin the wheel",
+    "spinAgain": "Spin again",
+    "spinning": "Spinning...",
+    "yourCocktail": "The wheel has spoken!",
+    "seeRecipe": "See the recipe",
+    "partyMode": "Party mode",
+    "noRecipes": "No recipes found with these filters.",
+    "error": "Error loading recipes.",
+    "allDifficulties": "All difficulties",
+    "allCategories": "All categories",
+    "allSeasons": "All seasons",
+    "onlyMyBar": "My bar only",
+    "landingCta": "Try the roulette"
+  },
   "premium": {
     "title": "Premium",
     "hero": "Unlock the full experience",

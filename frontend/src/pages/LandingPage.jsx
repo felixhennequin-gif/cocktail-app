@@ -100,6 +100,12 @@ export default function LandingPage() {
           >
             {t('recipes.heroCta')}
           </Link>
+          <Link
+            to="/roulette"
+            className="px-6 py-2.5 border border-gold-300 dark:border-gold-600 text-gold-600 dark:text-gold-400 rounded-xl font-medium text-sm hover:bg-gold-50 dark:hover:bg-ink-800 transition-colors"
+          >
+            {t('roulette.landingCta')}
+          </Link>
           {!user && (
             <Link
               to="/register"

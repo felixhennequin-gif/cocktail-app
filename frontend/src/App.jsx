@@ -43,7 +43,8 @@ const lazyImports = {
   CocktailQuiz:     () => import('./pages/CocktailQuiz'),
   VerifyEmail:      () => import('./pages/VerifyEmail'),
   ForgotPassword:   () => import('./pages/ForgotPassword'),
-  ResetPassword:    () => import('./pages/ResetPassword'),
+  ResetPassword:      () => import('./pages/ResetPassword'),
+  CocktailRoulette:   () => import('./pages/CocktailRoulette'),
 }
 
 const RecipeDetail     = lazy(lazyImports.RecipeDetail)
@@ -69,6 +70,7 @@ const CocktailQuiz     = lazy(lazyImports.CocktailQuiz)
 const VerifyEmail      = lazy(lazyImports.VerifyEmail)
 const ForgotPassword   = lazy(lazyImports.ForgotPassword)
 const ResetPassword    = lazy(lazyImports.ResetPassword)
+const CocktailRoulette = lazy(lazyImports.CocktailRoulette)
 
 // Préchargement des pages au survol des liens
 export const preload = (page) => { lazyImports[page]?.() }
@@ -263,6 +265,7 @@ export default function App() {
             <Route path="/techniques"               element={<TechniquesPage />} />
             <Route path="/blog"                    element={<BlogList />} />
             <Route path="/blog/:slug"              element={<BlogArticle />} />
+            <Route path="/roulette"                 element={<CocktailRoulette />} />
             <Route path="/quiz"                    element={<CocktailQuiz />} />
             <Route path="/premium"                 element={<PremiumPage />} />
             <Route path="/api-docs"               element={<ApiDocs />} />
