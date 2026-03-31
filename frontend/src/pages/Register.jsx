@@ -6,14 +6,17 @@ import { useAuth } from '../contexts/AuthContext'
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export default function Register() {
-  const { register } = useAuth()
+  const { register, authFetch } = useAuth()
   const { t }        = useTranslation()
   const navigate     = useNavigate()
 
-  const [form, setForm]       = useState({ email: '', pseudo: '', password: '', confirm: '' })
-  const [touched, setTouched] = useState({})
-  const [error, setError]     = useState(null)
-  const [loading, setLoading] = useState(false)
+  const [form, setForm]             = useState({ email: '', pseudo: '', password: '', confirm: '' })
+  const [touched, setTouched]       = useState({})
+  const [error, setError]           = useState(null)
+  const [loading, setLoading]       = useState(false)
+  const [registered, setRegistered] = useState(false)
+  const [resending, setResending]   = useState(false)
+  const [resent, setResent]         = useState(false)
 
   const validate = (f) => {
     const errors = {}
@@ -43,7 +46,7 @@ export default function Register() {
     setError(null)
     try {
       await register(form.email, form.pseudo, form.password)
-      navigate('/', { replace: true })
+      setRegistered(true)
     } catch (err) {
       setError(err.message)
     } finally {
@@ -57,6 +60,47 @@ export default function Register() {
         ? 'border-red-400 bg-red-50 dark:bg-red-900/20'
         : 'border-gray-200 dark:border-gray-600'
     }`
+
+  const handleResend = async () => {
+    setResending(true)
+    try {
+      await authFetch('/api/auth/resend-verification', { method: 'POST' })
+      setResent(true)
+    } catch {
+      // Silencieux
+    } finally {
+      setResending(false)
+    }
+  }
+
+  if (registered) {
+    return (
+      <div className="max-w-sm mx-auto mt-12 text-center">
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-8">
+          <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+            <svg className="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">{t('auth.verifyEmail.checkInbox')}</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+            {t('auth.verifyEmail.sentTo', { email: form.email })}
+          </p>
+          {!resent ? (
+            <button
+              onClick={handleResend}
+              disabled={resending}
+              className="text-sm text-gold-500 dark:text-gold-400 hover:underline font-medium disabled:opacity-60"
+            >
+              {resending ? t('auth.verifyEmail.resending') : t('auth.verifyEmail.resendButton')}
+            </button>
+          ) : (
+            <p className="text-sm text-green-500">{t('auth.verifyEmail.resent')}</p>
+          )}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="max-w-sm mx-auto mt-12">

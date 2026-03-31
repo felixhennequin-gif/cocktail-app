@@ -15,6 +15,11 @@ model User {
   plan         Plan      @default(FREE)
   avatar       String?
   bio          String?
+  emailVerified      Boolean   @default(false)
+  emailVerifyToken   String?   @unique
+  emailVerifyExpires DateTime?
+  resetToken         String?   @unique
+  resetExpires       DateTime?
   createdAt    DateTime  @default(now())
   recipes      Recipe[]
   favorites    Favorite[]

@@ -9,6 +9,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
 import { useFavorites } from '../contexts/FavoritesContext'
 import { getImageUrl } from '../utils/image'
+import ChangePasswordForm from '../components/ChangePasswordForm'
 
 const LIMIT = 20
 
@@ -337,6 +338,7 @@ export default function UserProfile() {
     { key: 'badges', label: t('badges.title') },
     // Onglet collections uniquement sur son propre profil
     ...(user?.id === parseInt(id) ? [{ key: 'collections', label: t('collections.title') }] : []),
+    ...(user?.id === parseInt(id) ? [{ key: 'security', label: t('profile.tabs.security') }] : []),
   ]
 
   const isOwnProfile = user?.id === parseInt(id)
@@ -576,6 +578,17 @@ export default function UserProfile() {
             })}
           </div>
         )
+      )}
+
+      {/* Onglet Sécurité (propre profil uniquement) */}
+      {activeTab === 'security' && isOwnProfile && (
+        <div className="max-w-sm">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">{t('auth.changePassword.title')}</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+            <ChangePasswordForm />
+          </div>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-3">{t('auth.changePassword.logoutWarning')}</p>
+        </div>
       )}
 
       {/* Onglet Collections (propre profil uniquement) */}

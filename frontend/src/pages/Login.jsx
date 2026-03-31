@@ -97,12 +97,19 @@ export default function Login() {
         </button>
       </form>
 
-      <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-4">
-        {t('auth.noAccount')}{' '}
-        <Link to="/register" className="text-gold-500 dark:text-gold-400 hover:underline font-medium">
-          {t('auth.signUpLink')}
-        </Link>
-      </p>
+      <div className="text-center text-sm mt-4 space-y-2">
+        <p className="text-gray-500 dark:text-gray-400">
+          <Link to="/forgot-password" className="text-gold-500 dark:text-gold-400 hover:underline font-medium">
+            {t('auth.forgotPassword.link')}
+          </Link>
+        </p>
+        <p className="text-gray-500 dark:text-gray-400">
+          {t('auth.noAccount')}{' '}
+          <Link to="/register" className="text-gold-500 dark:text-gold-400 hover:underline font-medium">
+            {t('auth.signUpLink')}
+          </Link>
+        </p>
+      </div>
     </div>
   )
 }

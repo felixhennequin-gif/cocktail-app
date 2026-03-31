@@ -47,6 +47,54 @@
       "pseudoTooShort": "Pseudo trop court (min. 2 caractères)",
       "confirmRequired": "Confirmation requise",
       "confirmMismatch": "Les mots de passe ne correspondent pas"
+    },
+    "verifyEmail": {
+      "loading": "Vérification en cours...",
+      "successTitle": "Email vérifié !",
+      "successMessage": "Ton adresse email a été confirmée avec succès.",
+      "goToLogin": "Se connecter",
+      "errorTitle": "Vérification échouée",
+      "genericError": "Une erreur est survenue lors de la vérification.",
+      "noToken": "Lien de vérification invalide.",
+      "resendButton": "Renvoyer l'email de vérification",
+      "resending": "Envoi en cours...",
+      "resent": "Email renvoyé ! Vérifie ta boîte de réception.",
+      "checkInbox": "Vérifie ta boîte de réception",
+      "sentTo": "Un email de vérification a été envoyé à {{email}}. Clique sur le lien pour confirmer ton adresse."
+    },
+    "forgotPassword": {
+      "title": "Mot de passe oublié",
+      "description": "Saisis ton adresse email et nous t'enverrons un lien pour réinitialiser ton mot de passe.",
+      "button": "Envoyer le lien",
+      "loading": "Envoi...",
+      "sentTitle": "Email envoyé",
+      "sentMessage": "Si cette adresse est associée à un compte, tu recevras un email avec les instructions pour réinitialiser ton mot de passe.",
+      "backToLogin": "Retour à la connexion",
+      "link": "Mot de passe oublié ?",
+      "genericError": "Une erreur est survenue. Réessaie plus tard."
+    },
+    "changePassword": {
+      "title": "Changer le mot de passe",
+      "currentLabel": "Mot de passe actuel",
+      "currentRequired": "Mot de passe actuel requis",
+      "newLabel": "Nouveau mot de passe",
+      "button": "Mettre à jour",
+      "loading": "Mise à jour...",
+      "success": "Mot de passe mis à jour ! Reconnecte-toi.",
+      "logoutWarning": "Tu seras déconnecté après le changement de mot de passe.",
+      "genericError": "Une erreur est survenue."
+    },
+    "resetPassword": {
+      "title": "Nouveau mot de passe",
+      "newPasswordLabel": "Nouveau mot de passe",
+      "button": "Réinitialiser",
+      "loading": "Réinitialisation...",
+      "successTitle": "Mot de passe mis à jour !",
+      "successMessage": "Tu peux maintenant te connecter avec ton nouveau mot de passe.",
+      "goToLogin": "Se connecter",
+      "invalidLink": "Lien de réinitialisation invalide",
+      "requestNew": "Demander un nouveau lien",
+      "genericError": "Une erreur est survenue. Réessaie plus tard."
     }
   },
   "recipes": {
@@ -204,7 +252,8 @@
     "tabs": {
       "recipes": "Recettes ({{count}})",
       "followers": "Abonnés ({{count}})",
-      "following": "Abonnements ({{count}})"
+      "following": "Abonnements ({{count}})",
+      "security": "Sécurité"
     },
     "noRecipes": "Aucune recette publiée.",
     "noFollowers": "Aucun abonné pour le moment.",

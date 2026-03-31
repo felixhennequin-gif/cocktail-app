@@ -24,7 +24,7 @@ const requireAuth = async (req, res, next) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: decoded.id },
-      select: { id: true, pseudo: true, role: true, email: true, plan: true },
+      select: { id: true, pseudo: true, role: true, email: true, plan: true, emailVerified: true },
     });
     if (!user) return res.status(401).json({ error: 'Utilisateur introuvable' });
     req.user = user;
@@ -56,7 +56,7 @@ const optionalAuth = async (req, res, next) => {
     try {
       const user = await prisma.user.findUnique({
         where: { id: decoded.id },
-        select: { id: true, pseudo: true, role: true, email: true, plan: true },
+        select: { id: true, pseudo: true, role: true, email: true, plan: true, emailVerified: true },
       });
       if (user) req.user = user;
     } catch {
@@ -66,4 +66,12 @@ const optionalAuth = async (req, res, next) => {
   next();
 };
 
-module.exports = { requireAuth, requireAdmin, optionalAuth, JWT_SECRET };
+// Vérifie que l'email de l'utilisateur est vérifié (à utiliser après requireAuth)
+const requireVerifiedEmail = (req, res, next) => {
+  if (!req.user?.emailVerified) {
+    return res.status(403).json({ error: 'Veuillez vérifier votre adresse email' });
+  }
+  next();
+};
+
+module.exports = { requireAuth, requireAdmin, optionalAuth, requireVerifiedEmail, JWT_SECRET };

@@ -108,6 +108,36 @@ const logoutSchema = z.object({
   refreshToken: z.string().min(1, 'Refresh token requis'),
 });
 
+// --- Vérification email ---
+
+const verifyEmailSchema = z.object({
+  token: z.string().min(1, 'Token requis'),
+});
+
+// --- Changement de mot de passe (connecté) ---
+
+const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, 'Mot de passe actuel requis'),
+  newPassword: z.string()
+    .min(8, 'Le mot de passe doit faire au moins 8 caractères')
+    .regex(/[a-zA-Z]/, 'Le mot de passe doit contenir au moins une lettre')
+    .regex(/[0-9]/, 'Le mot de passe doit contenir au moins un chiffre'),
+});
+
+// --- Mot de passe oublié / reset ---
+
+const forgotPasswordSchema = z.object({
+  email: z.string().email('Email invalide'),
+});
+
+const resetPasswordSchema = z.object({
+  token: z.string().min(1, 'Token requis'),
+  password: z.string()
+    .min(8, 'Le mot de passe doit faire au moins 8 caractères')
+    .regex(/[a-zA-Z]/, 'Le mot de passe doit contenir au moins une lettre')
+    .regex(/[0-9]/, 'Le mot de passe doit contenir au moins un chiffre'),
+});
+
 // --- Challenges ---
 
 const createChallengeSchema = z.object({
@@ -193,6 +223,10 @@ module.exports = {
   loginSchema,
   refreshSchema,
   logoutSchema,
+  verifyEmailSchema,
+  changePasswordSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
   ratingSchema,
   createArticleSchema,
   updateArticleSchema,

@@ -41,6 +41,9 @@ const lazyImports = {
   PremiumPage:      () => import('./pages/PremiumPage'),
   TasteProfile:     () => import('./pages/TasteProfile'),
   CocktailQuiz:     () => import('./pages/CocktailQuiz'),
+  VerifyEmail:      () => import('./pages/VerifyEmail'),
+  ForgotPassword:   () => import('./pages/ForgotPassword'),
+  ResetPassword:    () => import('./pages/ResetPassword'),
 }
 
 const RecipeDetail     = lazy(lazyImports.RecipeDetail)
@@ -63,6 +66,9 @@ const ApiDocs          = lazy(lazyImports.ApiDocs)
 const PremiumPage      = lazy(lazyImports.PremiumPage)
 const TasteProfile     = lazy(lazyImports.TasteProfile)
 const CocktailQuiz     = lazy(lazyImports.CocktailQuiz)
+const VerifyEmail      = lazy(lazyImports.VerifyEmail)
+const ForgotPassword   = lazy(lazyImports.ForgotPassword)
+const ResetPassword    = lazy(lazyImports.ResetPassword)
 
 // Préchargement des pages au survol des liens
 export const preload = (page) => { lazyImports[page]?.() }
@@ -241,6 +247,9 @@ export default function App() {
             <Route path="/recipes/:id"             element={<RecipeDetail />} />
             <Route path="/login"                   element={<Login />} />
             <Route path="/register"                element={<Register />} />
+            <Route path="/verify-email"            element={<VerifyEmail />} />
+            <Route path="/forgot-password"         element={<ForgotPassword />} />
+            <Route path="/reset-password"          element={<ResetPassword />} />
             <Route path="/favorites"               element={<ProtectedRoute><Favorites /></ProtectedRoute>} />
             <Route path="/users/:id"               element={<UserProfile />} />
             <Route path="/my-bar"                    element={<ProtectedRoute><MyBar /></ProtectedRoute>} />

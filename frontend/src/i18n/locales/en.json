@@ -47,6 +47,54 @@
       "pseudoTooShort": "Username too short (min. 2 characters)",
       "confirmRequired": "Confirmation required",
       "confirmMismatch": "Passwords do not match"
+    },
+    "verifyEmail": {
+      "loading": "Verifying...",
+      "successTitle": "Email verified!",
+      "successMessage": "Your email address has been confirmed successfully.",
+      "goToLogin": "Log in",
+      "errorTitle": "Verification failed",
+      "genericError": "An error occurred during verification.",
+      "noToken": "Invalid verification link.",
+      "resendButton": "Resend verification email",
+      "resending": "Sending...",
+      "resent": "Email sent! Check your inbox.",
+      "checkInbox": "Check your inbox",
+      "sentTo": "A verification email has been sent to {{email}}. Click the link to confirm your address."
+    },
+    "forgotPassword": {
+      "title": "Forgot password",
+      "description": "Enter your email address and we'll send you a link to reset your password.",
+      "button": "Send reset link",
+      "loading": "Sending...",
+      "sentTitle": "Email sent",
+      "sentMessage": "If this address is associated with an account, you'll receive an email with instructions to reset your password.",
+      "backToLogin": "Back to login",
+      "link": "Forgot password?",
+      "genericError": "An error occurred. Please try again later."
+    },
+    "changePassword": {
+      "title": "Change password",
+      "currentLabel": "Current password",
+      "currentRequired": "Current password required",
+      "newLabel": "New password",
+      "button": "Update password",
+      "loading": "Updating...",
+      "success": "Password updated! Please log in again.",
+      "logoutWarning": "You will be logged out after changing your password.",
+      "genericError": "An error occurred."
+    },
+    "resetPassword": {
+      "title": "New password",
+      "newPasswordLabel": "New password",
+      "button": "Reset password",
+      "loading": "Resetting...",
+      "successTitle": "Password updated!",
+      "successMessage": "You can now log in with your new password.",
+      "goToLogin": "Log in",
+      "invalidLink": "Invalid reset link",
+      "requestNew": "Request a new link",
+      "genericError": "An error occurred. Please try again later."
     }
   },
   "recipes": {
@@ -204,7 +252,8 @@
     "tabs": {
       "recipes": "Recipes ({{count}})",
       "followers": "Followers ({{count}})",
-      "following": "Following ({{count}})"
+      "following": "Following ({{count}})",
+      "security": "Security"
     },
     "noRecipes": "No published recipes.",
     "noFollowers": "No followers yet.",
