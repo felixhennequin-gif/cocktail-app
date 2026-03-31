@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import DifficultyBadge from '../DifficultyBadge'
@@ -5,6 +6,9 @@ import PortionSelector from './PortionSelector'
 
 export default function RecipeMeta({ recipe, avgRating, ratingsCount, isFavorited, onToggleFavorite, onAddToCollection, onLogTasting, onAddToShoppingList, isInShoppingCart, portionCount, onPortionChange, user }) {
   const { t } = useTranslation()
+  const [showEmbed, setShowEmbed] = useState(false)
+  const [embedCopied, setEmbedCopied] = useState(false)
+  const embedCode = `<iframe src="${window.location.origin}/embed/recipes/${recipe.id}" width="400" height="600" frameborder="0" style="border-radius:12px;max-width:100%"></iframe>`
 
   return (
     <div>
@@ -65,6 +69,15 @@ export default function RecipeMeta({ recipe, avgRating, ratingsCount, isFavorite
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
           </a>
+          <button
+            onClick={() => setShowEmbed(true)}
+            className="text-xl leading-none text-gray-300 dark:text-gray-600 hover:text-gold-400 transition-colors"
+            title={t('embed.title')}
+          >
+            <svg aria-hidden="true" className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+            </svg>
+          </button>
           {user && (recipe.author?.id === user?.id || user?.role === 'ADMIN') && (
             <Link
               to={`/recipes/${recipe.id}/edit`}
@@ -122,6 +135,28 @@ export default function RecipeMeta({ recipe, avgRating, ratingsCount, isFavorite
       {recipe.status === 'PENDING' && (
         <div className="mt-3 px-3 py-2 bg-gold-50 dark:bg-gold-900/20 border border-gold-200 dark:border-gold-700 rounded-lg text-sm text-gold-700 dark:text-gold-400">
           {t('recipes.pending')}
+        </div>
+      )}
+      {/* Modale embed */}
+      {showEmbed && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowEmbed(false)}>
+          <div className="bg-white dark:bg-ink-900 rounded-xl p-6 max-w-lg w-full mx-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-gray-900 dark:text-white">{t('embed.title')}</h3>
+              <button onClick={() => setShowEmbed(false)} className="text-gray-400 hover:text-gray-600">✕</button>
+            </div>
+            <textarea
+              readOnly
+              value={embedCode}
+              className="w-full h-20 p-3 text-xs font-mono bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg resize-none"
+            />
+            <button
+              onClick={() => { navigator.clipboard.writeText(embedCode); setEmbedCopied(true); setTimeout(() => setEmbedCopied(false), 2000); }}
+              className="mt-3 px-4 py-2 bg-gold-400 text-ink-900 rounded-lg text-sm font-medium hover:bg-gold-300 transition-colors"
+            >
+              {embedCopied ? t('embed.copied') : t('embed.copy')}
+            </button>
+          </div>
         </div>
       )}
     </div>

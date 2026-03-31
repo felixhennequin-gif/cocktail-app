@@ -207,6 +207,10 @@ const badgeRoutes = require('./routes/badge-routes');
 apiRouter.use('/bar',    barRoutes);
 apiRouter.use('/badges', badgeRoutes);
 
+// Widget embeddable (hors /api — HTML direct)
+const embedRoutes = require('./routes/embed-routes');
+app.use('/embed', embedRoutes);
+
 // API publique v1
 app.use('/api/v1', apiV1Routes);
 
