@@ -78,6 +78,11 @@ export default function RecipeMeta({ recipe, avgRating, ratingsCount, isFavorite
       </div>
       <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 mb-2">
         <span>⏱ {recipe.prepTime} min</span>
+        {recipe.estimatedCost != null && (
+          <span title={t('cost.perGlass', { cost: recipe.estimatedCost.toFixed(2) })}>
+            💰 ~{recipe.estimatedCost.toFixed(2)} €
+          </span>
+        )}
         {recipe.category && <span>📂 {recipe.category.name}</span>}
         {recipe.author && (
           <Link to={`/users/${recipe.author.id}`} className="text-gold-500 dark:text-gold-400 hover:underline">

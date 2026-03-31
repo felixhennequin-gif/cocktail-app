@@ -80,6 +80,24 @@ const enrichRecipes = async (recipes) => {
 };
 
 /**
+ * Calcule le coût estimé d'une recette à partir des prix des ingrédients.
+ * Retourne null si aucun prix n'est renseigné.
+ */
+const computeEstimatedCost = (recipe) => {
+  if (!recipe.ingredients || recipe.ingredients.length === 0) return null;
+  let total = 0;
+  let hasPrice = false;
+  for (const ri of recipe.ingredients) {
+    const ing = ri.ingredient;
+    if (ing?.estimatedPricePerUnit && ri.quantity) {
+      total += ri.quantity * ing.estimatedPricePerUnit;
+      hasPrice = true;
+    }
+  }
+  return hasPrice ? Math.round(total * 100) / 100 : null;
+};
+
+/**
  * Aplatit les tags et supprime les champs internes (_count).
  * Pour les cas où avgRating/ratingsCount sont déjà calculés séparément.
  */
@@ -87,6 +105,7 @@ const flattenRecipe = (recipe) => {
   const { tags, _count, ...rest } = recipe;
   return {
     ...rest,
+    estimatedCost: computeEstimatedCost(recipe),
     ...(tags ? { tags: tags.map((rt) => rt.tag) } : {}),
   };
 };
@@ -102,4 +121,4 @@ const handlePrismaError = (err, res) => {
   throw err;
 };
 
-module.exports = { includeTags, includeDetail, includeList, batchRatingStats, enrichRecipes, flattenRecipe, handlePrismaError };
+module.exports = { includeTags, includeDetail, includeList, batchRatingStats, enrichRecipes, flattenRecipe, computeEstimatedCost, handlePrismaError };

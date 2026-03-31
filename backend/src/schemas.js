@@ -168,6 +168,8 @@ const updateArticleSchema = createArticleSchema.partial();
 
 const updateIngredientSchema = z.object({
   affiliateUrl: z.string().url('L\'URL affiliée doit être une URL valide').max(2000, 'L\'URL ne doit pas dépasser 2000 caractères').nullable().optional(),
+  estimatedPricePerUnit: z.coerce.number().min(0).nullable().optional(),
+  unitSize: z.coerce.number().positive().nullable().optional(),
 });
 
 // --- Techniques ---

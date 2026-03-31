@@ -10,7 +10,7 @@ const getAllIngredients = async (req, res, next) => {
   try {
     const ingredients = await prisma.ingredient.findMany({
       orderBy: { name: 'asc' },
-      select: { id: true, name: true, affiliateUrl: true },
+      select: { id: true, name: true, affiliateUrl: true, estimatedPricePerUnit: true, unitSize: true },
     });
     res.json(ingredients);
   } catch (err) {
@@ -34,16 +34,20 @@ const updateIngredient = async (req, res, next) => {
       return res.status(400).json({ error: formatZodError(parsed.error) });
     }
 
-    const { affiliateUrl } = parsed.data;
+    const { affiliateUrl, estimatedPricePerUnit, unitSize } = parsed.data;
 
     // Vérification existence
     const existing = await prisma.ingredient.findUnique({ where: { id } });
     if (!existing) return res.status(404).json({ error: 'Ingrédient introuvable' });
 
+    const data = { affiliateUrl: affiliateUrl ?? null };
+    if (estimatedPricePerUnit !== undefined) data.estimatedPricePerUnit = estimatedPricePerUnit;
+    if (unitSize !== undefined) data.unitSize = unitSize;
+
     const updated = await prisma.ingredient.update({
       where: { id },
-      data: { affiliateUrl: affiliateUrl ?? null },
-      select: { id: true, name: true, affiliateUrl: true },
+      data,
+      select: { id: true, name: true, affiliateUrl: true, estimatedPricePerUnit: true, unitSize: true },
     });
 
     res.json(updated);
