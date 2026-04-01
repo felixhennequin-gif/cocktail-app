@@ -244,6 +244,12 @@ app.use(sitemapRoutes);
 // Frontend production — sert le build React si le dossier dist existe
 const frontendDist = path.join(__dirname, '..', '..', 'frontend', 'dist');
 if (fs.existsSync(frontendDist)) {
+  // sw.js → toujours no-cache pour que le navigateur détecte les mises à jour immédiatement
+  app.get('/sw.js', (req, res) => {
+    res.setHeader('Cache-Control', 'no-cache');
+    res.sendFile(path.join(frontendDist, 'sw.js'));
+  });
+
   // Assets avec hash → cache long (1 an)
   app.use('/assets', express.static(path.join(frontendDist, 'assets'), {
     maxAge: '1y',

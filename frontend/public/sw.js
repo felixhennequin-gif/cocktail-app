@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cocktails-v2'
+const CACHE_NAME = 'cocktails-v3'
 const FAVORITES_CACHE_NAME = 'cocktail-favorites-v1'
 const OFFLINE_URL = '/offline.html'
 
@@ -14,12 +14,25 @@ self.addEventListener('install', (event) => {
   self.skipWaiting()
 })
 
-// Activation : supprime TOUS les anciens caches (sauf les caches connus)
+// Activation : supprime les anciens caches + purge les entrées cross-origin des caches connus
 self.addEventListener('activate', (event) => {
   const knownCaches = [CACHE_NAME, FAVORITES_CACHE_NAME]
   event.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => !knownCaches.includes(k)).map((k) => caches.delete(k)))
+      Promise.all([
+        // Supprimer les caches inconnus (ancienne version)
+        ...keys.filter((k) => !knownCaches.includes(k)).map((k) => caches.delete(k)),
+        // Purger les entrées cross-origin des caches connus (résidus ancien SW)
+        ...knownCaches.map(async (name) => {
+          const cache = await caches.open(name)
+          const requests = await cache.keys()
+          return Promise.all(
+            requests
+              .filter((req) => new URL(req.url).origin !== self.location.origin)
+              .map((req) => cache.delete(req))
+          )
+        }),
+      ])
     )
   )
   self.clients.claim()
