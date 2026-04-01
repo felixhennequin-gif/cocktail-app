@@ -74,7 +74,11 @@ export default function MenuBuilder() {
 
   return (
     <div className="max-w-3xl mx-auto">
-      <Helmet><title>{t('menu.title')} — Écume</title></Helmet>
+      <Helmet>
+        <title>{t('menu.title')} — Écume</title>
+        <meta name="description" content="Créez et imprimez un menu cocktail personnalisé pour vos événements." />
+        <link rel="canonical" href="https://cocktail-app.fr/menu" />
+      </Helmet>
 
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">{t('menu.title')}</h1>

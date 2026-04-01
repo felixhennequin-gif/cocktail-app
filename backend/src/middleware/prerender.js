@@ -91,7 +91,8 @@ function renderMetaPage({ title, description, image, url, type = 'website', json
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="${safeTitle}">
   <meta name="twitter:description" content="${safeDescription}">
-  <meta name="twitter:image" content="${safeImage}">${jsonLd ? `
+  <meta name="twitter:image" content="${safeImage}">
+  <link rel="canonical" href="${safeUrl}">${jsonLd ? `
   <script type="application/ld+json">${jsonLd}</script>` : ''}
 </head>
 <body>

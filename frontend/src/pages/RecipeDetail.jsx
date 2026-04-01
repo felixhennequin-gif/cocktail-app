@@ -151,6 +151,7 @@ export default function RecipeDetail() {
         <meta name="twitter:description" content={metaDescription} />
         {recipe.imageUrl && <meta name="twitter:image" content={getImageUrl(recipe.imageUrl)} />}
         <script type="application/ld+json">{jsonLd}</script>
+        <link rel="canonical" href={`https://cocktail-app.fr/recipes/${recipe.id}`} />
       </Helmet>
 
       <AddToCollectionModal

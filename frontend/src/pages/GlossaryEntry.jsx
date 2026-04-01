@@ -44,6 +44,7 @@ export default function GlossaryEntry() {
     <div className="max-w-3xl mx-auto">
       <Helmet>
         <title>{entry.term} — {t('glossary.title')}</title>
+        <link rel="canonical" href={`https://cocktail-app.fr/glossary/${slug}`} />
         <meta name="description" content={entry.definition} />
       </Helmet>
 

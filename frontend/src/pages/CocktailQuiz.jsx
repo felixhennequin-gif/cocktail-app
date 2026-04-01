@@ -260,6 +260,8 @@ export default function CocktailQuiz() {
       <div className="max-w-2xl mx-auto px-4 py-12 text-center">
         <Helmet>
           <title>{t('quiz.title')} — Cocktails</title>
+          <link rel="canonical" href="https://cocktail-app.fr/quiz" />
+          <meta name="description" content="Découvrez votre profil de goût avec notre quiz interactif et recevez des recommandations personnalisées." />
         </Helmet>
         <div
           className="text-7xl mb-6 select-none"
@@ -380,6 +382,8 @@ export default function CocktailQuiz() {
     <div className="max-w-2xl mx-auto px-4 py-8">
       <Helmet>
         <title>{t('quiz.title')} — Cocktails</title>
+        <link rel="canonical" href="https://cocktail-app.fr/quiz" />
+        <meta name="description" content="Découvrez votre profil de goût avec notre quiz interactif et recevez des recommandations personnalisées." />
       </Helmet>
 
       {/* Barre de progression */}

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { Helmet } from 'react-helmet-async'
 import { useAuth } from '../contexts/AuthContext'
 
 export default function VerifyEmail() {
@@ -51,6 +52,7 @@ export default function VerifyEmail() {
 
   return (
     <div className="max-w-sm mx-auto mt-12 text-center">
+      <Helmet><title>Vérification email — Écume</title></Helmet>
       {status === 'loading' && (
         <div className="flex flex-col items-center gap-4">
           <div className="w-8 h-8 border-2 border-gold-400 border-t-transparent rounded-full animate-spin" />

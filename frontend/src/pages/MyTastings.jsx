@@ -67,7 +67,11 @@ export default function MyTastings() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <Helmet><title>{t('tastings.title')} — Cocktails</title></Helmet>
+      <Helmet>
+        <title>{t('tastings.title')} — Cocktails</title>
+        <meta name="description" content="Votre journal de dégustation personnel : notes, photos et ajustements." />
+        <link rel="canonical" href="https://cocktail-app.fr/tastings" />
+      </Helmet>
 
       <h1 className="text-3xl font-serif font-medium text-gray-900 dark:text-gray-100 mb-2">
         {t('tastings.title')}

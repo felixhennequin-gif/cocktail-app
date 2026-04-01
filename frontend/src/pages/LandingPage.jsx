@@ -81,6 +81,7 @@ export default function LandingPage() {
         <meta name="twitter:title" content="Écume — Recettes & Inspiration" />
         <meta name="twitter:description" content="Découvrez des centaines de recettes de cocktails artisanales." />
         <meta name="twitter:image" content="https://cocktail-app.fr/og-default.png" />
+        <link rel="canonical" href="https://cocktail-app.fr" />
       </Helmet>
 
       {/* Hero */}

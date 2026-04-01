@@ -359,6 +359,7 @@ export default function UserProfile() {
         <meta name="twitter:card" content="summary" />
         <meta name="twitter:title" content={`${profile.pseudo} sur Cocktails`} />
         <meta name="twitter:description" content={profile.bio || `Profil de ${profile.pseudo} sur Écume`} />
+        <link rel="canonical" href={`https://cocktail-app.fr/users/${profile.id}`} />
       </Helmet>
       {/* Modale d'édition de profil */}
       {editOpen && (

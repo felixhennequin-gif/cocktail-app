@@ -252,6 +252,8 @@ export default function TasteProfile() {
     <div className="max-w-2xl mx-auto">
       <Helmet>
         <title>{t('preferences.title')} — Cocktails</title>
+        <meta name="description" content="Consultez et ajustez votre profil de goût pour des recommandations cocktails sur mesure." />
+        <link rel="canonical" href="https://cocktail-app.fr/taste-profile" />
       </Helmet>
 
       <div className="mb-8">

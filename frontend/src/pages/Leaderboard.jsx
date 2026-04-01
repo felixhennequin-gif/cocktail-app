@@ -34,7 +34,11 @@ export default function Leaderboard() {
 
   return (
     <div className="max-w-3xl mx-auto">
-      <Helmet><title>{t('leaderboard.title')} — Écume</title></Helmet>
+      <Helmet>
+        <title>{t('leaderboard.title')} — Écume</title>
+        <meta name="description" content="Classement des meilleurs contributeurs de la communauté Écume." />
+        <link rel="canonical" href="https://cocktail-app.fr/leaderboard" />
+      </Helmet>
 
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">{t('leaderboard.title')}</h1>

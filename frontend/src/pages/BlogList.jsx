@@ -49,6 +49,7 @@ export default function BlogList() {
     <>
       <Helmet>
         <title>{t('blog.title')} — Cocktails</title>
+        <link rel="canonical" href="https://cocktail-app.fr/blog" />
         <meta name="description" content={t('blog.subtitle')} />
       </Helmet>
 

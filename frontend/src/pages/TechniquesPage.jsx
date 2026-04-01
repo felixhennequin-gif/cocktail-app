@@ -119,6 +119,7 @@ export default function TechniquesPage() {
       <Helmet>
         <title>{t('techniques.title')} — Écume</title>
         <meta name="description" content={t('techniques.subtitle')} />
+        <link rel="canonical" href="https://cocktail-app.fr/techniques" />
       </Helmet>
 
       <div className="max-w-4xl mx-auto">

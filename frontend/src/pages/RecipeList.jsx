@@ -228,6 +228,7 @@ export default function RecipeList() {
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={pageDescription} />
         <meta property="og:type" content="website" />
+        <link rel="canonical" href="https://cocktail-app.fr/recipes" />
       </Helmet>
       <h1 className="text-3xl font-serif font-medium text-gray-900 dark:text-gray-100 mb-6">{t('recipes.allTitle')}</h1>
 

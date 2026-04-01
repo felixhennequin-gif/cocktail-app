@@ -179,7 +179,11 @@ export default function CompareCocktails() {
   if (ids.length < 2) {
     return (
       <div className="text-center py-16">
-        <Helmet><title>{t('compare.title')} — Cocktails</title></Helmet>
+        <Helmet>
+          <title>{t('compare.title')} — Cocktails</title>
+          <link rel="canonical" href="https://cocktail-app.fr/compare" />
+          <meta name="description" content="Comparez deux cocktails côte à côte : ingrédients, difficulté et notes." />
+        </Helmet>
         <h1 className="text-2xl font-serif font-medium text-gray-900 dark:text-gray-100 mb-4">
           {t('compare.title')}
         </h1>
@@ -208,6 +212,8 @@ export default function CompareCocktails() {
     <div>
       <Helmet>
         <title>{t('compare.titleWith', { a: recipeA.name, b: recipeB.name })} — Cocktails</title>
+        <link rel="canonical" href="https://cocktail-app.fr/compare" />
+        <meta name="description" content="Comparez deux cocktails côte à côte : ingrédients, difficulté et notes." />
       </Helmet>
 
       <h1 className="text-2xl sm:text-3xl font-serif font-medium text-gray-900 dark:text-gray-100 text-center mb-2">

@@ -115,6 +115,8 @@ export default function ChallengeDetail() {
     <div>
       <Helmet>
         <title>{challenge.title} — {t('challenges.pageTitle')}</title>
+        <link rel="canonical" href={`https://cocktail-app.fr/challenges/${id}`} />
+        <meta name="description" content={challenge ? `Participez au défi ${challenge.title} sur Écume.` : 'Défi cocktail communautaire sur Écume.'} />
       </Helmet>
 
       <Link to="/" className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 mb-4 inline-block">

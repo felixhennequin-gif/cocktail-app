@@ -144,6 +144,7 @@ export default function BlogArticle() {
     <>
       <Helmet>
         <title>{article.title} — {t('blog.title')} — Cocktails</title>
+        <link rel="canonical" href={`https://cocktail-app.fr/blog/${slug}`} />
         <meta name="description" content={article.excerpt} />
         {article.coverImage && <meta property="og:image" content={article.coverImage} />}
       </Helmet>

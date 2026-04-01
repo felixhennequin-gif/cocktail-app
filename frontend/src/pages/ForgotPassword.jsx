@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { Helmet } from 'react-helmet-async'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -61,6 +62,7 @@ export default function ForgotPassword() {
 
   return (
     <div className="max-w-sm mx-auto mt-12">
+      <Helmet><title>Mot de passe oublié — Écume</title></Helmet>
       <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6 text-center">{t('auth.forgotPassword.title')}</h1>
 
       {error && (

@@ -136,6 +136,7 @@ export default function CollectionDetail() {
     <div className="max-w-2xl mx-auto">
       <Helmet>
         <title>{collection.name} — Cocktails</title>
+        <link rel="canonical" href={`https://cocktail-app.fr/collections/${id}`} />
         <meta name="description" content={collection.description || `Collection de cocktails par ${collection.user?.pseudo}`} />
         <meta property="og:site_name" content="Écume" />
         <meta property="og:title" content={`${collection.name} — Collection`} />

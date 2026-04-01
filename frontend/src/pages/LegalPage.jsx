@@ -8,6 +8,8 @@ export default function LegalPage() {
     <>
       <Helmet>
         <title>{t('legal.title')} — Cocktails</title>
+        <meta name="description" content="Mentions légales et conditions d'utilisation du site Écume." />
+        <link rel="canonical" href="https://cocktail-app.fr/legal" />
       </Helmet>
 
       <div className="max-w-2xl mx-auto py-8">

@@ -95,6 +95,8 @@ export default function ApiDocs() {
     <>
       <Helmet>
         <title>{t('apiDocs.title')} — Cocktails</title>
+        <link rel="canonical" href="https://cocktail-app.fr/api-docs" />
+        <meta name="description" content="Documentation de l'API publique Écume : endpoints, authentification et exemples d'utilisation." />
       </Helmet>
 
       <div className="max-w-3xl mx-auto space-y-10">

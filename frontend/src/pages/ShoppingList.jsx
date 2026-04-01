@@ -88,7 +88,11 @@ export default function ShoppingList() {
   if (cartIds.length === 0) {
     return (
       <div className="max-w-2xl mx-auto text-center py-16">
-        <Helmet><title>{t('shoppingList.title')} — Cocktails</title></Helmet>
+        <Helmet>
+          <title>{t('shoppingList.title')} — Cocktails</title>
+          <meta name="description" content="Liste de courses consolidée pour préparer vos cocktails préférés." />
+          <link rel="canonical" href="https://cocktail-app.fr/shopping-list" />
+        </Helmet>
         <h1 className="text-2xl font-serif font-medium text-gray-900 dark:text-gray-100 mb-4">
           {t('shoppingList.title')}
         </h1>

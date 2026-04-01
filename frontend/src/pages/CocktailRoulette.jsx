@@ -146,6 +146,8 @@ export default function CocktailRoulette() {
     <div className="max-w-2xl mx-auto">
       <Helmet>
         <title>{t('roulette.title')} — Cocktails</title>
+        <link rel="canonical" href="https://cocktail-app.fr/roulette" />
+        <meta name="description" content="Laissez le hasard choisir votre prochain cocktail avec la roulette Écume." />
       </Helmet>
 
       <h1 className="text-3xl sm:text-4xl font-serif font-medium text-gray-900 dark:text-gray-100 text-center mb-2">

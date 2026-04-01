@@ -45,7 +45,11 @@ export default function Glossary() {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <Helmet><title>{t('glossary.title')} — Écume</title></Helmet>
+      <Helmet>
+        <title>{t('glossary.title')} — Écume</title>
+        <link rel="canonical" href="https://cocktail-app.fr/glossary" />
+        <meta name="description" content="Glossaire complet du cocktail : termes, techniques et ingrédients expliqués." />
+      </Helmet>
 
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">{t('glossary.title')}</h1>

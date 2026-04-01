@@ -51,6 +51,7 @@ export default function PremiumPage() {
       <Helmet>
         <title>{t('premium.title')} — Cocktails</title>
         <meta name="description" content={t('premium.heroSubtitle')} />
+        <link rel="canonical" href="https://cocktail-app.fr/premium" />
       </Helmet>
 
       <div className="max-w-3xl mx-auto">
