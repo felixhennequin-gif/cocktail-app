@@ -307,6 +307,152 @@ async function prerenderMiddleware(req, res, next) {
         url: fullUrl,
       }));
     }
+
+    // Article de blog : /blog/:slug
+    const blogMatch = req.path.match(/^\/blog\/([^/]+)$/);
+    if (blogMatch) {
+      const slug = decodeURIComponent(blogMatch[1]);
+      const article = await prisma.article.findUnique({
+        where: { slug },
+        include: { author: true },
+      });
+      if (article && article.status === 'PUBLISHED') {
+        const desc = article.excerpt || `${article.title} — Article sur Écume`;
+        const breadcrumbJsonLd = JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Accueil', item: siteUrl },
+            { '@type': 'ListItem', position: 2, name: 'Blog', item: `${siteUrl}/blog` },
+            { '@type': 'ListItem', position: 3, name: article.title, item: `${siteUrl}/blog/${article.slug}` },
+          ],
+        });
+        const articleJsonLd = JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'Article',
+          headline: article.title,
+          description: desc,
+          image: article.coverImage || undefined,
+          author: article.author ? { '@type': 'Person', name: article.author.pseudo } : undefined,
+          datePublished: article.publishedAt?.toISOString?.() || article.createdAt?.toISOString?.(),
+          url: `${siteUrl}/blog/${article.slug}`,
+        }, (k, v) => v === undefined ? undefined : v);
+        const combinedJsonLd = `${breadcrumbJsonLd}</script>\n  <script type="application/ld+json">${articleJsonLd}`;
+        return res.send(renderMetaPage({
+          title: `${article.title} — Écume`,
+          description: desc.substring(0, 160),
+          image: article.coverImage,
+          url: fullUrl,
+          type: 'article',
+          jsonLd: combinedJsonLd,
+        }));
+      }
+    }
+
+    // Liste du blog : /blog
+    if (req.path === '/blog') {
+      return res.send(renderMetaPage({
+        title: 'Blog — Écume',
+        description: 'Articles, conseils et actualités autour du monde des cocktails.',
+        url: fullUrl,
+      }));
+    }
+
+    // Entrée du glossaire : /glossary/:slug
+    const glossaryMatch = req.path.match(/^\/glossary\/([^/]+)$/);
+    if (glossaryMatch) {
+      const slug = decodeURIComponent(glossaryMatch[1]);
+      const entry = await prisma.glossaryEntry.findUnique({ where: { slug } });
+      if (entry) {
+        const desc = entry.definition || `${entry.term} — Définition et explication`;
+        const breadcrumbJsonLd = JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Accueil', item: siteUrl },
+            { '@type': 'ListItem', position: 2, name: 'Glossaire', item: `${siteUrl}/glossary` },
+            { '@type': 'ListItem', position: 3, name: entry.term, item: `${siteUrl}/glossary/${entry.slug}` },
+          ],
+        });
+        const definedTermJsonLd = JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'DefinedTerm',
+          name: entry.term,
+          description: desc,
+          url: `${siteUrl}/glossary/${entry.slug}`,
+        });
+        const combinedJsonLd = `${breadcrumbJsonLd}</script>\n  <script type="application/ld+json">${definedTermJsonLd}`;
+        return res.send(renderMetaPage({
+          title: `${entry.term} — Glossaire Écume`,
+          description: desc.substring(0, 160),
+          url: fullUrl,
+          jsonLd: combinedJsonLd,
+        }));
+      }
+    }
+
+    // Glossaire : /glossary
+    if (req.path === '/glossary') {
+      return res.send(renderMetaPage({
+        title: 'Glossaire des cocktails — Écume',
+        description: 'Glossaire complet du cocktail : termes, techniques et ingrédients expliqués.',
+        url: fullUrl,
+      }));
+    }
+
+    // Techniques : /techniques
+    if (req.path === '/techniques') {
+      return res.send(renderMetaPage({
+        title: 'Techniques de cocktail — Écume',
+        description: 'Apprenez les techniques essentielles pour réaliser des cocktails parfaits.',
+        url: fullUrl,
+      }));
+    }
+
+    // Quiz : /quiz
+    if (req.path === '/quiz') {
+      return res.send(renderMetaPage({
+        title: 'Quiz Cocktails — Écume',
+        description: 'Découvrez votre profil de goût avec notre quiz interactif et recevez des recommandations personnalisées.',
+        url: fullUrl,
+      }));
+    }
+
+    // Classement : /leaderboard
+    if (req.path === '/leaderboard') {
+      return res.send(renderMetaPage({
+        title: 'Classement — Écume',
+        description: 'Classement des meilleurs contributeurs de la communauté Écume.',
+        url: fullUrl,
+      }));
+    }
+
+    // Roulette : /roulette
+    if (req.path === '/roulette') {
+      return res.send(renderMetaPage({
+        title: 'Roulette Cocktail — Écume',
+        description: 'Laissez le hasard choisir votre prochain cocktail avec la roulette Écume.',
+        url: fullUrl,
+      }));
+    }
+
+    // Premium : /premium
+    if (req.path === '/premium') {
+      return res.send(renderMetaPage({
+        title: 'Premium — Écume',
+        description: 'Débloquez toutes les fonctionnalités Écume avec le plan Premium.',
+        url: fullUrl,
+      }));
+    }
+
+    // Mentions légales : /legal ou /legal/:page
+    if (req.path === '/legal' || req.path.match(/^\/legal\/[^/]+$/)) {
+      return res.send(renderMetaPage({
+        title: 'Mentions légales — Écume',
+        description: 'Mentions légales et conditions d\'utilisation du site Écume.',
+        url: fullUrl,
+      }));
+    }
   } catch (err) {
     // En cas d'erreur BDD, on laisse passer vers le SPA normal
     console.error('[prerender] Erreur:', err.message);
