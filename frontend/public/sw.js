@@ -91,6 +91,8 @@ self.addEventListener('fetch', (event) => {
 
   if (request.method !== 'GET') return
   if (!url.protocol.startsWith('http')) return
+  // Ne pas intercepter les requêtes cross-origin (images externes, etc.)
+  if (url.origin !== self.location.origin) return
 
   // Détail d'une recette — network-first, fallback sur le cache favoris
   const recipeDetailMatch = url.pathname.match(/^\/api\/recipes\/(\d+)$/)

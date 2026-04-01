@@ -61,7 +61,7 @@ app.use(helmet({
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       imgSrc: ["'self'", "data:", "https://placehold.co", "https://*.thecocktaildb.com", "https://cocktail-app.fr"],
-      connectSrc: ["'self'", "https://cocktail-app.fr"],
+      connectSrc: ["'self'", "https://cocktail-app.fr", "https://*.thecocktaildb.com"],
     },
   },
 }));
