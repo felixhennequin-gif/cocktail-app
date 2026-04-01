@@ -174,6 +174,8 @@ export default function UserProfile() {
   const { id }              = useParams()
   const { user, authFetch } = useAuth()
   const { t, i18n }         = useTranslation()
+  const authFetchRef = useRef(authFetch)
+  useEffect(() => { authFetchRef.current = authFetch }, [authFetch])
   const { isFavorited, toggleFavorite } = useFavorites()
 
   const [profile, setProfile]     = useState(null)
@@ -230,7 +232,7 @@ export default function UserProfile() {
     setAllBadges([])
     setUserBadges([])
     setBadgesLoaded(false)
-    authFetch(`/api/users/${id}`, { signal: controller.signal })
+    authFetchRef.current(`/api/users/${id}`, { signal: controller.signal })
       .then((r) => {
         if (!r.ok) throw new Error('Utilisateur introuvable')
         return r.json()
@@ -241,7 +243,7 @@ export default function UserProfile() {
       })
       .finally(() => setLoading(false))
     return () => controller.abort()
-  }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [id])
 
   // Chargement des statistiques du profil
   useEffect(() => {
@@ -272,21 +274,21 @@ export default function UserProfile() {
   useEffect(() => {
     if (activeTab !== 'followers' || followersLoaded) return
     setFollowersLoading(true)
-    authFetch(`/api/users/${id}/followers?limit=50`)
+    authFetchRef.current(`/api/users/${id}/followers?limit=50`)
       .then((r) => r.ok ? r.json() : { data: [], total: 0 })
       .then(({ data, total: t }) => { setFollowers(data); setFollowersTotal(t); setFollowersLoaded(true) })
       .finally(() => setFollowersLoading(false))
-  }, [activeTab, id]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [activeTab, id])
 
   // Chargement lazy des abonnements quand l'onglet est activé
   useEffect(() => {
     if (activeTab !== 'following' || followingLoaded) return
     setFollowingLoading(true)
-    authFetch(`/api/users/${id}/following?limit=50`)
+    authFetchRef.current(`/api/users/${id}/following?limit=50`)
       .then((r) => r.ok ? r.json() : { data: [], total: 0 })
       .then(({ data, total: t }) => { setFollowing(data); setFollowingTotal(t); setFollowingLoaded(true) })
       .finally(() => setFollowingLoading(false))
-  }, [activeTab, id]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [activeTab, id])
 
   // Chargement lazy des badges quand l'onglet est activé
   useEffect(() => {
@@ -302,18 +304,18 @@ export default function UserProfile() {
         setBadgesLoaded(true)
       })
       .finally(() => setBadgesLoading(false))
-  }, [activeTab, id]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [activeTab, id])
 
   // Chargement lazy des collections (propre profil uniquement)
   useEffect(() => {
     if (activeTab !== 'collections' || collectionsLoaded) return
     if (!user || user.id !== parseInt(id)) return
     setCollectionsLoading(true)
-    authFetch('/api/collections/me')
+    authFetchRef.current('/api/collections/me')
       .then((r) => r.ok ? r.json() : [])
       .then((data) => { setCollections(data); setCollectionsLoaded(true) })
       .finally(() => setCollectionsLoading(false))
-  }, [activeTab, id]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [activeTab, id])
 
   const totalPages = Math.ceil(total / LIMIT)
 

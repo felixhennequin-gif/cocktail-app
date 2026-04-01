@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { useTranslation } from 'react-i18next'
+import DOMPurify from 'dompurify'
 import { useAuth } from '../contexts/AuthContext'
 
 // ---------------------------------------------------------------------------
@@ -87,7 +88,7 @@ function simpleMarkdownToHtml(md) {
 export default function BlogArticle() {
   const { slug }         = useParams()
   const { t, i18n }     = useTranslation()
-  const { user }        = useAuth()
+  const { user, authFetch } = useAuth()
   const [article, setArticle] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError]     = useState(null)
@@ -97,11 +98,7 @@ export default function BlogArticle() {
     setLoading(true)
     setError(null)
 
-    const headers = {}
-    const token = localStorage.getItem('token')
-    if (token) headers['Authorization'] = `Bearer ${token}`
-
-    fetch(`/api/articles/${slug}`, { headers })
+    authFetch(`/api/articles/${slug}`)
       .then((r) => {
         if (r.status === 404) throw new Error('not_found')
         if (!r.ok) throw new Error('fetch_error')
@@ -112,10 +109,10 @@ export default function BlogArticle() {
       .finally(() => { if (!cancelled) setLoading(false) })
 
     return () => { cancelled = true }
-  }, [slug])
+  }, [slug, authFetch])
 
   const renderedContent = useMemo(
-    () => (article ? simpleMarkdownToHtml(article.content) : ''),
+    () => (article ? DOMPurify.sanitize(simpleMarkdownToHtml(article.content)) : ''),
     [article]
   )
 

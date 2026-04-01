@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense } from 'react'
+import { useState, lazy, Suspense, useEffect } from 'react'
 import { Routes, Route, Link, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import Logo from './components/Logo'
@@ -98,8 +98,9 @@ export const preload = (page) => { lazyImports[page]?.() }
 // Garde de route pour les pages nécessitant une authentification
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
+  const location = useLocation()
   if (loading) return null
-  if (!user) return <Navigate to="/login" replace />
+  if (!user) return <Navigate to="/login" state={{ from: location.pathname }} replace />
   return children
 }
 
@@ -116,7 +117,10 @@ function Header() {
   const { user, logout } = useAuth()
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const location = useLocation()
   const [menuOpen, setMenuOpen] = useState(false)
+
+  useEffect(() => { setMenuOpen(false) }, [location.pathname])
 
   const handleLogout = () => {
     logout()
@@ -247,7 +251,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gold-50 dark:bg-ink-950 transition-colors">
-      <Helmet defaultTitle={t('nav.brand') + ' — ' + t('recipes.heroTitle')} />
+      <Helmet defaultTitle={'Écume — ' + t('recipes.heroTitle')} />
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2 focus:bg-gold-400 focus:text-ink-900 focus:rounded-lg focus:text-sm focus:font-medium"
@@ -259,7 +263,7 @@ export default function App() {
 
       <main id="main-content" role="main" className="max-w-5xl mx-auto px-4 py-6 md:py-8">
         <ErrorBoundary key={location.pathname}>
-          <Suspense fallback={<div className="flex justify-center py-16"><div className="w-6 h-6 border-2 border-gold-400 border-t-transparent rounded-full animate-spin" /></div>}>
+          <Suspense fallback={<div className="flex justify-center py-16" role="status"><div className="w-6 h-6 border-2 border-gold-400 border-t-transparent rounded-full animate-spin" /><span className="sr-only">Loading...</span></div>}>
           <Routes>
             <Route path="/"                        element={<LandingPage />} />
             <Route path="/recipes"                  element={<RecipeList />} />

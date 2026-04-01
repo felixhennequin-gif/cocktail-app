@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 
 /**
  * Modale de confirmation réutilisable.
@@ -20,6 +21,7 @@ export default function ConfirmModal({
   confirmLabel = 'Confirmer',
   variant = 'danger',
 }) {
+  const { t } = useTranslation()
   const modalRef = useRef(null)
 
   useEffect(() => {
@@ -72,7 +74,7 @@ export default function ConfirmModal({
             onClick={onCancel}
             className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600 rounded-xl hover:border-gray-300 dark:hover:border-gray-500 transition-colors"
           >
-            Annuler
+            {t('common.cancel')}
           </button>
           <button
             onClick={onConfirm}

@@ -29,30 +29,37 @@ export default function CommentSection({ recipeId, isOwnRecipe, comments, setCom
     const body   = { content: commentText }
     if (commentScore) body.score = commentScore
 
-    const res = await authFetch(url, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    })
-    if (res.ok) {
-      const saved = await res.json()
-      if (isEdit) {
-        setComments((prev) => prev.map((c) => c.id === saved.id ? saved : c))
+    try {
+      const res = await authFetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      if (res.ok) {
+        const saved = await res.json()
+        if (isEdit) {
+          setComments((prev) => prev.map((c) => c.id === saved.id ? saved : c))
+        } else {
+          setComments((prev) => [saved, ...prev])
+        }
+        setMyComment(saved)
+        showToast(isEdit ? t('recipes.editComment') + ' !' : t('recipes.submitComment') + ' !', 'success')
+        authFetch(`/api/comments/${recipeId}`)
+          .then((r) => r.ok ? r.json() : null)
+          .then((data) => {
+            if (data?.avgRating !== undefined) {
+              setAvgRating(data.avgRating)
+              setRatingsCount(data.ratingsCount ?? 0)
+            }
+          })
       } else {
-        setComments((prev) => [saved, ...prev])
+        showToast(t('common.error'), 'error')
       }
-      setMyComment(saved)
-      showToast(isEdit ? t('recipes.editComment') + ' !' : t('recipes.submitComment') + ' !', 'success')
-      authFetch(`/api/comments/${recipeId}`)
-        .then((r) => r.ok ? r.json() : null)
-        .then((data) => {
-          if (data?.avgRating !== undefined) {
-            setAvgRating(data.avgRating)
-            setRatingsCount(data.ratingsCount ?? 0)
-          }
-        })
+    } catch {
+      showToast(t('common.error'), 'error')
+    } finally {
+      setSubmitting(false)
     }
-    setSubmitting(false)
   }
 
   const handleEditClick = () => {

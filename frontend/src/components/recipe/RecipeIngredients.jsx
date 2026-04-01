@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../contexts/AuthContext'
 
@@ -35,13 +35,13 @@ function SubstitutePopover({ ingredientId, onClose }) {
   const [subs, setSubs] = useState(null)
   const [loading, setLoading] = useState(true)
 
-  useState(() => {
+  useEffect(() => {
     authFetch(`/api/ingredients/${ingredientId}/substitutes`)
       .then((r) => r.json())
       .then(setSubs)
       .catch(() => setSubs([]))
       .finally(() => setLoading(false))
-  }, [ingredientId])
+  }, [ingredientId, authFetch])
 
   return (
     <div className="absolute right-0 top-full mt-1 z-20 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-3 text-xs">

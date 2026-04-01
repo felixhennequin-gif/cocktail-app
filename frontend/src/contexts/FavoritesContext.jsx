@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
 import { useAuth } from './AuthContext'
 import { useToast } from './ToastContext'
 import { useOfflineCache } from '../hooks/useOfflineCache'
@@ -11,6 +11,12 @@ export function FavoritesProvider({ children }) {
   const { cacheFavorite, uncacheFavorite } = useOfflineCache()
   const [favoriteIds, setFavoriteIds] = useState(new Set())
   const [pendingIds, setPendingIds] = useState(new Set())
+
+  const favoriteIdsRef = useRef(favoriteIds)
+  const pendingIdsRef = useRef(pendingIds)
+
+  useEffect(() => { favoriteIdsRef.current = favoriteIds }, [favoriteIds])
+  useEffect(() => { pendingIdsRef.current = pendingIds }, [pendingIds])
 
   useEffect(() => {
     if (!user) { setFavoriteIds(new Set()); return }
@@ -25,8 +31,8 @@ export function FavoritesProvider({ children }) {
   const isPending = useCallback((recipeId) => pendingIds.has(recipeId), [pendingIds])
 
   const toggleFavorite = useCallback(async (recipeId) => {
-    if (!user || pendingIds.has(recipeId)) return
-    const willFavorite = !favoriteIds.has(recipeId)
+    if (!user || pendingIdsRef.current.has(recipeId)) return
+    const willFavorite = !favoriteIdsRef.current.has(recipeId)
     setPendingIds((prev) => new Set(prev).add(recipeId))
     // Optimistic update
     setFavoriteIds((prev) => {
@@ -69,7 +75,7 @@ export function FavoritesProvider({ children }) {
         return next
       })
     }
-  }, [user, authFetch, favoriteIds, pendingIds])
+  }, [user, authFetch])
 
   return (
     <FavoritesContext.Provider value={{ favoriteIds, isFavorited, toggleFavorite, isPending }}>

@@ -66,11 +66,14 @@ export default function TastingModal({ recipeId, recipeName, isOpen, onClose }) 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="tasting-modal-title"
         className="bg-white dark:bg-ink-900 rounded-2xl border border-gray-200 dark:border-gray-700 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto shadow-xl animate-fade-in"
         onClick={(e) => e.stopPropagation()}
       >
         <form onSubmit={handleSubmit} className="p-5">
-          <h2 className="text-lg font-serif font-medium text-gray-900 dark:text-gray-100 mb-1">
+          <h2 id="tasting-modal-title" className="text-lg font-serif font-medium text-gray-900 dark:text-gray-100 mb-1">
             {t('tastings.logTitle')}
           </h2>
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">{recipeName}</p>
@@ -85,6 +88,7 @@ export default function TastingModal({ recipeId, recipeName, isOpen, onClose }) 
                 <button
                   key={i}
                   type="button"
+                  aria-label={t('tastings.ratingAria', { count: i + 1 })}
                   className={`text-2xl transition-colors ${
                     i < (hoverRating || personalRating) ? 'text-amber-500' : 'text-gray-300 dark:text-gray-600'
                   }`}

@@ -400,7 +400,12 @@
     "stepUploading": "Uploading...",
     "loading": "Loading...",
     "editRecipeButton": "✏️ Edit",
-    "deleteRecipeButton": "🗑 Delete"
+    "deleteRecipeButton": "🗑 Delete",
+    "fields": {
+      "servings": "Glasses / servings",
+      "servingsPlaceholder": "e.g. 2",
+      "stepPlaceholder": "Step {{number}}"
+    }
   },
   "common": {
     "switchToFrench": "Switch to French",
@@ -667,7 +672,8 @@
     "statTotal": "Cocktails made",
     "statUnique": "Unique recipes",
     "statCategories": "Categories explored",
-    "statTopRecipe": "Top recipe"
+    "statTopRecipe": "Top recipe",
+    "ratingAria": "{{count}} star out of 5"
   },
   "compare": {
     "title": "Compare Cocktails",

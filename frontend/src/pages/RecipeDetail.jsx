@@ -138,13 +138,13 @@ export default function RecipeDetail() {
   return (
     <div className="max-w-5xl mx-auto">
       <Helmet>
-        <title>{recipe.name} — Cocktails</title>
+        <title>{recipe.name} — Écume</title>
         <meta name="description" content={metaDescription} />
         <meta property="og:site_name" content="Écume" />
         <meta property="og:title" content={recipe.name} />
         <meta property="og:description" content={metaDescription} />
         <meta property="og:type" content="article" />
-        <meta property="og:url" content={`https://cocktail-app.fr/recipes/${recipe.id}`} />
+        <meta property="og:url" content={`${window.location.origin}/recipes/${recipe.id}`} />
         {recipe.imageUrl && <meta property="og:image" content={getImageUrl(recipe.imageUrl)} />}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={recipe.name} />
@@ -156,7 +156,7 @@ export default function RecipeDetail() {
       <AddToCollectionModal
         isOpen={collectionModalOpen}
         onClose={() => setCollectionModalOpen(false)}
-        recipeId={id}
+        recipeId={parseInt(id)}
       />
       <TastingModal
         recipeId={parseInt(id)}

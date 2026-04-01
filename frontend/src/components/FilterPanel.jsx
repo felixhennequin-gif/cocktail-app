@@ -1,4 +1,4 @@
-import { memo } from 'react'
+import { memo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 /**
@@ -95,7 +95,7 @@ function FilterPanel({
  */
 const TagsFilter = memo(function TagsFilter({ tags, tagIds, onToggleTag }) {
   const { t } = useTranslation()
-  const [showAllTags, setShowAllTags] = useTagsExpansion()
+  const [showAllTags, setShowAllTags] = useState(false)
 
   const sorted = [...tags].sort((a, b) => (b.recipesCount || 0) - (a.recipesCount || 0))
   const visibleTags = showAllTags ? sorted : sorted.slice(0, 10)
@@ -140,10 +140,5 @@ const TagsFilter = memo(function TagsFilter({ tags, tagIds, onToggleTag }) {
   )
 })
 
-// Hook local pour gérer l'expansion des tags dans TagsFilter
-function useTagsExpansion() {
-  const { useState: useS } = require('react') // eslint-disable-line @typescript-eslint/no-require-imports
-  return useS(false)
-}
 
 export default memo(FilterPanel)

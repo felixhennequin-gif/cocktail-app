@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import Logo from './Logo'
 
 export default function Footer() {
   const { t } = useTranslation()
@@ -7,9 +8,7 @@ export default function Footer() {
   return (
     <footer className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-ink-900 transition-colors">
       <div className="max-w-5xl mx-auto px-4 md:px-6 py-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
-        <span className="font-serif text-lg text-gray-900 dark:text-gray-100">
-          Cocktails
-        </span>
+        <Logo className="h-8 text-gray-900 dark:text-gray-100" />
 
         <div className="flex flex-col items-center gap-3 sm:items-end">
           <nav className="flex gap-4">

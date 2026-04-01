@@ -7,6 +7,7 @@ import DifficultyBadge from '../components/DifficultyBadge'
 import { SkeletonCardGrid } from '../components/Skeleton'
 import { useAuth } from '../contexts/AuthContext'
 import useFavorites from '../hooks/useFavorites'
+import { getImageUrl } from '../utils/image'
 
 export default function LandingPage() {
   const { user, authFetch } = useAuth()
@@ -25,16 +26,20 @@ export default function LandingPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    const controller = new AbortController()
+    const { signal } = controller
+
     const publicFetches = [
-      fetch('/api/recipes/daily').then((r) => r.ok ? r.json() : null),
-      fetch('/api/recipes?sortBy=avgRating&sortOrder=desc&limit=8').then((r) => r.ok ? r.json() : { data: [], total: 0 }),
-      fetch('/api/categories').then((r) => r.ok ? r.json() : []),
-      fetch('/api/recipes/seasonal?limit=4').then((r) => r.ok ? r.json() : { data: [], season: null }),
-      fetch('/api/challenges/current').then((r) => r.ok ? r.json() : null),
-      fetch('/api/tags').then((r) => r.ok ? r.json() : []),
+      fetch('/api/recipes/daily', { signal }).then((r) => r.ok ? r.json() : null),
+      fetch('/api/recipes?sortBy=avgRating&sortOrder=desc&limit=8', { signal }).then((r) => r.ok ? r.json() : { data: [], total: 0 }),
+      fetch('/api/categories', { signal }).then((r) => r.ok ? r.json() : []),
+      fetch('/api/recipes/seasonal?limit=4', { signal }).then((r) => r.ok ? r.json() : { data: [], season: null }),
+      fetch('/api/challenges/current', { signal }).then((r) => r.ok ? r.json() : null),
+      fetch('/api/tags', { signal }).then((r) => r.ok ? r.json() : []),
     ]
 
     Promise.allSettled(publicFetches).then(([dailyResult, recipesResult, categoriesResult, seasonalResult, challengeResult, tagsResult]) => {
+      if (signal.aborted) return
       if (dailyResult.status === 'fulfilled') setDailyRecipe(dailyResult.value)
       if (recipesResult.status === 'fulfilled') {
         setPopularRecipes(recipesResult.value.data ?? [])
@@ -47,7 +52,9 @@ export default function LandingPage() {
       }
       if (challengeResult.status === 'fulfilled') setCurrentChallenge(challengeResult.value)
       if (tagsResult.status === 'fulfilled') setTags(tagsResult.value)
-    }).finally(() => setLoading(false))
+    }).finally(() => { if (!signal.aborted) setLoading(false) })
+
+    return () => controller.abort()
   }, [])
 
   // Chargement des recommandations personnalisées pour l'utilisateur connecté
@@ -62,16 +69,16 @@ export default function LandingPage() {
   return (
     <div>
       <Helmet>
-        <title>Cocktails — Recettes & Inspiration</title>
+        <title>Écume — Recettes & Inspiration</title>
         <meta name="description" content="Découvrez des centaines de recettes de cocktails. Recherchez, filtrez, notez et partagez vos cocktails préférés." />
         <meta property="og:site_name" content="Écume" />
-        <meta property="og:title" content="Cocktails — Recettes & Inspiration" />
+        <meta property="og:title" content="Écume — Recettes & Inspiration" />
         <meta property="og:description" content="Découvrez des centaines de recettes de cocktails artisanales." />
         <meta property="og:image" content="https://cocktail-app.fr/og-default.png" />
         <meta property="og:url" content="https://cocktail-app.fr" />
         <meta property="og:type" content="website" />
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Cocktails — Recettes & Inspiration" />
+        <meta name="twitter:title" content="Écume — Recettes & Inspiration" />
         <meta name="twitter:description" content="Découvrez des centaines de recettes de cocktails artisanales." />
         <meta name="twitter:image" content="https://cocktail-app.fr/og-default.png" />
       </Helmet>
@@ -135,7 +142,7 @@ export default function LandingPage() {
             {dailyRecipe.imageUrl && (
               <div className="sm:w-56 h-48 sm:h-auto flex-shrink-0 relative">
                 <img
-                  src={dailyRecipe.imageUrl}
+                  src={getImageUrl(dailyRecipe.imageUrl)}
                   alt={dailyRecipe.name}
                   width="224"
                   height="192"

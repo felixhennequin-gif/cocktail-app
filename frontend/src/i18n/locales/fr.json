@@ -400,7 +400,12 @@
     "stepUploading": "Upload...",
     "loading": "Chargement...",
     "editRecipeButton": "✏️ Modifier",
-    "deleteRecipeButton": "🗑 Supprimer"
+    "deleteRecipeButton": "🗑 Supprimer",
+    "fields": {
+      "servings": "Verres / portions",
+      "servingsPlaceholder": "ex : 2",
+      "stepPlaceholder": "Étape {{number}}"
+    }
   },
   "common": {
     "switchToFrench": "Passer en français",
@@ -667,7 +672,8 @@
     "statTotal": "Cocktails réalisés",
     "statUnique": "Recettes différentes",
     "statCategories": "Catégories explorées",
-    "statTopRecipe": "Recette favorite"
+    "statTopRecipe": "Recette favorite",
+    "ratingAria": "{{count}} étoile sur 5"
   },
   "compare": {
     "title": "Comparaison de cocktails",

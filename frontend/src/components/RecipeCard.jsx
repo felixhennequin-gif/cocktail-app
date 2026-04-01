@@ -1,5 +1,5 @@
 import { memo } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { getImageUrl } from '../utils/image'
 import DifficultyBadge from './DifficultyBadge'
@@ -7,18 +7,11 @@ import Stars from './Stars'
 
 function RecipeCard({ recipe, isFavorited, onToggleFavorite, userId, showAuthorProminent }) {
   const { t } = useTranslation()
-  const navigate = useNavigate()
 
   const handleFavorite = (e) => {
     e.preventDefault()
     e.stopPropagation()
     if (onToggleFavorite) onToggleFavorite(recipe.id)
-  }
-
-  const handleAuthorClick = (e) => {
-    e.preventDefault()
-    e.stopPropagation()
-    navigate(`/users/${recipe.author.id}`)
   }
 
   return (
@@ -38,12 +31,13 @@ function RecipeCard({ recipe, isFavorited, onToggleFavorite, userId, showAuthorP
 
       <div className="flex flex-col justify-between min-w-0 flex-1">
         {showAuthorProminent && recipe.author && (
-          <button
-            onClick={handleAuthorClick}
+          <Link
+            to={`/users/${recipe.author.id}`}
+            onClick={(e) => e.stopPropagation()}
             className="text-xs font-medium text-gold-500 dark:text-gold-400 hover:underline text-left mb-0.5"
           >
             {recipe.author.pseudo}
-          </button>
+          </Link>
         )}
         <div className="flex items-start justify-between gap-2">
           <h2 className="text-base font-serif font-medium text-gray-900 dark:text-gray-100 truncate">{recipe.name}</h2>
@@ -91,12 +85,13 @@ function RecipeCard({ recipe, isFavorited, onToggleFavorite, userId, showAuthorP
             <Stars value={recipe.avgRating} count={recipe.ratingsCount} />
           )}
           {recipe.author && (
-            <button
-              onClick={handleAuthorClick}
+            <Link
+              to={`/users/${recipe.author.id}`}
+              onClick={(e) => e.stopPropagation()}
               className="text-gold-500 dark:text-gold-400 hover:underline ml-auto"
             >
               {recipe.author.pseudo}
-            </button>
+            </Link>
           )}
         </div>
 
