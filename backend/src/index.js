@@ -296,6 +296,12 @@ setInterval(() => {
 if (require.main === module) {
   const server = app.listen(PORT, () => {
     console.log(`Serveur démarré sur le port ${PORT}`);
+
+    // Ping Google pour signaler le sitemap (une seule fois au démarrage)
+    const sitemapUrl = `${process.env.SITE_URL || 'https://cocktail-app.fr'}/sitemap.xml`;
+    fetch(`https://www.google.com/ping?sitemap=${encodeURIComponent(sitemapUrl)}`)
+      .then((res) => console.log(`[sitemap] Ping Google: ${res.status}`))
+      .catch((err) => console.warn(`[sitemap] Ping Google échoué: ${err.message}`));
   });
 
   let isShuttingDown = false;
