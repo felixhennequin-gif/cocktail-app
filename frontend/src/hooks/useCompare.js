@@ -1,29 +1,38 @@
-import { useState, useCallback, useSyncExternalStore } from 'react'
+import { useCallback, useSyncExternalStore } from 'react'
 
 const STORAGE_KEY = 'compare_ids'
 const MAX = 2
+const EMPTY = []
 
-// Stockage et notification pour useSyncExternalStore
 let listeners = new Set()
 const subscribe = (cb) => { listeners.add(cb); return () => listeners.delete(cb) }
-const notify = () => listeners.forEach((cb) => cb())
+
+// Cache le snapshot pour que useSyncExternalStore reçoive une référence stable
+const UNSET = Symbol()
+let cachedRaw = UNSET
+let cachedSnapshot = EMPTY
 
 function getIds() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    return raw ? JSON.parse(raw) : []
+    if (raw !== cachedRaw) {
+      cachedRaw = raw
+      cachedSnapshot = raw ? JSON.parse(raw) : EMPTY
+    }
+    return cachedSnapshot
   } catch {
-    return []
+    return cachedSnapshot
   }
 }
 
 function setIds(ids) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(ids))
-  notify()
+  cachedRaw = UNSET
+  listeners.forEach((cb) => cb())
 }
 
 export default function useCompare() {
-  const ids = useSyncExternalStore(subscribe, getIds, () => [])
+  const ids = useSyncExternalStore(subscribe, getIds, () => EMPTY)
 
   const toggle = useCallback((id) => {
     const current = getIds()

@@ -2,27 +2,39 @@ import { useCallback, useSyncExternalStore } from 'react'
 
 const STORAGE_KEY = 'shopping_cart'
 const MAX = 20
+const EMPTY = []
 
 let listeners = new Set()
 const subscribe = (cb) => { listeners.add(cb); return () => listeners.delete(cb) }
-const notify = () => listeners.forEach((cb) => cb())
+
+// Cache le snapshot pour que useSyncExternalStore reçoive une référence stable
+// (getSnapshot doit renvoyer la même référence si la valeur n'a pas changé)
+const UNSET = Symbol()
+let cachedRaw = UNSET
+let cachedSnapshot = EMPTY
 
 function getCart() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    return raw ? JSON.parse(raw) : []
+    if (raw !== cachedRaw) {
+      cachedRaw = raw
+      cachedSnapshot = raw ? JSON.parse(raw) : EMPTY
+    }
+    return cachedSnapshot
   } catch {
-    return []
+    return cachedSnapshot
   }
 }
 
 function setCart(ids) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(ids))
-  notify()
+  // Invalide le cache avant de notifier
+  cachedRaw = UNSET
+  listeners.forEach((cb) => cb())
 }
 
 export default function useShoppingCart() {
-  const ids = useSyncExternalStore(subscribe, getCart, () => [])
+  const ids = useSyncExternalStore(subscribe, getCart, () => EMPTY)
 
   const add = useCallback((id) => {
     const current = getCart()
