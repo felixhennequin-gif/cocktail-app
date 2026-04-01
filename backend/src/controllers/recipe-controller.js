@@ -1,5 +1,14 @@
 const fs = require('fs');
 const path = require('path');
+
+// Normalise un imageUrl en chemin absolu dans uploadsDir
+const resolveImagePath = (imageUrl, uploadsDir) => {
+  if (!imageUrl) return null;
+  // Strip leading /uploads/ prefix and resolve relative to uploadsDir
+  const relative = imageUrl.replace(/^\/uploads\//, '');
+  return path.join(uploadsDir, relative);
+};
+
 const prisma = require('../prisma');
 const logger = require('../logger');
 const { createNotification, notifyFollowers } = require('../services/notification-service');
@@ -203,7 +212,7 @@ const updateRecipe = async (req, res, next) => {
     return badRequest(res, formatZodError(parsed.error));
   }
 
-  const { name, description, imageUrl, difficulty, prepTime, servings, categoryId, ingredients, steps, tagIds, tagNames, season, status: requestedStatus, sponsorName, sponsorLogo, isSponsored } = parsed.data;
+  const { name, description, imageUrl, difficulty, prepTime, servings, categoryId, ingredients, steps, tagIds, tagNames, parentRecipeId, season, status: requestedStatus, sponsorName, sponsorLogo, isSponsored } = parsed.data;
 
   const exists = await prisma.recipe.findUnique({ where: { id } });
   if (!exists) return notFound(res, 'Recette introuvable');
@@ -234,50 +243,58 @@ const updateRecipe = async (req, res, next) => {
       resolvedTagIds = await resolveTagNames(tagNames);
     }
 
-    // Sauvegarder une révision avant la mise à jour (versioning #229)
-    try {
-      const snapshot = await prisma.recipe.findUnique({
-        where: { id },
-        include: { ingredients: { include: { ingredient: true } }, steps: true, tags: { include: { tag: true } } },
-      });
-      if (snapshot) {
-        const lastRevision = await prisma.recipeRevision.findFirst({
-          where: { recipeId: id },
-          orderBy: { version: 'desc' },
-          select: { version: true },
-        });
-        const nextVersion = (lastRevision?.version || 0) + 1;
-        await prisma.recipeRevision.create({
-          data: {
-            recipeId: id,
-            version: nextVersion,
-            authorId: req.user.id,
-            message: req.body.revisionMessage || null,
-            data: {
-              name: snapshot.name,
-              description: snapshot.description,
-              difficulty: snapshot.difficulty,
-              prepTime: snapshot.prepTime,
-              servings: snapshot.servings,
-              categoryId: snapshot.categoryId,
-              season: snapshot.season,
-              ingredients: snapshot.ingredients.map((ri) => ({
-                name: ri.ingredient.name,
-                quantity: ri.quantity,
-                unit: ri.unit,
-              })),
-              steps: snapshot.steps.map((s) => ({ order: s.order, description: s.description })),
-              tags: snapshot.tags.map((rt) => rt.tag.name),
-            },
-          },
-        });
-      }
-    } catch (revErr) {
-      // Ne pas bloquer la mise à jour si le versioning échoue
-      logger.error('versioning', 'Erreur sauvegarde révision', { error: revErr.message });
+    // Valider la contrainte variante si parentRecipeId est fourni (#257)
+    if (parentRecipeId !== undefined && parentRecipeId !== null) {
+      const parent = await prisma.recipe.findUnique({ where: { id: parseInt(parentRecipeId) } });
+      if (!parent) return badRequest(res, 'Recette parente introuvable');
+      if (parent.status !== 'PUBLISHED') return badRequest(res, 'La recette parente doit être publiée');
+      if (parent.parentRecipeId) return badRequest(res, 'Impossible de créer une variante d\'une variante');
     }
 
     const recipe = await prisma.$transaction(async (tx) => {
+      // Sauvegarder une révision avant la mise à jour (versioning #229)
+      try {
+        const snapshot = await tx.recipe.findUnique({
+          where: { id },
+          include: { ingredients: { include: { ingredient: true } }, steps: true, tags: { include: { tag: true } } },
+        });
+        if (snapshot) {
+          const lastRevision = await tx.recipeRevision.findFirst({
+            where: { recipeId: id },
+            orderBy: { version: 'desc' },
+            select: { version: true },
+          });
+          const nextVersion = (lastRevision?.version || 0) + 1;
+          await tx.recipeRevision.create({
+            data: {
+              recipeId: id,
+              version: nextVersion,
+              authorId: req.user.id,
+              message: req.body.revisionMessage || null,
+              data: {
+                name: snapshot.name,
+                description: snapshot.description,
+                difficulty: snapshot.difficulty,
+                prepTime: snapshot.prepTime,
+                servings: snapshot.servings,
+                categoryId: snapshot.categoryId,
+                season: snapshot.season,
+                ingredients: snapshot.ingredients.map((ri) => ({
+                  name: ri.ingredient.name,
+                  quantity: ri.quantity,
+                  unit: ri.unit,
+                })),
+                steps: snapshot.steps.map((s) => ({ order: s.order, description: s.description })),
+                tags: snapshot.tags.map((rt) => rt.tag.name),
+              },
+            },
+          });
+        }
+      } catch (revErr) {
+        // Ne pas bloquer la mise à jour si le versioning échoue
+        logger.error('versioning', 'Erreur sauvegarde révision', { error: revErr.message });
+      }
+
       if (resolved !== undefined) {
         await tx.recipeIngredient.deleteMany({ where: { recipeId: id } });
       }
@@ -299,8 +316,9 @@ const updateRecipe = async (req, res, next) => {
           ...(prepTime    !== undefined && { prepTime: parseInt(prepTime) }),
           ...(servings    !== undefined && { servings: servings ? parseInt(servings) : null }),
           ...(categoryId  !== undefined && { categoryId: parseInt(categoryId) }),
-          ...(season      !== undefined && { season: season || null }),
-          ...(newStatus   !== undefined && { status: newStatus }),
+          ...(season          !== undefined && { season: season || null }),
+          ...(newStatus       !== undefined && { status: newStatus }),
+          ...(parentRecipeId  !== undefined && { parentRecipeId: parentRecipeId ? parseInt(parentRecipeId) : null }),
           ...(req.user.role === 'ADMIN' ? {
             ...(isSponsored  !== undefined && { isSponsored }),
             ...(sponsorName  !== undefined && { sponsorName }),
@@ -367,9 +385,11 @@ const deleteRecipe = async (req, res, next) => {
     // Nettoyage des images associées (fire and forget)
     const uploadsDir = path.join(__dirname, '..', '..', 'uploads');
     const imagesToDelete = [];
-    if (exists.imageUrl) imagesToDelete.push(path.join(uploadsDir, path.basename(exists.imageUrl)));
+    const mainImg = resolveImagePath(exists.imageUrl, uploadsDir);
+    if (mainImg) imagesToDelete.push(mainImg);
     for (const step of exists.steps) {
-      if (step.imageUrl) imagesToDelete.push(path.join(uploadsDir, ...step.imageUrl.replace('/uploads/', '').split('/')));
+      const stepImg = resolveImagePath(step.imageUrl, uploadsDir);
+      if (stepImg) imagesToDelete.push(stepImg);
     }
     for (const imgPath of imagesToDelete) {
       fs.unlink(imgPath, () => {});

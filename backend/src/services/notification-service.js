@@ -98,13 +98,14 @@ const notifyFollowers = async ({ authorId, type, data }) => {
   });
   if (follows.length === 0) return;
 
-  const pushPayload = buildPushPayload(type, data);
+  const sanitized = sanitizeData(data);
+  const pushPayload = buildPushPayload(type, sanitized);
 
   // Traitement par lots
   for (let i = 0; i < follows.length; i += BATCH_SIZE) {
     const batch = follows.slice(i, i + BATCH_SIZE);
     await prisma.notification.createMany({
-      data: batch.map((f) => ({ userId: f.followerId, type, data })),
+      data: batch.map((f) => ({ userId: f.followerId, type, data: sanitized })),
     });
 
     // Envoyer les push notifications à tous les followers du lot (fire and forget)

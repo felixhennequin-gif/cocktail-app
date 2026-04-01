@@ -1,6 +1,8 @@
+const { Prisma } = require('@prisma/client');
 const prisma = require('../prisma');
 const { badRequest } = require('../helpers');
 const { enrichRecipes, includeList } = require('../helpers/recipe-helpers');
+const { updateBarSchema, formatZodError } = require('../schemas');
 
 // GET /bar — ingrédients du bar de l'utilisateur connecté
 const getMyBar = async (req, res, next) => {
@@ -20,20 +22,11 @@ const getMyBar = async (req, res, next) => {
 const updateMyBar = async (req, res, next) => {
   try {
     const userId = req.user.id;
-    const { ingredientIds } = req.body;
 
-    if (!Array.isArray(ingredientIds)) {
-      return badRequest(res, 'ingredientIds doit être un tableau');
-    }
-    // Dédupliquer et valider les IDs
-    const uniqueIds = [...new Set(ingredientIds.map((id) => parseInt(id)).filter(Number.isFinite))];
-    if (uniqueIds.length === 0 && ingredientIds.length > 0) {
-      return badRequest(res, 'Aucun ID valide fourni');
-    }
-    // Limite raisonnable
-    if (uniqueIds.length > 200) {
-      return badRequest(res, 'Maximum 200 ingrédients autorisés');
-    }
+    const parsed = updateBarSchema.safeParse(req.body);
+    if (!parsed.success) return badRequest(res, formatZodError(parsed.error));
+    const { ingredientIds } = parsed.data;
+    const uniqueIds = [...new Set(ingredientIds)];
 
     // Vérifier que les ingrédients existent
     const existing = await prisma.ingredient.findMany({
@@ -65,64 +58,83 @@ const getMakeableRecipes = async (req, res, next) => {
   try {
     const userId = req.user.id;
 
-    // Récupérer les ingrédients du bar
     const barItems = await prisma.userIngredient.findMany({
       where: { userId },
       select: { ingredientId: true },
     });
-    const barIds = new Set(barItems.map((i) => i.ingredientId));
+    const barIds = barItems.map((i) => i.ingredientId);
 
-    if (barIds.size === 0) {
+    if (barIds.length === 0) {
       return res.json({ makeable: [], almostMakeable: [] });
     }
 
-    // Récupérer toutes les recettes publiées avec leurs ingrédients
-    const recipes = await prisma.recipe.findMany({
-      where: { status: 'PUBLISHED' },
-      include: {
-        ...includeList,
-        ingredients: {
-          include: { ingredient: true },
-        },
-      },
-    });
+    // Recettes 100% faisables via SQL
+    const makeableRows = await prisma.$queryRaw`
+      SELECT r.id
+      FROM "Recipe" r
+      WHERE r.status = 'PUBLISHED'
+        AND NOT EXISTS (
+          SELECT 1 FROM "RecipeIngredient" ri
+          WHERE ri."recipeId" = r.id
+            AND ri."ingredientId" NOT IN (${Prisma.join(barIds)})
+        )
+        AND EXISTS (
+          SELECT 1 FROM "RecipeIngredient" ri WHERE ri."recipeId" = r.id
+        )
+    `;
+    const makeableIds = makeableRows.map((r) => r.id);
 
-    const makeable = [];
-    const almostMakeable = [];
+    // Recettes à 1-2 ingrédients manquants via SQL
+    const almostRows = await prisma.$queryRaw`
+      SELECT r.id,
+        COUNT(CASE WHEN ri."ingredientId" NOT IN (${Prisma.join(barIds)}) THEN 1 END)::int AS missing_count,
+        COUNT(ri."ingredientId")::int AS total_count
+      FROM "Recipe" r
+      JOIN "RecipeIngredient" ri ON ri."recipeId" = r.id
+      WHERE r.status = 'PUBLISHED'
+        AND r.id NOT IN (${makeableIds.length > 0 ? Prisma.join(makeableIds) : Prisma.sql`-1`})
+      GROUP BY r.id
+      HAVING COUNT(CASE WHEN ri."ingredientId" NOT IN (${Prisma.join(barIds)}) THEN 1 END) BETWEEN 1 AND 2
+      ORDER BY COUNT(CASE WHEN ri."ingredientId" NOT IN (${Prisma.join(barIds)}) THEN 1 END) ASC,
+               COUNT(ri."ingredientId")::int DESC
+      LIMIT 20
+    `;
+    const almostIds = almostRows.map((r) => r.id);
 
-    for (const recipe of recipes) {
+    // Charger les recettes complètes seulement pour les IDs trouvés
+    const allIds = [...makeableIds, ...almostIds];
+    const allRecipes = allIds.length > 0
+      ? await prisma.recipe.findMany({
+          where: { id: { in: allIds } },
+          include: {
+            ...includeList,
+            ingredients: { include: { ingredient: true } },
+          },
+        })
+      : [];
+
+    const recipeMap = new Map(allRecipes.map((r) => [r.id, r]));
+    const barIdSet = new Set(barIds);
+
+    const makeableRecipes = makeableIds.map((id) => recipeMap.get(id)).filter(Boolean);
+    const enrichedMakeable = await enrichRecipes(makeableRecipes);
+
+    // Enrichir en batch (pas N+1)
+    const almostRecipes = almostIds.map((id) => recipeMap.get(id)).filter(Boolean);
+    const enrichedAlmostRecipes = await enrichRecipes(almostRecipes);
+    const enrichedAlmost = almostRecipes.map((recipe, i) => {
       const recipeIngredientIds = recipe.ingredients.map((ri) => ri.ingredientId);
-      if (recipeIngredientIds.length === 0) continue;
-
-      const missing = recipeIngredientIds.filter((id) => !barIds.has(id));
-      const matchPercent = ((recipeIngredientIds.length - missing.length) / recipeIngredientIds.length) * 100;
-
-      if (missing.length === 0) {
-        makeable.push(recipe);
-      } else if (missing.length <= 2) {
-        const missingNames = recipe.ingredients
-          .filter((ri) => missing.includes(ri.ingredientId))
-          .map((ri) => ri.ingredient.name);
-        almostMakeable.push({
-          recipe,
-          missingCount: missing.length,
-          missingIngredients: missingNames,
-          matchPercent: Math.round(matchPercent),
-        });
-      }
-    }
-
-    // Trier les « presque réalisables » par % de correspondance décroissant
-    almostMakeable.sort((a, b) => b.matchPercent - a.matchPercent);
-
-    // Enrichir avec avgRating etc.
-    const enrichedMakeable = await enrichRecipes(makeable);
-    const enrichedAlmost = await Promise.all(
-      almostMakeable.map(async (item) => ({
-        ...item,
-        recipe: (await enrichRecipes([item.recipe]))[0],
-      }))
-    );
+      const missing = recipeIngredientIds.filter((id) => !barIdSet.has(id));
+      const missingNames = recipe.ingredients
+        .filter((ri) => missing.includes(ri.ingredientId))
+        .map((ri) => ri.ingredient.name);
+      return {
+        recipe: enrichedAlmostRecipes[i],
+        missingCount: missing.length,
+        missingIngredients: missingNames,
+        matchPercent: Math.round(((recipeIngredientIds.length - missing.length) / recipeIngredientIds.length) * 100),
+      };
+    });
 
     res.json({ makeable: enrichedMakeable, almostMakeable: enrichedAlmost });
   } catch (err) {

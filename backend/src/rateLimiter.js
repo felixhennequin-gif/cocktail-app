@@ -61,6 +61,15 @@ const changePasswordLimiter = rateLimit({
   message:         { error: 'Trop de tentatives, réessaie plus tard.' },
 });
 
+const resetPasswordLimiter = rateLimit({
+  skip,
+  windowMs:        15 * 60 * 1000,
+  max:             5,
+  standardHeaders: true,
+  legacyHeaders:   false,
+  message:         { error: 'Trop de tentatives de réinitialisation, réessayez dans 15 minutes' },
+});
+
 // Réservé à la phase 4 (POST /ai/*)
 const aiLimiter = rateLimit({
   skip,
@@ -92,4 +101,4 @@ const apiV1KeyLimiter = rateLimit({
   message:         { error: 'Limite de clé API atteinte. Réessayez dans une heure.' },
 });
 
-module.exports = { generalLimiter, authLimiter, pollingLimiter, aiLimiter, forgotPasswordLimiter, resendVerificationLimiter, changePasswordLimiter, apiV1AnonLimiter, apiV1KeyLimiter };
+module.exports = { generalLimiter, authLimiter, pollingLimiter, aiLimiter, forgotPasswordLimiter, resetPasswordLimiter, resendVerificationLimiter, changePasswordLimiter, apiV1AnonLimiter, apiV1KeyLimiter };

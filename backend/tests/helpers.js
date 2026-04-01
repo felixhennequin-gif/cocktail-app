@@ -1,7 +1,7 @@
 const bcrypt = require('bcrypt');
 const jwt    = require('jsonwebtoken');
 const prisma = require('../src/prisma');
-const { JWT_SECRET } = require('../src/middleware/auth');
+const JWT_SECRET = process.env.JWT_SECRET;
 
 // Vide toutes les tables dans l'ordre correct (FK)
 const cleanDb = async () => {

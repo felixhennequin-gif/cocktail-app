@@ -88,6 +88,7 @@ const getRecommendedRecipes = async (req, res, next) => {
         _count: { select: { ratings: true } },
         tags: { include: { tag: true } },
       },
+      take: 500,
     });
 
     // Calcul du score pour chaque recette candidate

@@ -15,8 +15,9 @@ router.get('/seasonal',   optionalAuth, cacheMiddleware(3600), getSeasonalRecipe
 router.get('/recommended', requireAuth, getRecommendedRecipes);
 router.get('/advent',     cacheMiddleware(3600), getAdventSummary);
 router.get('/advent/:day', cacheMiddleware(3600), getAdventRecipe);
-router.get('/:id/history',           getRecipeHistory);
-router.get('/:id/revisions/:version', getRevision);
+router.get('/:id/history',           optionalAuth, getRecipeHistory);
+router.get('/:id/revisions/:version', optionalAuth, getRevision);
+// Pas de cache ici : la réponse contient des champs spécifiques à l'utilisateur (isFavorited, userScore) — #251
 router.get('/:id',        optionalAuth, getRecipeById);
 router.post('/',         requireAuth,  createRecipe);
 router.put('/:id',       requireAuth,  updateRecipe);

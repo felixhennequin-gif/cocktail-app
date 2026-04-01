@@ -82,39 +82,77 @@ const getAdventSummary = async (req, res, next) => {
 
     const currentDay = now.getDate();
     const year = now.getFullYear();
+    const maxDay = Math.min(currentDay, 24);
+
+    // Cache du résumé complet
+    const summaryCacheKey = `cocktail:advent:summary:${year}:${maxDay}`;
+    const cachedSummary = process.env.NODE_ENV === 'test' ? null : await getCache(summaryCacheKey);
+    if (cachedSummary) {
+      return res.json(cachedSummary);
+    }
+
     const days = [];
 
-    // Pour chaque jour passé, on retourne le nom de la recette (pas tout le détail)
-    for (let d = 1; d <= Math.min(currentDay, 24); d++) {
+    // Vérifier d'abord si tous les jours ouverts sont déjà en cache
+    const cachedDays = [];
+    let allCached = true;
+    for (let d = 1; d <= maxDay; d++) {
       const cacheKey = `cocktail:advent:${year}:${d}`;
-      let cached = process.env.NODE_ENV === 'test' ? null : await getCache(cacheKey);
+      const cached = process.env.NODE_ENV === 'test' ? null : await getCache(cacheKey);
+      cachedDays[d] = cached;
+      if (!cached) allCached = false;
+    }
 
-      if (cached) {
-        days.push({ day: d, opened: true, recipeName: cached.name, recipeId: cached.id, imageUrl: cached.imageUrl });
-      } else {
-        // Calcul rapide du nom sans tout charger
-        const count = await prisma.recipe.count({ where: { status: 'PUBLISHED' } });
-        const hash = crypto.createHash('sha256').update(`advent-${year}-${d}`).digest();
-        const index = hash.readUInt32BE(0) % count;
-        const [recipe] = await prisma.recipe.findMany({
+    if (!allCached) {
+      // Un seul COUNT pour tous les jours
+      const count = await prisma.recipe.count({ where: { status: 'PUBLISHED' } });
+
+      if (count > 0) {
+        // Pré-calculer tous les indices en une seule passe
+        const indices = [];
+        for (let d = 1; d <= maxDay; d++) {
+          if (!cachedDays[d]) {
+            const hash = crypto.createHash('sha256').update(`advent-${year}-${d}`).digest();
+            indices.push({ day: d, index: hash.readUInt32BE(0) % count });
+          }
+        }
+
+        // Charger toutes les recettes nécessaires en une seule requête
+        // On utilise un offset/take par index via une sous-requête ordonnée
+        const allPublishedIds = await prisma.recipe.findMany({
           where: { status: 'PUBLISHED' },
           orderBy: { id: 'asc' },
-          skip: index,
-          take: 1,
           select: { id: true, name: true, imageUrl: true },
         });
-        if (recipe) {
-          days.push({ day: d, opened: true, recipeName: recipe.name, recipeId: recipe.id, imageUrl: recipe.imageUrl });
+
+        for (const { day, index } of indices) {
+          const recipe = allPublishedIds[index];
+          if (recipe) cachedDays[day] = recipe;
         }
       }
     }
 
+    // Construire le résumé à partir des données rassemblées
+    for (let d = 1; d <= maxDay; d++) {
+      const recipe = cachedDays[d];
+      if (recipe) {
+        days.push({ day: d, opened: true, recipeName: recipe.name, recipeId: recipe.id, imageUrl: recipe.imageUrl });
+      }
+    }
+
     // Ajouter les jours futurs (verrouillés)
-    for (let d = Math.min(currentDay, 24) + 1; d <= 24; d++) {
+    for (let d = maxDay + 1; d <= 24; d++) {
       days.push({ day: d, opened: false });
     }
 
-    res.json({ available: true, year, currentDay: Math.min(currentDay, 24), days });
+    const result = { available: true, year, currentDay: maxDay, days };
+
+    // Mettre en cache le résumé complet jusqu'à la prochaine case (minuit)
+    const msUntilMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1) - now;
+    const ttl = Math.max(60, Math.floor(msUntilMidnight / 1000));
+    setCache(summaryCacheKey, result, ttl).catch(() => {});
+
+    res.json(result);
   } catch (err) {
     next(err);
   }

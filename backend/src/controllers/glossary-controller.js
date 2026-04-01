@@ -1,5 +1,6 @@
 const prisma = require('../prisma');
 const { parseId, badRequest, notFound } = require('../helpers');
+const { createGlossaryEntrySchema, formatZodError } = require('../schemas');
 
 // GET /glossary?category=technique&q=shaker&page=1&limit=20
 const getGlossary = async (req, res, next) => {
@@ -71,8 +72,9 @@ const getGlossaryEntry = async (req, res, next) => {
 // POST /glossary [admin] — créer une entrée
 const createGlossaryEntry = async (req, res, next) => {
   try {
-    const { term, definition, longDescription, category, relatedRecipeIds, relatedEntryIds } = req.body;
-    if (!term || !definition || !category) return badRequest(res, 'term, definition et category sont requis');
+    const parsed = createGlossaryEntrySchema.safeParse(req.body);
+    if (!parsed.success) return badRequest(res, formatZodError(parsed.error));
+    const { term, definition, longDescription, category, relatedRecipeIds, relatedEntryIds } = parsed.data;
 
     const slug = term.toLowerCase().replace(/[^a-z0-9àâäéèêëïîôùûüÿçœæ]+/g, '-').replace(/(^-|-$)/g, '');
 
@@ -83,8 +85,8 @@ const createGlossaryEntry = async (req, res, next) => {
         definition: definition.trim(),
         longDescription: longDescription || null,
         category,
-        relatedRecipeIds: relatedRecipeIds || [],
-        relatedEntryIds: relatedEntryIds || [],
+        relatedRecipeIds,
+        relatedEntryIds,
       },
     });
 

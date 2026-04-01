@@ -1,9 +1,14 @@
+const { z } = require('zod');
 const prisma = require('../prisma');
 const { getCache, setCache } = require('../cache');
 const { badRequest } = require('../helpers');
+const { formatZodError } = require('../schemas');
 
-const VALID_CATEGORIES = ['recipes', 'ratings', 'followers', 'comments'];
-const VALID_PERIODS = ['week', 'month', 'all'];
+// Schéma de validation des paramètres du leaderboard
+const leaderboardSchema = z.object({
+  category: z.enum(['recipes', 'ratings', 'followers', 'comments']).default('recipes'),
+  period:   z.enum(['all', 'month', 'week']).default('all'),
+});
 
 // Retourne la date de début de la période
 const getPeriodStart = (period) => {
@@ -17,134 +22,81 @@ const getPeriodStart = (period) => {
   return now;
 };
 
+/**
+ * Calcule un classement générique via groupBy sur un modèle Prisma.
+ * @param {object} model         - Le modèle Prisma (ex: prisma.recipe)
+ * @param {string} groupByField  - Le champ sur lequel grouper (ex: 'authorId')
+ * @param {object} where         - La clause where à appliquer
+ * @param {object} userMap       - Map id → { pseudo, avatar }
+ */
+const computeRanking = async (model, groupByField, where) => {
+  const result = await model.groupBy({
+    by: [groupByField],
+    where,
+    _count: { id: true },
+    orderBy: { _count: { id: 'desc' } },
+    take: 20,
+  });
+
+  const userIds = result.map((r) => r[groupByField]);
+  const users = await prisma.user.findMany({
+    where:  { id: { in: userIds } },
+    select: { id: true, pseudo: true, avatar: true },
+  });
+  const userMap = Object.fromEntries(users.map((u) => [u.id, u]));
+
+  return result.map((r, i) => ({
+    rank:   i + 1,
+    userId: r[groupByField],
+    pseudo: userMap[r[groupByField]]?.pseudo,
+    avatar: userMap[r[groupByField]]?.avatar,
+    score:  r._count.id,
+  }));
+};
+
 // GET /leaderboard?category=recipes&period=month
 const getLeaderboard = async (req, res, next) => {
   try {
-    const category = req.query.category || 'recipes';
-    const period = req.query.period || 'all';
-
-    if (!VALID_CATEGORIES.includes(category)) return badRequest(res, 'Catégorie invalide');
-    if (!VALID_PERIODS.includes(period)) return badRequest(res, 'Période invalide');
+    const parsed = leaderboardSchema.safeParse(req.query);
+    if (!parsed.success) return badRequest(res, formatZodError(parsed.error));
+    const { category, period } = parsed.data;
 
     const cacheKey = `leaderboard:${category}:${period}`;
     const cached = process.env.NODE_ENV === 'test' ? null : await getCache(cacheKey);
     if (cached) return res.json(cached);
 
     const periodStart = getPeriodStart(period);
-    let rankings = [];
 
     // Utilisateurs qui acceptent d'apparaître dans le leaderboard
     const visibleUserIds = await prisma.user.findMany({
-      where: { showInLeaderboard: true },
+      where:  { showInLeaderboard: true },
       select: { id: true },
     });
     const visibleIds = visibleUserIds.map((u) => u.id);
 
+    let rankings = [];
+
     if (category === 'recipes') {
-      // Nombre de recettes publiées bien notées
-      const where = {
-        status: 'PUBLISHED',
+      rankings = await computeRanking(prisma.recipe, 'authorId', {
+        status:   'PUBLISHED',
         authorId: { not: null, in: visibleIds },
         ...(periodStart ? { createdAt: { gte: periodStart } } : {}),
-      };
-      const result = await prisma.recipe.groupBy({
-        by: ['authorId'],
-        where,
-        _count: { id: true },
-        orderBy: { _count: { id: 'desc' } },
-        take: 20,
       });
-      const userIds = result.map((r) => r.authorId);
-      const users = await prisma.user.findMany({
-        where: { id: { in: userIds } },
-        select: { id: true, pseudo: true, avatar: true },
-      });
-      const userMap = Object.fromEntries(users.map((u) => [u.id, u]));
-      rankings = result.map((r, i) => ({
-        rank: i + 1,
-        userId: r.authorId,
-        pseudo: userMap[r.authorId]?.pseudo,
-        avatar: userMap[r.authorId]?.avatar,
-        score: r._count.id,
-      }));
     } else if (category === 'ratings') {
-      // Plus de notes données
-      const where = {
+      rankings = await computeRanking(prisma.rating, 'userId', {
         userId: { in: visibleIds },
         ...(periodStart ? { createdAt: { gte: periodStart } } : {}),
-      };
-      const result = await prisma.rating.groupBy({
-        by: ['userId'],
-        where,
-        _count: { id: true },
-        orderBy: { _count: { id: 'desc' } },
-        take: 20,
       });
-      const userIds = result.map((r) => r.userId);
-      const users = await prisma.user.findMany({
-        where: { id: { in: userIds } },
-        select: { id: true, pseudo: true, avatar: true },
-      });
-      const userMap = Object.fromEntries(users.map((u) => [u.id, u]));
-      rankings = result.map((r, i) => ({
-        rank: i + 1,
-        userId: r.userId,
-        pseudo: userMap[r.userId]?.pseudo,
-        avatar: userMap[r.userId]?.avatar,
-        score: r._count.id,
-      }));
     } else if (category === 'followers') {
-      // Plus de followers
-      const where = {
+      rankings = await computeRanking(prisma.follow, 'followingId', {
         followingId: { in: visibleIds },
         ...(periodStart ? { createdAt: { gte: periodStart } } : {}),
-      };
-      const result = await prisma.follow.groupBy({
-        by: ['followingId'],
-        where,
-        _count: { id: true },
-        orderBy: { _count: { id: 'desc' } },
-        take: 20,
       });
-      const userIds = result.map((r) => r.followingId);
-      const users = await prisma.user.findMany({
-        where: { id: { in: userIds } },
-        select: { id: true, pseudo: true, avatar: true },
-      });
-      const userMap = Object.fromEntries(users.map((u) => [u.id, u]));
-      rankings = result.map((r, i) => ({
-        rank: i + 1,
-        userId: r.followingId,
-        pseudo: userMap[r.followingId]?.pseudo,
-        avatar: userMap[r.followingId]?.avatar,
-        score: r._count.id,
-      }));
     } else if (category === 'comments') {
-      // Plus de commentaires
-      const where = {
+      rankings = await computeRanking(prisma.comment, 'userId', {
         userId: { in: visibleIds },
         ...(periodStart ? { createdAt: { gte: periodStart } } : {}),
-      };
-      const result = await prisma.comment.groupBy({
-        by: ['userId'],
-        where,
-        _count: { id: true },
-        orderBy: { _count: { id: 'desc' } },
-        take: 20,
       });
-      const userIds = result.map((r) => r.userId);
-      const users = await prisma.user.findMany({
-        where: { id: { in: userIds } },
-        select: { id: true, pseudo: true, avatar: true },
-      });
-      const userMap = Object.fromEntries(users.map((u) => [u.id, u]));
-      rankings = result.map((r, i) => ({
-        rank: i + 1,
-        userId: r.userId,
-        pseudo: userMap[r.userId]?.pseudo,
-        avatar: userMap[r.userId]?.avatar,
-        score: r._count.id,
-      }));
     }
 
     const data = { category, period, rankings };

@@ -1,17 +1,14 @@
 const PDFDocument = require('pdfkit');
 const prisma = require('../prisma');
 const { badRequest } = require('../helpers');
+const { generateMenuSchema, formatZodError } = require('../schemas');
 
 // POST /menus/generate — génère un PDF de menu cocktails
 const generateMenu = async (req, res, next) => {
   try {
-    const { title, recipeIds, template, showIngredients } = req.body;
-
-    if (!title || typeof title !== 'string') return badRequest(res, 'Le titre du menu est requis');
-    if (!recipeIds || !Array.isArray(recipeIds) || recipeIds.length === 0) {
-      return badRequest(res, 'Sélectionnez au moins une recette');
-    }
-    if (recipeIds.length > 12) return badRequest(res, 'Maximum 12 recettes par menu');
+    const parsed = generateMenuSchema.safeParse(req.body);
+    if (!parsed.success) return badRequest(res, formatZodError(parsed.error));
+    const { title, recipeIds, template, showIngredients } = parsed.data;
 
     const ids = recipeIds.map(Number).filter((n) => n > 0);
     const recipes = await prisma.recipe.findMany({

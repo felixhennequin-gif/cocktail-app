@@ -74,4 +74,4 @@ const requireVerifiedEmail = (req, res, next) => {
   next();
 };
 
-module.exports = { requireAuth, requireAdmin, optionalAuth, requireVerifiedEmail, JWT_SECRET };
+module.exports = { requireAuth, requireAdmin, optionalAuth, requireVerifiedEmail };

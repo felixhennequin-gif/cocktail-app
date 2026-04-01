@@ -28,9 +28,10 @@ const computeTagCounts = async (whereWithoutTags) => {
     select: { id: true },
     take: MAX_FACET_IDS,
   });
+  const approximate = filteredIds.length >= MAX_FACET_IDS;
   const ids = filteredIds.map(r => r.id);
-  if (ids.length === 0) return [];
-  return prisma.$queryRaw`
+  if (ids.length === 0) return { tags: [], approximate };
+  const tags = await prisma.$queryRaw`
     SELECT t.id, t.name, COUNT(DISTINCT rt."recipeId")::int AS count
     FROM "Tag" t
     JOIN "RecipeTag" rt ON rt."tagId" = t.id
@@ -38,6 +39,7 @@ const computeTagCounts = async (whereWithoutTags) => {
     GROUP BY t.id, t.name
     ORDER BY count DESC
   `;
+  return { tags, approximate };
 };
 
 // Construit la clause where selon le contexte utilisateur
@@ -93,9 +95,10 @@ const searchWithQuery = async ({ q, where, whereWithoutTags, minRatingIds, offse
       FROM "Recipe"
       WHERE "searchVector" @@ to_tsquery('french', ${tsquery})
       ORDER BY rank DESC
+      LIMIT 5000
     `,
-    prisma.recipe.findMany({ where: filterWhere, select: { id: true } }),
-    prisma.recipe.findMany({ where: facetWhere, select: { id: true } }),
+    prisma.recipe.findMany({ where: filterWhere, select: { id: true }, take: MAX_FACET_IDS }),
+    prisma.recipe.findMany({ where: facetWhere, select: { id: true }, take: MAX_FACET_IDS }),
   ]);
 
   const searchIds    = searchRows.map(r => r.id);
@@ -108,8 +111,8 @@ const searchWithQuery = async ({ q, where, whereWithoutTags, minRatingIds, offse
   const facetSearchIds = searchIds.filter(id => facetIds.includes(id));
 
   const computeFacetTagCounts = async (ids) => {
-    if (ids.length === 0) return [];
-    return prisma.$queryRaw`
+    if (ids.length === 0) return { tags: [], approximate: false };
+    const tags = await prisma.$queryRaw`
       SELECT t.id, t.name, COUNT(DISTINCT rt."recipeId")::int AS count
       FROM "Tag" t
       JOIN "RecipeTag" rt ON rt."tagId" = t.id
@@ -117,20 +120,22 @@ const searchWithQuery = async ({ q, where, whereWithoutTags, minRatingIds, offse
       GROUP BY t.id, t.name
       ORDER BY count DESC
     `;
+    return { tags, approximate: ids.length >= MAX_FACET_IDS };
   };
 
   if (pageIds.length === 0) {
-    const tagCounts = await computeFacetTagCounts(facetSearchIds);
-    return { data: [], total, page, limit, tagCounts };
+    const { tags: tagCounts, approximate } = await computeFacetTagCounts(facetSearchIds);
+    return { data: [], total, page, limit, tagCounts, approximate };
   }
 
-  const [recipes, tagCounts] = await Promise.all([
+  const [recipes, tagCountsResult] = await Promise.all([
     prisma.recipe.findMany({ where: { id: { in: pageIds } }, include: includeList }),
     computeFacetTagCounts(facetSearchIds),
   ]);
 
+  const { tags: tagCounts, approximate } = tagCountsResult;
   const ranked = pageIds.map(id => recipes.find(r => r.id === id)).filter(Boolean);
-  return { data: await enrichRecipes(ranked), total, page, limit, tagCounts };
+  return { data: await enrichRecipes(ranked), total, page, limit, tagCounts, approximate };
 };
 
 // Recherche avec tri par agrégat (avgRating / favoritesCount)
@@ -144,8 +149,8 @@ const searchWithAggSort = async ({ where, whereWithoutTags, minRatingIds, sortBy
   }
 
   if (filteredIds.length === 0) {
-    const tagCounts = await computeTagCounts(facetWhere);
-    return { data: [], total: 0, page, limit, tagCounts };
+    const { tags: tagCounts, approximate } = await computeTagCounts(facetWhere);
+    return { data: [], total: 0, page, limit, tagCounts, approximate };
   }
 
   let orderFragment;
@@ -176,18 +181,19 @@ const searchWithAggSort = async ({ where, whereWithoutTags, minRatingIds, sortBy
   const pageIds = sortedRows.map(r => r.id);
 
   if (pageIds.length === 0) {
-    const tagCounts = await computeTagCounts(facetWhere);
-    return { data: [], total, page, limit, tagCounts };
+    const { tags: tagCounts, approximate } = await computeTagCounts(facetWhere);
+    return { data: [], total, page, limit, tagCounts, approximate };
   }
 
-  const [recipes, tagCounts] = await Promise.all([
+  const [recipes, tagCountsResult] = await Promise.all([
     prisma.recipe.findMany({ where: { id: { in: pageIds } }, include: includeList }),
     computeTagCounts(facetWhere),
   ]);
 
+  const { tags: tagCounts, approximate } = tagCountsResult;
   const ordered = pageIds.map(id => recipes.find(r => r.id === id)).filter(Boolean);
   const data = await enrichRecipes(ordered);
-  return { data, total, page, limit, tagCounts };
+  return { data, total, page, limit, tagCounts, approximate };
 };
 
 // Point d'entrée principal : recherche de recettes avec filtres, tri et pagination
@@ -234,13 +240,14 @@ const search = async (params) => {
     facetWhere.id = { in: minRatingIds.length > 0 ? minRatingIds : [-1] };
   }
 
-  const [recipes, total, tagCounts] = await Promise.all([
+  const [recipes, total, tagCountsResult] = await Promise.all([
     prisma.recipe.findMany({ where, include: includeList, orderBy, skip: offset, take: limit }),
     prisma.recipe.count({ where }),
     computeTagCounts(facetWhere),
   ]);
 
-  return { data: await enrichRecipes(recipes), total, page, limit, tagCounts };
+  const { tags: tagCounts, approximate } = tagCountsResult;
+  return { data: await enrichRecipes(recipes), total, page, limit, tagCounts, approximate };
 };
 
 module.exports = { recipeListSchema, search };

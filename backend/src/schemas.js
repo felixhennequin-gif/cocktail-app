@@ -223,6 +223,32 @@ const ratingSchema = z.object({
   score: z.coerce.number().int().min(1, 'Le score doit être compris entre 1 et 5').max(5, 'Le score doit être compris entre 1 et 5'),
 });
 
+// --- Bar virtuel ---
+
+const updateBarSchema = z.object({
+  ingredientIds: z.array(z.coerce.number().int().positive()).max(200),
+});
+
+// --- Menu cocktail ---
+
+const generateMenuSchema = z.object({
+  title:           z.string().min(1).max(200),
+  recipeIds:       z.array(z.coerce.number().int().positive()).min(1).max(20),
+  template:        z.enum(['classic', 'modern', 'minimal']).default('classic'),
+  showIngredients: z.boolean().default(true),
+});
+
+// --- Glossaire ---
+
+const createGlossaryEntrySchema = z.object({
+  term:             z.string().min(1).max(200),
+  definition:       z.string().min(1).max(2000),
+  category:         z.string().min(1).max(100),
+  longDescription:  z.string().max(10000).optional(),
+  relatedRecipeIds: z.array(z.coerce.number().int().positive()).max(20).optional().default([]),
+  relatedEntryIds:  z.array(z.coerce.number().int().positive()).max(20).optional().default([]),
+});
+
 // Helper : formatte les erreurs Zod en message lisible
 const formatZodError = (error) => {
   const fieldErrors = error.flatten().fieldErrors;
@@ -257,5 +283,8 @@ module.exports = {
   updateTechniqueSchema,
   updateUserPlanSchema,
   preferencesSchema,
+  updateBarSchema,
+  generateMenuSchema,
+  createGlossaryEntrySchema,
   formatZodError,
 };

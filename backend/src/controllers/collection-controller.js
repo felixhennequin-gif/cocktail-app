@@ -2,9 +2,7 @@ const prisma = require('../prisma');
 const { parseId, badRequest, notFound, forbidden, conflict } = require('../helpers');
 const { createCollectionSchema, updateCollectionSchema, formatZodError } = require('../schemas');
 const { enrichRecipes } = require('../helpers/recipe-helpers');
-
-const MAX_COLLECTIONS_PER_USER = 20;
-const MAX_RECIPES_PER_COLLECTION = 100;
+const { PLAN_LIMITS } = require('../config/plans');
 
 // POST /collections
 const createCollection = async (req, res, next) => {
@@ -18,10 +16,12 @@ const createCollection = async (req, res, next) => {
 
     const { name, description, isPublic } = parsed.data;
 
-    // Vérifier la limite
+    // Vérifier la limite selon le plan de l'utilisateur
+    const limits = PLAN_LIMITS[req.user.plan] || PLAN_LIMITS.FREE;
+    const maxCollections = limits.maxCollections;
     const count = await prisma.collection.count({ where: { userId } });
-    if (count >= MAX_COLLECTIONS_PER_USER) {
-      return badRequest(res, `Vous ne pouvez pas créer plus de ${MAX_COLLECTIONS_PER_USER} collections`);
+    if (count >= maxCollections) {
+      return badRequest(res, `Vous ne pouvez pas créer plus de ${maxCollections === Infinity ? 'collections illimitées' : maxCollections + ' collections'}`);
     }
 
     const collection = await prisma.collection.create({
@@ -194,8 +194,10 @@ const addRecipeToCollection = async (req, res, next) => {
     if (!collection) return notFound(res, 'Collection introuvable');
     if (collection.userId !== req.user.id) return forbidden(res);
 
-    if (collection._count.recipes >= MAX_RECIPES_PER_COLLECTION) {
-      return badRequest(res, `Une collection ne peut pas contenir plus de ${MAX_RECIPES_PER_COLLECTION} recettes`);
+    const collectionLimits = PLAN_LIMITS[req.user.plan] || PLAN_LIMITS.FREE;
+    const maxRecipesPerCollection = collectionLimits.maxRecipesPerCollection;
+    if (collection._count.recipes >= maxRecipesPerCollection) {
+      return badRequest(res, `Une collection ne peut pas contenir plus de ${maxRecipesPerCollection} recettes`);
     }
 
     // Vérifier que la recette existe

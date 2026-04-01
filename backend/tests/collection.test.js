@@ -46,23 +46,23 @@ describe('POST /api/collections', () => {
     expect(res.status).toBe(400);
   });
 
-  it('refuse la 21e collection (limite 20 par utilisateur)', async () => {
-    // Créer 20 collections directement via prisma
-    const data = Array.from({ length: 20 }, (_, i) => ({
+  it('refuse au-delà de la limite de collections par plan (3 pour FREE)', async () => {
+    // Créer 3 collections (limite FREE) directement via prisma
+    const data = Array.from({ length: 3 }, (_, i) => ({
       name: `Collection ${i + 1}`,
       isPublic: true,
       userId: alice.id,
     }));
     await prisma.collection.createMany({ data });
 
-    // La 21e doit être refusée
+    // La 4e doit être refusée
     const res = await request(app)
       .post('/api/collections')
       .set(getAuthHeader(aliceToken))
       .send({ name: 'Collection de trop' });
 
     expect(res.status).toBe(400);
-    expect(res.body.error).toMatch(/20/);
+    expect(res.body.error).toMatch(/3/);
   });
 });
 
@@ -229,18 +229,17 @@ describe('POST /api/collections/:id/recipes', () => {
     expect(res.status).toBe(409);
   });
 
-  it('retourne 400 si la collection atteint 100 recettes', async () => {
+  it('retourne 400 si la collection atteint la limite de recettes par plan (20 pour FREE)', async () => {
     const collection = await prisma.collection.create({
       data: { name: 'Collection pleine', isPublic: true, userId: alice.id },
     });
 
-    // Créer une recette de référence pour les 100 entrées
+    // Créer une recette de référence pour la 21e entrée
     const recipe = await createTestRecipe({ authorId: bob.id, categoryId: category.id, name: 'Recette ref' });
 
-    // Insérer directement 100 recettes dans la collection via prisma
-    // On crée 100 recettes distinctes pour respecter la contrainte unique (collectionId, recipeId)
+    // Insérer directement 20 recettes (limite FREE) dans la collection via prisma
     const recipes = await Promise.all(
-      Array.from({ length: 100 }, (_, i) =>
+      Array.from({ length: 20 }, (_, i) =>
         createTestRecipe({ authorId: bob.id, categoryId: category.id, name: `Recette ${i + 1}` })
       )
     );
@@ -249,14 +248,14 @@ describe('POST /api/collections/:id/recipes', () => {
       data: recipes.map((r) => ({ collectionId: collection.id, recipeId: r.id })),
     });
 
-    // La 101e recette doit être refusée
+    // La 21e recette doit être refusée
     const res = await request(app)
       .post(`/api/collections/${collection.id}/recipes`)
       .set(getAuthHeader(aliceToken))
       .send({ recipeId: recipe.id });
 
     expect(res.status).toBe(400);
-    expect(res.body.error).toMatch(/100/);
+    expect(res.body.error).toMatch(/20/);
   });
 
   it('retourne 403 si un autre user tente d\'ajouter une recette', async () => {

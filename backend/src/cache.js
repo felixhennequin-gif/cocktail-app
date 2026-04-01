@@ -62,7 +62,7 @@ const invalidateCacheByPattern = async (pattern) => {
     do {
       const [nextCursor, keys] = await client.scan(cursor, 'MATCH', pattern, 'COUNT', 100);
       cursor = nextCursor;
-      if (keys.length > 0) await client.del(...keys);
+      if (keys.length > 0) await client.unlink(...keys);
     } while (cursor !== '0');
   } catch {}
 };
@@ -74,12 +74,16 @@ const invalidateCacheByPattern = async (pattern) => {
 /**
  * Middleware de cache.
  * @param {number} ttlSeconds TTL en secondes
+ * @param {object} options
+ * @param {boolean} options.perUser - Si true, la clé inclut l'ID utilisateur (pour les endpoints personnalisés)
  */
-const cacheMiddleware = (ttlSeconds) => async (req, res, next) => {
+const cacheMiddleware = (ttlSeconds, { perUser = false } = {}) => async (req, res, next) => {
   // Désactivé en test et pour les admins (qui peuvent voir des données différentes)
   if (process.env.NODE_ENV === 'test' || req.user?.role === 'ADMIN') return next();
 
-  const key = `cocktail:${req.originalUrl}:user:${req.user?.id || 'anon'}`;
+  const key = perUser
+    ? `cocktail:${req.originalUrl}:user:${req.user?.id || 'anon'}`
+    : `cocktail:${req.originalUrl}`;
   const cached = await getCache(key);
 
   if (cached !== null) {

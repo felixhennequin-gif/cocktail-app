@@ -117,6 +117,7 @@ model Recipe {
   collections    CollectionRecipe[]
   challengeEntries ChallengeEntry[]
   tastingLogs      TastingLog[]
+  revisions        RecipeRevision[] @relation("RecipeRevisions")
 
   @@index([categoryId])
   @@index([authorId])
@@ -249,6 +250,7 @@ model RecipeTag {
   tag      Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@id([recipeId, tagId])
+  @@index([tagId])
 }
 
 model Collection {
@@ -278,6 +280,7 @@ model CollectionRecipe {
   recipe       Recipe     @relation(fields: [recipeId], references: [id], onDelete: Cascade)
 
   @@id([collectionId, recipeId])
+  @@index([recipeId])
 }
 
 model UserIngredient {
@@ -440,6 +443,7 @@ model UserStreak {
 model RecipeRevision {
   id        Int      @id @default(autoincrement())
   recipeId  Int
+  recipe    Recipe   @relation("RecipeRevisions", fields: [recipeId], references: [id], onDelete: Cascade)
   version   Int
   data      Json     // Snapshot complet de la recette
   authorId  Int

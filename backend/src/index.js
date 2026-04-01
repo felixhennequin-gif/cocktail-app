@@ -187,9 +187,6 @@ apiRouter.post('/upload/step/:recipeId', requireAuth, async (req, res, next) => 
   const rel = `/uploads/recipes/${recipeId}/steps/${req.file.filename}`;
   res.json({ url: rel });
 });
-apiRouter.use('/auth/login',    authLimiter);
-apiRouter.use('/auth/register', authLimiter);
-apiRouter.use('/auth/refresh',  authLimiter);
 apiRouter.use('/auth',          authRoutes);
 apiRouter.use('/recipes',       recipeRoutes);
 apiRouter.use('/categories',    categoryRoutes);
