@@ -97,6 +97,21 @@ export default function CursorGlow() {
     const startupInterval = setInterval(recalcRects, 500)
     setTimeout(() => clearInterval(startupInterval), 3000)
 
+    // Extra recalc after scroll-reveal animations complete (transition: 0.6s)
+    setTimeout(recalcRects, 800)
+    setTimeout(recalcRects, 1500)
+
+    // Recalc when scroll-reveal transitions complete
+    const onTransitionEnd = (e) => {
+      if (e.target.classList?.contains('scroll-reveal') ||
+          e.target.classList?.contains('revealed') ||
+          e.target.closest?.('.scroll-reveal')) {
+        clearTimeout(mutationTimer)
+        mutationTimer = setTimeout(recalcRects, 50)
+      }
+    }
+    document.addEventListener('transitionend', onTransitionEnd, { passive: true })
+
     // MutationObserver: recalc when DOM changes (new cards rendered, etc.)
     let mutationTimer = null
     const observer = new MutationObserver(() => {
@@ -318,6 +333,7 @@ export default function CursorGlow() {
       observer.disconnect()
       clearInterval(startupInterval)
       clearTimeout(mutationTimer)
+      document.removeEventListener('transitionend', onTransitionEnd)
     }
   }, [])
 
