@@ -534,14 +534,22 @@
     "legal": "Mentions légales",
     "contact": "Contact",
     "about": "À propos",
-    "copyright": "© 2025 Cocktails. Tous droits réservés."
+    "copyright": "© {{year}} Cocktails. Tous droits réservés."
   },
   "legal": {
     "title": "Mentions légales",
-    "editor": "Éditeur",
+    "siteEditor": "Éditeur du site",
+    "siteEditorContent": "Nom : Félix Hennequin\nStatut : Particulier\nLocalisation : Nantes, France\nContact : contact@cocktail-app.fr\nSite : https://cocktail-app.fr",
     "hosting": "Hébergement",
-    "editorInfo": "Projet personnel — Écume (cocktail-app.fr)",
-    "hostingInfo": "Serveur auto-hébergé — Debian"
+    "hostingContent": "Le site est hébergé sur un serveur personnel (Debian) situé en France.\nLe trafic transite via Cloudflare, Inc. — 101 Townsend St, San Francisco, CA 94107, USA.\nSite : https://www.cloudflare.com",
+    "ip": "Propriété intellectuelle",
+    "ipContent": "L'ensemble du contenu du site (textes, images, logos, code source) est la propriété de Félix Hennequin, sauf mention contraire. Toute reproduction, même partielle, est interdite sans autorisation préalable.",
+    "gdpr": "Données personnelles & RGPD",
+    "gdprContent": "Le site collecte des données personnelles dans le cadre de la création de comptes utilisateurs (adresse e-mail, nom d'utilisateur). Ces données sont stockées dans une base PostgreSQL hébergée sur le serveur personnel de l'éditeur.\nLes tokens d'authentification sont stockés côté client via localStorage.\nLe site utilise Google Analytics pour mesurer l'audience. Google Analytics peut déposer des cookies sur votre navigateur. Pour en savoir plus : https://policies.google.com/privacy\nConformément au RGPD, vous disposez d'un droit d'accès, de rectification et de suppression de vos données. Pour exercer ces droits, contactez : contact@cocktail-app.fr",
+    "cookies": "Cookies",
+    "cookiesContent": "Le site utilise des cookies techniques nécessaires au fonctionnement (authentification) et des cookies tiers via Google Analytics. Vous pouvez configurer votre navigateur pour refuser les cookies.",
+    "liability": "Responsabilité",
+    "liabilityContent": "L'éditeur ne saurait être tenu responsable des erreurs ou omissions dans le contenu du site, ni des dommages résultant de son utilisation."
   },
   "bar": {
     "title": "Mon bar virtuel",

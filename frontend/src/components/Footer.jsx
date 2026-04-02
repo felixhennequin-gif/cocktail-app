@@ -25,7 +25,7 @@ export default function Footer() {
               {t('footer.legal')}
             </Link>
           </nav>
-          <p className="text-xs text-gray-500">{t('footer.copyright')}</p>
+          <p className="text-xs text-gray-500">{t('footer.copyright', { year: new Date().getFullYear() })}</p>
         </div>
       </div>
     </footer>

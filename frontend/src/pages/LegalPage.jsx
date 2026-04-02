@@ -1,6 +1,15 @@
 import { useTranslation } from 'react-i18next'
 import { Helmet } from 'react-helmet-async'
 
+const sections = [
+  { num: 1, title: 'siteEditor', content: 'siteEditorContent' },
+  { num: 2, title: 'hosting', content: 'hostingContent' },
+  { num: 3, title: 'ip', content: 'ipContent' },
+  { num: 4, title: 'gdpr', content: 'gdprContent' },
+  { num: 5, title: 'cookies', content: 'cookiesContent' },
+  { num: 6, title: 'liability', content: 'liabilityContent' },
+]
+
 export default function LegalPage() {
   const { t } = useTranslation()
 
@@ -17,23 +26,16 @@ export default function LegalPage() {
           {t('legal.title')}
         </h1>
 
-        <section className="mb-8">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
-            {t('legal.editor')}
-          </h2>
-          <p className="text-gray-600 dark:text-gray-400">
-            {t('legal.editorInfo')}
-          </p>
-        </section>
-
-        <section className="mb-8">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
-            {t('legal.hosting')}
-          </h2>
-          <p className="text-gray-600 dark:text-gray-400">
-            {t('legal.hostingInfo')}
-          </p>
-        </section>
+        {sections.map(({ num, title, content }) => (
+          <section key={num} className="mb-8">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+              {num}. {t(`legal.${title}`)}
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400 whitespace-pre-line">
+              {t(`legal.${content}`)}
+            </p>
+          </section>
+        ))}
       </div>
     </>
   )

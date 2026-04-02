@@ -534,14 +534,22 @@
     "legal": "Legal notice",
     "contact": "Contact",
     "about": "About",
-    "copyright": "© 2025 Cocktails. All rights reserved."
+    "copyright": "© {{year}} Cocktails. All rights reserved."
   },
   "legal": {
     "title": "Legal Notice",
-    "editor": "Publisher",
+    "siteEditor": "Publisher",
+    "siteEditorContent": "Name: Félix Hennequin\nStatus: Individual\nLocation: Nantes, France\nContact: contact@cocktail-app.fr\nWebsite: https://cocktail-app.fr",
     "hosting": "Hosting",
-    "editorInfo": "Personal project — Écume (cocktail-app.fr)",
-    "hostingInfo": "Self-hosted server — Debian"
+    "hostingContent": "The website is hosted on a personal server (Debian) located in France.\nTraffic is routed through Cloudflare, Inc. — 101 Townsend St, San Francisco, CA 94107, USA.\nWebsite: https://www.cloudflare.com",
+    "ip": "Intellectual Property",
+    "ipContent": "All content on this website (text, images, logos, source code) is the property of Félix Hennequin, unless otherwise stated. Any reproduction, even partial, is prohibited without prior authorization.",
+    "gdpr": "Personal Data & GDPR",
+    "gdprContent": "The website collects personal data for user account creation (email address, username). This data is stored in a PostgreSQL database hosted on the publisher's personal server.\nAuthentication tokens are stored client-side via localStorage.\nThe website uses Google Analytics to measure audience. Google Analytics may place cookies on your browser. Learn more: https://policies.google.com/privacy\nIn accordance with GDPR, you have the right to access, rectify, and delete your data. To exercise these rights, contact: contact@cocktail-app.fr",
+    "cookies": "Cookies",
+    "cookiesContent": "The website uses technical cookies necessary for operation (authentication) and third-party cookies via Google Analytics. You can configure your browser to refuse cookies.",
+    "liability": "Liability",
+    "liabilityContent": "The publisher cannot be held responsible for errors or omissions in the website content, nor for damages resulting from its use."
   },
   "bar": {
     "title": "My Virtual Bar",
