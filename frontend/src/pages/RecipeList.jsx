@@ -9,8 +9,47 @@ import { useAuth } from '../contexts/AuthContext'
 import useFavorites from '../hooks/useFavorites'
 import useCompare from '../hooks/useCompare'
 import CompareBar from '../components/CompareBar'
+import { useScrollReveal } from '../hooks/useScrollReveal'
 
 const LIMIT = 12
+
+function RecipeGrid({ viewMode, recipes, favoriteIds, toggleFavorite, userId, isCompareSelected, toggleCompare }) {
+  const revealRef = useScrollReveal()
+  return (
+    <div
+      ref={revealRef}
+      className={`scroll-reveal ${
+        viewMode === 'grid'
+          ? 'grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'
+          : 'flex flex-col gap-3'
+      }`}
+    >
+      {recipes.map((recipe, i) =>
+        viewMode === 'grid' ? (
+          <div key={recipe.id} className="stagger-child" style={{ transitionDelay: `${i * 60}ms` }}>
+            <RecipeCardGrid
+              recipe={recipe}
+              isFavorited={favoriteIds.has(recipe.id)}
+              onToggleFavorite={toggleFavorite}
+              userId={userId}
+              compareSelected={isCompareSelected(recipe.id)}
+              onToggleCompare={toggleCompare}
+            />
+          </div>
+        ) : (
+          <div key={recipe.id} className="stagger-child" style={{ transitionDelay: `${i * 60}ms` }}>
+            <RecipeCard
+              recipe={recipe}
+              isFavorited={favoriteIds.has(recipe.id)}
+              onToggleFavorite={toggleFavorite}
+              userId={userId}
+            />
+          </div>
+        )
+      )}
+    </div>
+  )
+}
 
 export default function RecipeList() {
   const { user }                           = useAuth()
@@ -463,33 +502,16 @@ export default function RecipeList() {
         </div>
       ) : (
         <>
-          <div className={
-            viewMode === 'grid'
-              ? 'grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'
-              : 'flex flex-col gap-3'
-          }>
-            {recipes.map((recipe) =>
-              viewMode === 'grid' ? (
-                <RecipeCardGrid
-                  key={recipe.id}
-                  recipe={recipe}
-                  isFavorited={favoriteIds.has(recipe.id)}
-                  onToggleFavorite={toggleFavorite}
-                  userId={user?.id}
-                  compareSelected={isCompareSelected(recipe.id)}
-                  onToggleCompare={toggleCompare}
-                />
-              ) : (
-                <RecipeCard
-                  key={recipe.id}
-                  recipe={recipe}
-                  isFavorited={favoriteIds.has(recipe.id)}
-                  onToggleFavorite={toggleFavorite}
-                  userId={user?.id}
-                />
-              )
-            )}
-          </div>
+          <RecipeGrid
+            viewMode={viewMode}
+            recipes={recipes}
+            favoriteIds={favoriteIds}
+            toggleFavorite={toggleFavorite}
+            userId={user?.id}
+            isCompareSelected={isCompareSelected}
+            toggleCompare={toggleCompare}
+          >
+          </RecipeGrid>
 
           {/* Skeletons pendant le chargement supplémentaire */}
           {loadingMore && (

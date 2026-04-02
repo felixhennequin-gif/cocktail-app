@@ -9,7 +9,6 @@ import { useAuth } from '../contexts/AuthContext'
 import useFavorites from '../hooks/useFavorites'
 import { getImageUrl } from '../utils/image'
 import CursorGlow from '../components/ui/CursorGlow'
-import BubblesBackground from '../components/ui/BubblesBackground'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 
 function RevealSection({ className = '', children, ...props }) {
@@ -76,7 +75,6 @@ export default function LandingPage() {
 
   return (
     <div>
-      <BubblesBackground />
       <CursorGlow />
       <Helmet>
         <title>Écume — Recettes & Inspiration</title>

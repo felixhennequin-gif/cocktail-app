@@ -11,6 +11,7 @@ import ThemeToggle      from './components/ThemeToggle'
 import LanguageToggle   from './components/LanguageToggle'
 import Footer           from './components/Footer'
 import OfflineBanner    from './components/OfflineBanner'
+import BubblesBackground from './components/ui/BubblesBackground'
 
 // Pages d'entrée courantes — import statique
 import LandingPage      from './pages/LandingPage'
@@ -251,6 +252,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gold-50 dark:bg-ink-950 transition-colors">
+      <BubblesBackground />
       <Helmet defaultTitle={'Écume — ' + t('recipes.heroTitle')} />
       <a
         href="#main-content"
@@ -261,7 +263,7 @@ export default function App() {
       <Header />
       <OfflineBanner />
 
-      <main id="main-content" role="main" className="max-w-5xl mx-auto px-4 py-6 md:py-8">
+      <main id="main-content" role="main" className="relative z-1 max-w-5xl mx-auto px-4 py-6 md:py-8">
         <ErrorBoundary key={location.pathname}>
           <Suspense fallback={<div className="flex justify-center py-16" role="status"><div className="w-6 h-6 border-2 border-gold-400 border-t-transparent rounded-full animate-spin" /><span className="sr-only">Loading...</span></div>}>
           <Routes>

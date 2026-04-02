@@ -22,8 +22,8 @@ export default function CursorGlow() {
 
     const animate = () => {
       if (!prefersReducedMotion.current && glowRef.current) {
-        pos.current.x = lerp(pos.current.x, mouse.current.x, 0.12)
-        pos.current.y = lerp(pos.current.y, mouse.current.y, 0.12)
+        pos.current.x = lerp(pos.current.x, mouse.current.x, 0.08)
+        pos.current.y = lerp(pos.current.y, mouse.current.y, 0.08)
         glowRef.current.style.transform =
           `translate(${pos.current.x - 90}px, ${pos.current.y - 90}px)`
       }

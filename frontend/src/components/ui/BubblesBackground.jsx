@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 
-const BUBBLE_COUNT = 55
+const BUBBLE_COUNT = 75
 const AMBER = [245, 158, 11]
 
 function createBubble(canvasWidth, canvasHeight) {
@@ -85,6 +85,7 @@ export default function BubblesBackground() {
   return (
     <canvas
       ref={canvasRef}
+      id="bubbles-canvas"
       className="fixed inset-0 w-full h-full pointer-events-none z-0"
       aria-hidden="true"
     />

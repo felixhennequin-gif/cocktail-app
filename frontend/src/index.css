@@ -170,7 +170,7 @@ body {
   background: radial-gradient(circle, rgba(245, 158, 11, 0.08) 0%, transparent 70%);
   border-radius: 50%;
   pointer-events: none;
-  z-index: 1;
+  z-index: 2;
   will-change: transform;
 }
 
@@ -179,7 +179,8 @@ body {
   .animate-fade-in {
     animation: none;
   }
-  .cursor-glow {
+  .cursor-glow,
+  #bubbles-canvas {
     display: none;
   }
   .recipe-card::before {
