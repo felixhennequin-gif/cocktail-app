@@ -8,7 +8,7 @@ export default function CursorGlow() {
   const pos = useRef({ x: -200, y: -200 })
   const scroll = useRef({ x: 0, y: 0 })
   const rectsRef = useRef([])
-  const lastRecalc = useRef(0)
+  const fixedRectsRef = useRef([])
   const prefersReducedMotion = useRef(false)
 
   useEffect(() => {
@@ -60,20 +60,35 @@ export default function CursorGlow() {
     }
     window.addEventListener('mousemove', handleMouseMove, { passive: true })
 
-    // Cache des rects collidables (en page-space)
+    // Cache des rects collidables
     const recalcRects = () => {
       const sx = window.scrollX
       const sy = window.scrollY
       const elements = document.querySelectorAll('[data-bubble-collider]')
-      rectsRef.current = Array.from(elements).map(el => {
+      const pageRects = []
+      const fixedRects = []
+
+      for (const el of elements) {
         const r = el.getBoundingClientRect()
-        return {
-          left: r.left + sx,
-          top: r.top + sy,
-          right: r.right + sx,
-          bottom: r.bottom + sy,
+        if (el.hasAttribute('data-bubble-fixed')) {
+          fixedRects.push({
+            left: r.left,
+            top: r.top,
+            right: r.right,
+            bottom: r.bottom,
+          })
+        } else {
+          pageRects.push({
+            left: r.left + sx,
+            top: r.top + sy,
+            right: r.right + sx,
+            bottom: r.bottom + sy,
+          })
         }
-      })
+      }
+
+      rectsRef.current = pageRects
+      fixedRectsRef.current = fixedRects
     }
 
     // Initial calc + periodic recalc for async-loaded content
@@ -101,7 +116,7 @@ export default function CursorGlow() {
     let rafId
 
     const draw = () => {
-      if (prefersReducedMotion.current) {
+      if (prefersReducedMotion.current || firstMove) {
         rafId = requestAnimationFrame(draw)
         return
       }
@@ -148,54 +163,64 @@ export default function CursorGlow() {
         }
       }
 
-      // Step 3: Collision avec les rects DOM (page-space)
-      const rects = rectsRef.current
+      // Step 3: Collision avec les rects DOM
+      const pageRects = rectsRef.current
+      const fixedRects = fixedRectsRef.current
+      const sx = scroll.current.x
+      const sy = scroll.current.y
+
       for (const b of bubbles) {
         let colliding = false
 
-        for (const rect of rects) {
-          // Skip if bubble is clearly outside (broad phase)
-          if (b.x + b.radius < rect.left || b.x - b.radius > rect.right ||
-              b.y + b.radius < rect.top  || b.y - b.radius > rect.bottom) {
-            continue
+        const resolveCollision = (bx, by, rect) => {
+          if (bx + b.radius < rect.left || bx - b.radius > rect.right ||
+              by + b.radius < rect.top  || by - b.radius > rect.bottom) {
+            return false
           }
 
-          colliding = true
-
-          // Find minimum penetration axis
           const penetrations = [
-            { axis: 'left',   depth: (b.x + b.radius) - rect.left,   pushX: -1, pushY: 0  },
-            { axis: 'right',  depth: rect.right - (b.x - b.radius),  pushX: 1,  pushY: 0  },
-            { axis: 'top',    depth: (b.y + b.radius) - rect.top,     pushX: 0,  pushY: -1 },
-            { axis: 'bottom', depth: rect.bottom - (b.y - b.radius),  pushX: 0,  pushY: 1  },
+            { depth: (bx + b.radius) - rect.left,   px: -1, py: 0  },
+            { depth: rect.right - (bx - b.radius),  px: 1,  py: 0  },
+            { depth: (by + b.radius) - rect.top,    px: 0,  py: -1 },
+            { depth: rect.bottom - (by - b.radius), px: 0,  py: 1  },
           ]
 
-          // Only consider positive penetrations (actual overlaps)
           const valid = penetrations.filter(p => p.depth > 0)
-          if (valid.length === 0) continue
+          if (valid.length === 0) return false
 
-          // Pick smallest penetration — that's the cheapest escape direction
           valid.sort((a, c) => a.depth - c.depth)
           const escape = valid[0]
 
-          // Push bubble out
-          b.x += escape.pushX * escape.depth
-          b.y += escape.pushY * escape.depth
+          b.x += escape.px * escape.depth
+          b.y += escape.py * escape.depth
 
-          // Kill velocity in the collision direction + slight bounce
-          if (escape.pushX !== 0) {
+          if (escape.px !== 0) {
             b.vx *= -0.1
             b.scaleX = 0.6
             b.scaleY = 1.35
           }
-          if (escape.pushY !== 0) {
+          if (escape.py !== 0) {
             b.vy *= -0.1
             b.scaleY = 0.6
             b.scaleX = 1.35
           }
+
+          return true
         }
 
-        // Recovery toward round shape when not colliding
+        // Normal elements: page-space collision
+        for (const rect of pageRects) {
+          if (resolveCollision(b.x, b.y, rect)) colliding = true
+        }
+
+        // Fixed/sticky elements: viewport-space collision
+        const viewX = b.x - sx
+        const viewY = b.y - sy
+        for (const rect of fixedRects) {
+          if (resolveCollision(viewX, viewY, rect)) colliding = true
+        }
+
+        // Recovery toward round shape
         if (!colliding) {
           b.scaleX += (1 - b.scaleX) * 0.12
           b.scaleY += (1 - b.scaleY) * 0.12
@@ -213,8 +238,6 @@ export default function CursorGlow() {
       }
 
       // Rendu — conversion page-space → viewport-space
-      const sx = scroll.current.x
-      const sy = scroll.current.y
       for (const b of bubbles) {
         const screenX = b.x - sx
         const screenY = b.y - sy

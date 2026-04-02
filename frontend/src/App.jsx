@@ -132,7 +132,7 @@ function Header() {
   const closeMenu = () => setMenuOpen(false)
 
   return (
-    <header role="banner" data-bubble-collider className="sticky top-0 z-40 bg-white/80 dark:bg-ink-950/70 backdrop-blur-xl border-b border-gray-200 dark:border-white/[0.06] px-4 md:px-6 py-4 transition-colors">
+    <header role="banner" data-bubble-collider data-bubble-fixed className="sticky top-0 z-40 bg-white/80 dark:bg-ink-950/70 backdrop-blur-xl border-b border-gray-200 dark:border-white/[0.06] px-4 md:px-6 py-4 transition-colors">
       {/* Ligne principale */}
       <div className="flex items-center gap-4">
         <Link
