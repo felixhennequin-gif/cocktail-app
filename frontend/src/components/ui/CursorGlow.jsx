@@ -1,49 +1,98 @@
 import { useEffect, useRef } from 'react'
 
+const PARTICLE_COUNT = 14
+
 export default function CursorGlow() {
-  const glowRef = useRef(null)
-  const mouse = useRef({ x: 0, y: 0 })
-  const pos = useRef({ x: 0, y: 0 })
+  const canvasRef = useRef(null)
+  const mouse = useRef({ x: -200, y: -200 })
+  const pos = useRef({ x: -200, y: -200 })
   const prefersReducedMotion = useRef(false)
 
   useEffect(() => {
     const mql = window.matchMedia('(prefers-reduced-motion: reduce)')
     prefersReducedMotion.current = mql.matches
-    const onChange = (e) => { prefersReducedMotion.current = e.matches }
-    mql.addEventListener('change', onChange)
+    const onMqlChange = (e) => { prefersReducedMotion.current = e.matches }
+    mql.addEventListener('change', onMqlChange)
+
+    const canvas = canvasRef.current
+    const ctx = canvas.getContext('2d')
+
+    // Each particle has its own orbit offset, radius, speed, opacity
+    const particles = Array.from({ length: PARTICLE_COUNT }, () => ({
+      angle: Math.random() * Math.PI * 2,
+      orbitRadius: 8 + Math.random() * 35,
+      speed: 0.008 + Math.random() * 0.02,
+      size: 1 + Math.random() * 2.5,
+      opacity: 0.08 + Math.random() * 0.15,
+      // Each particle wobbles its orbit radius slightly
+      wobbleSpeed: 0.003 + Math.random() * 0.008,
+      wobbleAmp: 3 + Math.random() * 8,
+      wobbleOffset: Math.random() * Math.PI * 2,
+    }))
+
+    let w, h
+    const resize = () => {
+      w = canvas.width = window.innerWidth
+      h = canvas.height = window.innerHeight
+    }
+    resize()
+    window.addEventListener('resize', resize, { passive: true })
 
     const handleMouseMove = (e) => {
       mouse.current.x = e.clientX
       mouse.current.y = e.clientY
     }
+    window.addEventListener('mousemove', handleMouseMove, { passive: true })
 
     let rafId
-    const lerp = (a, b, t) => a + (b - a) * t
+    let frame = 0
 
-    const animate = () => {
-      if (!prefersReducedMotion.current && glowRef.current) {
-        pos.current.x = lerp(pos.current.x, mouse.current.x, 0.08)
-        pos.current.y = lerp(pos.current.y, mouse.current.y, 0.08)
-        glowRef.current.style.transform =
-          `translate(${pos.current.x - 60}px, ${pos.current.y - 60}px)`
+    const draw = () => {
+      if (prefersReducedMotion.current) {
+        rafId = requestAnimationFrame(draw)
+        return
       }
-      rafId = requestAnimationFrame(animate)
+
+      ctx.clearRect(0, 0, w, h)
+      frame++
+
+      // Lerp the center position toward mouse
+      pos.current.x += (mouse.current.x - pos.current.x) * 0.08
+      pos.current.y += (mouse.current.y - pos.current.y) * 0.08
+
+      const cx = pos.current.x
+      const cy = pos.current.y
+
+      for (const p of particles) {
+        p.angle += p.speed
+        const wobble = Math.sin(frame * p.wobbleSpeed + p.wobbleOffset) * p.wobbleAmp
+        const r = p.orbitRadius + wobble
+        const px = cx + Math.cos(p.angle) * r
+        const py = cy + Math.sin(p.angle) * r
+
+        ctx.beginPath()
+        ctx.arc(px, py, p.size, 0, Math.PI * 2)
+        ctx.fillStyle = `rgba(245, 158, 11, ${p.opacity})`
+        ctx.fill()
+      }
+
+      rafId = requestAnimationFrame(draw)
     }
 
-    window.addEventListener('mousemove', handleMouseMove, { passive: true })
-    rafId = requestAnimationFrame(animate)
+    rafId = requestAnimationFrame(draw)
 
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove)
       cancelAnimationFrame(rafId)
-      mql.removeEventListener('change', onChange)
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('resize', resize)
+      mql.removeEventListener('change', onMqlChange)
     }
   }, [])
 
   return (
-    <div
-      ref={glowRef}
-      className="cursor-glow"
+    <canvas
+      ref={canvasRef}
+      className="fixed inset-0 w-full h-full pointer-events-none z-0"
       aria-hidden="true"
     />
   )

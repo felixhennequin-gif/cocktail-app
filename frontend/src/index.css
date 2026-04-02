@@ -162,18 +162,62 @@ body {
   animation: toast-out 0.25s ease-in forwards;
 }
 
-/* Cursor glow — landing page uniquement */
-.cursor-glow {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 120px;
-  height: 120px;
-  background: radial-gradient(circle, rgba(245, 158, 11, 0.10) 0%, transparent 70%);
-  border-radius: 50%;
+/* Daily cocktail — rotating border glow */
+.daily-card-wrapper {
+  position: relative;
+  border-radius: 1rem;
+  padding: 2px;
+  background: conic-gradient(
+    from var(--border-angle, 0deg),
+    rgba(212, 160, 71, 0.5),
+    rgba(245, 158, 11, 0.15),
+    rgba(184, 115, 51, 0.4),
+    rgba(245, 158, 11, 0.15),
+    rgba(212, 160, 71, 0.5)
+  );
+  animation: rotate-border 6s linear infinite;
+}
+
+@property --border-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes rotate-border {
+  to { --border-angle: 360deg; }
+}
+
+.daily-card {
+  border-radius: calc(1rem - 2px);
+}
+
+/* Shimmer on hover */
+.daily-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    rgba(245, 158, 11, 0.06) 45%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(245, 158, 11, 0.06) 55%,
+    transparent 70%
+  );
+  transform: translateX(-100%);
+  transition: none;
   pointer-events: none;
-  z-index: 0;
-  will-change: transform;
+  border-radius: inherit;
+  z-index: 1;
+}
+
+.daily-card:hover::after {
+  animation: shimmer 0.8s ease forwards;
+}
+
+@keyframes shimmer {
+  to { transform: translateX(100%); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -181,7 +225,6 @@ body {
   .animate-fade-in {
     animation: none;
   }
-  .cursor-glow,
   #bubbles-canvas {
     display: none;
   }
@@ -198,5 +241,13 @@ body {
     opacity: 1;
     transform: none;
     transition: none;
+  }
+  .daily-card-wrapper {
+    animation: none;
+    background: none;
+    border: 1px solid rgba(212, 160, 71, 0.3);
+  }
+  .daily-card:hover::after {
+    animation: none;
   }
 }

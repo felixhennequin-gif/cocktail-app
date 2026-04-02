@@ -143,9 +143,10 @@ export default function LandingPage() {
 
       {/* Cocktail du jour */}
       {dailyRecipe && (
+        <div className="daily-card-wrapper mb-10">
         <Link
           to={`/recipes/${dailyRecipe.slug || dailyRecipe.id}`}
-          className="block mb-10 rounded-2xl overflow-hidden bg-gradient-to-r from-gold-100 to-gold-50 dark:from-ink-800 dark:to-ink-900 border border-gold-200 dark:border-gold-700/30 hover:shadow-lg transition-shadow"
+          className="daily-card block rounded-2xl overflow-hidden bg-gradient-to-r from-gold-100 to-gold-50 dark:from-ink-800 dark:to-ink-900 transition-shadow relative"
         >
           <div className="flex flex-col sm:flex-row">
             {dailyRecipe.imageUrl && (
@@ -188,6 +189,7 @@ export default function LandingPage() {
             </div>
           </div>
         </Link>
+        </div>
       )}
 
       {/* Défi de la semaine */}
