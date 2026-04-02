@@ -1,41 +1,25 @@
 const js = require('@eslint/js');
+const globals = require('globals');
 
 module.exports = [
-  js.configs.recommended,
   {
+    ignores: ['node_modules/', 'prisma/migrations/'],
+  },
+  {
+    files: ['**/*.js'],
+    ...js.configs.recommended,
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'commonjs',
       globals: {
-        require: 'readonly',
-        module: 'readonly',
-        exports: 'readonly',
-        __dirname: 'readonly',
-        __filename: 'readonly',
-        process: 'readonly',
-        console: 'readonly',
-        setTimeout: 'readonly',
-        clearTimeout: 'readonly',
-        setInterval: 'readonly',
-        clearInterval: 'readonly',
-        Buffer: 'readonly',
-        URL: 'readonly',
-        describe: 'readonly',
-        it: 'readonly',
-        expect: 'readonly',
-        beforeAll: 'readonly',
-        afterAll: 'readonly',
-        beforeEach: 'readonly',
-        afterEach: 'readonly',
+        ...globals.node,
+        ...globals.jest,
       },
     },
     rules: {
-      'no-unused-vars': ['warn', { argsIgnorePattern: '^_|^next$|^req$|^res$', destructuredArrayIgnorePattern: '^_' }],
+      'no-unused-vars': ['warn', { argsIgnorePattern: '^_|^next$|^req$|^res$', varsIgnorePattern: '^_', destructuredArrayIgnorePattern: '^_' }],
       'no-console': 'off',
       'no-empty': ['error', { allowEmptyCatch: true }],
     },
-  },
-  {
-    ignores: ['node_modules/', 'prisma/migrations/'],
   },
 ];

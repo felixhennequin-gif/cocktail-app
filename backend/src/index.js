@@ -1,8 +1,10 @@
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({
+  path: path.resolve(__dirname, '..', process.env.NODE_ENV === 'development' ? '.env.development' : '.env')
+});
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
-const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
 const FileType = require('file-type');

@@ -39,7 +39,7 @@ function ErrorFallback({ error }) {
           {t('common.backHome')}
         </button>
 
-        {process.env.NODE_ENV === 'development' && error && (
+        {import.meta.env.MODE === 'development' && error && (
           <div className="mt-8 text-left">
             <details className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg p-4">
               <summary className="cursor-pointer font-mono text-sm text-red-800 dark:text-red-200 font-medium">

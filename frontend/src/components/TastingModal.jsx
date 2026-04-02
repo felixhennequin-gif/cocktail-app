@@ -30,7 +30,7 @@ export default function TastingModal({ recipeId, recipeName, isOpen, onClose }) 
         const data = await res.json()
         setPhotoUrl(data.url)
       }
-    } catch {}
+    } catch { /* upload silencieux */ }
     setUploading(false)
   }
 
@@ -59,7 +59,7 @@ export default function TastingModal({ recipeId, recipeName, isOpen, onClose }) 
         setPhotoUrl('')
         onClose()
       }
-    } catch {}
+    } catch { /* erreur gérée silencieusement */ }
     setSubmitting(false)
   }
 

@@ -4,6 +4,7 @@ node_modules/
 # Variables d'environnement (contient des secrets)
 .env
 .env.local
+.env.development
 .env.*.local
 
 # Prisma — fichiers générés

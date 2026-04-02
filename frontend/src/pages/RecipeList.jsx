@@ -123,7 +123,7 @@ export default function RecipeList() {
         if (err.name !== 'AbortError') setError(err.message)
       })
       .finally(() => { setLoading(false); setLoadingMore(false) })
-  }, [q, categoryId, minRating, maxTime, season, sortBy, sortOrder, tagIds.join(',')]) // eslint-disable-line react-hooks/exhaustive-deps — tagIds.join(',') est intentionnel (array instable)
+  }, [q, categoryId, minRating, maxTime, season, sortBy, sortOrder, tagIds.join(',')]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Rechargement initial quand les filtres changent
   useEffect(() => {
