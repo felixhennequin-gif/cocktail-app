@@ -9,6 +9,7 @@ import { useAuth } from '../contexts/AuthContext'
 import useFavorites from '../hooks/useFavorites'
 import { getImageUrl } from '../utils/image'
 import CursorGlow from '../components/ui/CursorGlow'
+import BubblesBackground from '../components/ui/BubblesBackground'
 
 export default function LandingPage() {
   const { user, authFetch } = useAuth()
@@ -69,6 +70,7 @@ export default function LandingPage() {
 
   return (
     <div>
+      <BubblesBackground />
       <CursorGlow />
       <Helmet>
         <title>Écume — Recettes & Inspiration</title>
