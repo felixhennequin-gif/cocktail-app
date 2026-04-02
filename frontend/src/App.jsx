@@ -131,7 +131,7 @@ function Header() {
   const closeMenu = () => setMenuOpen(false)
 
   return (
-    <header role="banner" className="sticky top-0 z-40 bg-white/80 dark:bg-ink-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-700 px-4 md:px-6 py-4 transition-colors">
+    <header role="banner" className="sticky top-0 z-40 bg-white/80 dark:bg-ink-950/70 backdrop-blur-xl border-b border-gray-200 dark:border-white/[0.06] px-4 md:px-6 py-4 transition-colors">
       {/* Ligne principale */}
       <div className="flex items-center gap-4">
         <Link
@@ -206,7 +206,7 @@ function Header() {
       {/* Menu déroulant mobile — toujours dans le DOM pour permettre la transition CSS */}
       <nav
         aria-label="Menu mobile"
-        className={`md:hidden absolute top-full left-0 right-0 bg-white dark:bg-ink-900 border-b border-gray-200 dark:border-gray-700 shadow-lg z-50 px-4 flex flex-col gap-3 text-sm overflow-hidden transition-all duration-200 ease-in-out ${
+        className={`md:hidden absolute top-full left-0 right-0 bg-white/95 dark:bg-ink-950/90 backdrop-blur-xl border-b border-gray-200 dark:border-white/[0.06] shadow-lg z-50 px-4 flex flex-col gap-3 text-sm overflow-hidden transition-all duration-200 ease-in-out ${
           menuOpen ? 'max-h-96 opacity-100 py-3' : 'max-h-0 opacity-0 pointer-events-none'
         }`}
       >
