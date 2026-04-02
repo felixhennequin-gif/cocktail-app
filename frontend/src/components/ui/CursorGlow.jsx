@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 
-const BUBBLE_COUNT = 22
+const BUBBLE_COUNT = 30
 
 export default function CursorGlow() {
   const canvasRef = useRef(null)
@@ -30,7 +30,7 @@ export default function CursorGlow() {
       scaleX: 1,
       scaleY: 1,
       speedMult: 0.6 + Math.random() * 0.8,
-      noiseMult: 0.5 + Math.random() * 1.5,
+      noiseMult: 0.6 + Math.random() * 0.8,
     }))
 
     let firstMove = true
@@ -152,7 +152,7 @@ export default function CursorGlow() {
         const dy = cy - b.y
         const dist = Math.sqrt(dx * dx + dy * dy)
         if (dist > 0.5) {
-          const strength = Math.min(dist * 0.004, 2.0) * b.speedMult
+          const strength = Math.min(dist * 0.008, 4.0) * b.speedMult
           b.vx += (dx / dist) * strength
           b.vy += (dy / dist) * strength
         }
@@ -262,8 +262,8 @@ export default function CursorGlow() {
         b.y += b.vy
 
         // Step 5: Cohesion noise
-        b.vx += (Math.random() - 0.5) * 0.12 * b.noiseMult
-        b.vy += (Math.random() - 0.5) * 0.12 * b.noiseMult
+        b.vx += (Math.random() - 0.5) * 0.05 * b.noiseMult
+        b.vy += (Math.random() - 0.5) * 0.05 * b.noiseMult
       }
 
       // Viewport boundary clamp (header + edges)
