@@ -111,6 +111,7 @@
     "loadMore": "Load more ({{loaded}} / {{total}})",
     "loadMoreLoading": "Loading...",
     "noResults": "No recipes found.",
+    "loadError": "Unable to load recipes. Please try again later.",
     "clearFilters": "Clear all filters",
     "totalCount_one": "{{count}} recipe total",
     "totalCount_other": "{{count}} recipes total",

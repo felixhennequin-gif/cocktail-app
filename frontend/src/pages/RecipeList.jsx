@@ -493,7 +493,7 @@ export default function RecipeList() {
           ))}
         </div>
       ) : error ? (
-        <p className="text-center text-red-500 py-16">{error}</p>
+        <p className="text-center text-red-500 py-16">{t('recipes.loadError')}</p>
       ) : recipes.length === 0 ? (
         <div className="text-center py-16">
           <p className="text-gray-400 dark:text-gray-500 mb-4">{t('recipes.noResults')}</p>

@@ -111,6 +111,7 @@
     "loadMore": "Charger plus ({{loaded}} / {{total}})",
     "loadMoreLoading": "Chargement...",
     "noResults": "Aucune recette trouvée.",
+    "loadError": "Impossible de charger les recettes. Veuillez réessayer plus tard.",
     "clearFilters": "Effacer tous les filtres",
     "totalCount_one": "{{count}} recette au total",
     "totalCount_other": "{{count}} recettes au total",
