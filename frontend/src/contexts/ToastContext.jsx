@@ -7,14 +7,21 @@ export function ToastProvider({ children }) {
 
   const showToast = useCallback((message, type = 'info') => {
     const id = Date.now() + Math.random()
-    setToasts((prev) => [...prev, { id, message, type }])
+    setToasts((prev) => [...prev, { id, message, type, exiting: false }])
     setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id))
-    }, 3000)
+      setToasts((prev) => prev.map((t) => t.id === id ? { ...t, exiting: true } : t))
+      // Retirer après la durée de l'animation de sortie
+      setTimeout(() => {
+        setToasts((prev) => prev.filter((t) => t.id !== id))
+      }, 300)
+    }, 2500)
   }, [])
 
   const dismiss = useCallback((id) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id))
+    setToasts((prev) => prev.map((t) => t.id === id ? { ...t, exiting: true } : t))
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id))
+    }, 300)
   }, [])
 
   return (
@@ -31,16 +38,22 @@ export function useToast() {
   return ctx
 }
 
-const STYLES = {
-  success: 'bg-green-600 text-white',
-  error:   'bg-red-600   text-white',
-  info:    'bg-blue-600  text-white',
+const ICON_COLORS = {
+  success: 'text-emerald-400',
+  error:   'text-red-400',
+  info:    'text-amber-400',
 }
 
 const ICONS = {
   success: '✓',
   error:   '✕',
   info:    'ℹ',
+}
+
+const BORDER_COLORS = {
+  success: 'border-emerald-500/20',
+  error:   'border-red-500/20',
+  info:    'border-amber-500/20',
 }
 
 function ToastContainer({ toasts, onDismiss }) {
@@ -50,15 +63,13 @@ function ToastContainer({ toasts, onDismiss }) {
       {toasts.map((t) => (
         <div
           key={t.id}
-          className={`flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-sm font-medium max-w-sm pointer-events-auto
-            animate-in fade-in slide-in-from-bottom-2 duration-200
-            ${STYLES[t.type] ?? STYLES.info}`}
+          className={`toast-glass flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-sm font-medium max-w-sm pointer-events-auto border ${BORDER_COLORS[t.type] ?? BORDER_COLORS.info} ${t.exiting ? 'toast-out' : 'toast-in'}`}
         >
-          <span className="shrink-0 text-base font-bold">{ICONS[t.type] ?? ICONS.info}</span>
-          <span className="flex-1">{t.message}</span>
+          <span className={`shrink-0 text-base font-bold ${ICON_COLORS[t.type] ?? ICON_COLORS.info}`}>{ICONS[t.type] ?? ICONS.info}</span>
+          <span className="flex-1 text-gray-100">{t.message}</span>
           <button
             onClick={() => onDismiss(t.id)}
-            className="shrink-0 opacity-70 hover:opacity-100 transition-opacity text-lg leading-none"
+            className="shrink-0 text-gray-400 hover:text-gray-200 transition-opacity text-lg leading-none"
           >
             ×
           </button>
