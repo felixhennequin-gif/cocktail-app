@@ -218,8 +218,8 @@ export default function CursorGlow() {
                 b.vy *= -0.1
               }
             }
-          } else {
-            // Edge collision: standard AABB min-penetration
+          } else if (!inCorner) {
+            // Edge/center zone: standard AABB min-penetration
             colliding = true
 
             const penetrations = [
