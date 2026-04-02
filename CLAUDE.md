@@ -1,4 +1,4 @@
-# Cocktail App — Contexte Claude Code
+# Écume — Contexte Claude Code
 
 ## Stack technique
 
@@ -18,7 +18,16 @@
 Serveur Debian local : `192.168.1.85`
 - API backend : `http://192.168.1.85:3000`
 - Frontend dev : `http://192.168.1.85:5173`
-- Production : `https://cocktail-app.fr` (Nginx + SSL Let's Encrypt)
+- Production : `https://cocktail-app.fr` (Nginx + Cloudflare Tunnel, TLS géré par Cloudflare)
+
+## Git Workflow
+
+- Branche par défaut pour le développement : `dev`
+- Ne JAMAIS commit directement sur `main`
+- Toujours vérifier qu'on est sur `dev` avant de commencer (`git checkout dev`)
+- Commit sur `dev`, merge vers `main` uniquement après review
+- Ne pas push sauf demande explicite
+- Commit messages : conventional commits (`fix:`, `feat:`, `chore:`, etc.)
 
 ## Architecture des dossiers
 
@@ -214,6 +223,12 @@ cd backend && npm run seed:realistic   # Données réalistes
 cd backend && npm test            # Lance tous les tests Jest
 cd backend && npm run test:watch  # Mode watch
 
+# Environnement dev
+bash scripts/dev.sh               # Lance backend dev (port 3001) + frontend Vite
+bash scripts/stop-dev.sh          # Arrête le backend dev
+# Backend dev : port 3001, BDD cocktails_db_dev
+# Frontend dev : localhost:5173, proxy vers port 3001
+
 # Déploiement
 scripts/deploy.sh                 # Déploiement manuel (fetch main, npm ci, migrate, build, pm2 restart)
 
@@ -228,7 +243,7 @@ psql -h localhost -U cocktail_user -d cocktails_db
 - `GET /recipes` ne renvoie que `PUBLISHED` aux non-admins (filtre automatique dans le controller)
 - `deleteRecipe` supprime en cascade : collectionRecipes → recipeTag → comments → ratings → favorites → ingredients → steps → détache variantes → recipe
 - Images stockées dans `backend/uploads/`, exclues du git
-- Proxy Vite : `/api/*` → `http://192.168.1.85:3000` (retire le préfixe `/api`)
+- Proxy Vite (dev uniquement) : `/api/*` → `http://localhost:3001` (retire le préfixe `/api`). En prod, Nginx gère le proxy vers port 3000.
 - Warning `pg DeprecationWarning` sur `client.query()` : vient de `@prisma/adapter-pg`, pas actionnable
 - Compte admin : felix.hennequin1@gmail.com / pseudo "felix"
 - Tags normalisés : `name.trim().toLowerCase()` à la création/résolution
