@@ -1,4 +1,4 @@
-import { memo } from 'react'
+import { memo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { getImageUrl } from '../utils/image'
@@ -7,11 +7,13 @@ import Stars from './Stars'
 
 function RecipeCard({ recipe, isFavorited, onToggleFavorite, userId, showAuthorProminent }) {
   const { t } = useTranslation()
+  const [heartPop, setHeartPop] = useState(false)
 
   const handleFavorite = (e) => {
     e.preventDefault()
     e.stopPropagation()
     if (onToggleFavorite) onToggleFavorite(recipe.id)
+    setHeartPop(true)
   }
 
   return (
@@ -51,7 +53,8 @@ function RecipeCard({ recipe, isFavorited, onToggleFavorite, userId, showAuthorP
             {userId && (
               <button
                 onClick={handleFavorite}
-                className={`text-lg leading-none transition-all duration-200 active:scale-125 ${isFavorited ? 'text-red-500' : 'text-gray-300 dark:text-gray-600 hover:text-red-400'}`}
+                onAnimationEnd={() => setHeartPop(false)}
+                className={`text-lg leading-none transition-all duration-200 ${heartPop ? 'heart-pop' : ''} ${isFavorited ? 'text-red-500' : 'text-gray-300 dark:text-gray-600 hover:text-red-400'}`}
                 aria-label={isFavorited ? t('recipes.removeFavorite') : t('recipes.addFavorite')}
                 title={isFavorited ? t('recipes.removeFavorite') : t('recipes.addFavorite')}
               >
