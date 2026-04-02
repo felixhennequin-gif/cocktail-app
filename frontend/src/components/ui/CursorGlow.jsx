@@ -34,6 +34,7 @@ export default function CursorGlow() {
     }))
 
     let firstMove = true
+    const mountTime = performance.now()
 
     // Cache header height for hard clamp
     let headerHeight = 0
@@ -97,21 +98,6 @@ export default function CursorGlow() {
     const startupInterval = setInterval(recalcRects, 500)
     setTimeout(() => clearInterval(startupInterval), 3000)
 
-    // Extra recalc after scroll-reveal animations complete (transition: 0.6s)
-    setTimeout(recalcRects, 800)
-    setTimeout(recalcRects, 1500)
-
-    // Recalc when scroll-reveal transitions complete
-    const onTransitionEnd = (e) => {
-      if (e.target.classList?.contains('scroll-reveal') ||
-          e.target.classList?.contains('revealed') ||
-          e.target.closest?.('.scroll-reveal')) {
-        clearTimeout(mutationTimer)
-        mutationTimer = setTimeout(recalcRects, 50)
-      }
-    }
-    document.addEventListener('transitionend', onTransitionEnd, { passive: true })
-
     // MutationObserver: recalc when DOM changes (new cards rendered, etc.)
     let mutationTimer = null
     const observer = new MutationObserver(() => {
@@ -144,6 +130,11 @@ export default function CursorGlow() {
       scroll.current.y = window.scrollY
       const sx = scroll.current.x
       const sy = scroll.current.y
+
+      // Aggressive rect recalc during first 2 seconds (catch scroll-reveal animations)
+      if (performance.now() - mountTime < 2000) {
+        recalcRects()
+      }
 
       // Convert viewport mouse to page-space every frame (handles scroll-without-mousemove)
       const mousePageX = mouse.current.x + sx
@@ -370,7 +361,6 @@ export default function CursorGlow() {
       observer.disconnect()
       clearInterval(startupInterval)
       clearTimeout(mutationTimer)
-      document.removeEventListener('transitionend', onTransitionEnd)
     }
   }, [])
 
