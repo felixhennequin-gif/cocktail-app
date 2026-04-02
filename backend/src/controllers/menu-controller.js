@@ -26,11 +26,11 @@ const generateMenu = async (req, res, next) => {
 
     // Configuration des templates
     const templates = {
-      elegant:  { bg: '#1a1a1a', text: '#d4a047', accent: '#f5c96c', font: 'Helvetica-Bold' },
-      tropical: { bg: '#fff8e1', text: '#2e7d32', accent: '#ff6f00', font: 'Helvetica' },
+      classic:  { bg: '#1a1a1a', text: '#d4a047', accent: '#f5c96c', font: 'Helvetica-Bold' },
+      modern:   { bg: '#fff8e1', text: '#2e7d32', accent: '#ff6f00', font: 'Helvetica' },
       minimal:  { bg: '#ffffff', text: '#1a1a1a', accent: '#666666', font: 'Helvetica' },
     };
-    const t = templates[template] || templates.elegant;
+    const t = templates[template] || templates.classic;
 
     const doc = new PDFDocument({ size: 'A4', margin: 50 });
 
