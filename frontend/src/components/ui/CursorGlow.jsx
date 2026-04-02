@@ -99,10 +99,11 @@ export default function CursorGlow() {
     setTimeout(() => clearInterval(startupInterval), 3000)
 
     // MutationObserver: recalc when DOM changes (new cards rendered, etc.)
-    let mutationTimer = null
+    let recalcUntil = 0
     const observer = new MutationObserver(() => {
-      clearTimeout(mutationTimer)
-      mutationTimer = setTimeout(recalcRects, 200)
+      // After any DOM change, recalc rects every frame for 500ms
+      // This catches CSS transitions that shift layout
+      recalcUntil = Math.max(recalcUntil, performance.now() + 500)
     })
     observer.observe(document.body, { childList: true, subtree: true })
 
@@ -131,8 +132,8 @@ export default function CursorGlow() {
       const sx = scroll.current.x
       const sy = scroll.current.y
 
-      // Aggressive rect recalc during first 2 seconds (catch scroll-reveal animations)
-      if (performance.now() - mountTime < 2000) {
+      // Recalc rects every frame during startup (2s) or after DOM mutations (500ms)
+      if (performance.now() - mountTime < 2000 || performance.now() < recalcUntil) {
         recalcRects()
       }
 
@@ -360,7 +361,6 @@ export default function CursorGlow() {
       mql.removeEventListener('change', onMqlChange)
       observer.disconnect()
       clearInterval(startupInterval)
-      clearTimeout(mutationTimer)
     }
   }, [])
 
