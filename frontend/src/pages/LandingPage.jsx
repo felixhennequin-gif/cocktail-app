@@ -93,7 +93,7 @@ export default function LandingPage() {
       </Helmet>
 
       {/* Hero */}
-      <div className="mb-10 text-center py-10 sm:py-14" data-bubble-collider>
+      <div className="mb-10 text-center py-10 sm:py-14">
         <h1 className="text-4xl sm:text-5xl font-serif font-normal text-gray-900 dark:text-gray-100 leading-tight mb-4">
           {(() => {
             const highlights = new Set(t('recipes.heroTitleHighlight').split(','))
@@ -115,12 +115,14 @@ export default function LandingPage() {
         <div className="flex justify-center gap-3">
           <Link
             to="/recipes"
+            data-bubble-collider
             className="px-6 py-2.5 bg-gold-400 text-ink-900 rounded-xl font-medium text-sm hover:bg-gold-300 transition-colors"
           >
             {t('recipes.heroCta')}
           </Link>
           <Link
             to="/roulette"
+            data-bubble-collider
             className="px-6 py-2.5 border border-gold-300 dark:border-gold-600 text-gold-600 dark:text-gold-400 rounded-xl font-medium text-sm hover:bg-gold-50 dark:hover:bg-ink-800 transition-colors"
           >
             {t('roulette.landingCta')}
@@ -128,6 +130,7 @@ export default function LandingPage() {
           {!user && (
             <Link
               to="/register"
+              data-bubble-collider
               className="px-6 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 rounded-xl font-medium text-sm hover:border-gold-400 dark:hover:border-gold-400 hover:text-gold-500 dark:hover:text-gold-400 transition-colors"
             >
               {t('recipes.heroCtaSecondary')}

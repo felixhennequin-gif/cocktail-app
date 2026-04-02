@@ -31,6 +31,8 @@ export default function CursorGlow() {
       scaleY: 1,
     }))
 
+    let firstMove = true
+
     let w, h
     const resize = () => {
       w = canvas.width = window.innerWidth
@@ -42,6 +44,15 @@ export default function CursorGlow() {
     const handleMouseMove = (e) => {
       mouse.current.x = e.clientX
       mouse.current.y = e.clientY
+      if (firstMove) {
+        firstMove = false
+        pos.current.x = e.clientX
+        pos.current.y = e.clientY
+        for (const b of bubbles) {
+          b.x = e.clientX + (Math.random() - 0.5) * 40
+          b.y = e.clientY + (Math.random() - 0.5) * 40
+        }
+      }
     }
     window.addEventListener('mousemove', handleMouseMove, { passive: true })
 
@@ -85,7 +96,7 @@ export default function CursorGlow() {
         const dy = cy - b.y
         const dist = Math.sqrt(dx * dx + dy * dy)
         if (dist > 0.1) {
-          const force = 0.02
+          const force = 0.06
           b.vx += (dx / dist) * force
           b.vy += (dy / dist) * force
         }
@@ -157,8 +168,8 @@ export default function CursorGlow() {
         }
 
         // Step 4: Damping + mise à jour position
-        b.vx *= 0.92
-        b.vy *= 0.92
+        b.vx *= 0.88
+        b.vy *= 0.88
         b.x += b.vx
         b.y += b.vy
 
