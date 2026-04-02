@@ -107,15 +107,15 @@ export default function CursorGlow() {
       const cx = pos.current.x
       const cy = pos.current.y
 
-      // Step 1: Attraction vers le curseur
+      // Step 1: Attraction vers le curseur — force proportionnelle à la distance
       for (const b of bubbles) {
         const dx = cx - b.x
         const dy = cy - b.y
         const dist = Math.sqrt(dx * dx + dy * dy)
-        if (dist > 0.1) {
-          const force = 0.15
-          b.vx += (dx / dist) * force
-          b.vy += (dy / dist) * force
+        if (dist > 0.5) {
+          const strength = Math.min(dist * 0.004, 2.0)
+          b.vx += (dx / dist) * strength
+          b.vy += (dy / dist) * strength
         }
       }
 
@@ -142,57 +142,62 @@ export default function CursorGlow() {
         let colliding = false
 
         for (const rect of rects) {
-          const closestX = Math.max(rect.left, Math.min(b.x, rect.right))
-          const closestY = Math.max(rect.top, Math.min(b.y, rect.bottom))
-          const distX = b.x - closestX
-          const distY = b.y - closestY
-          const dist = Math.sqrt(distX * distX + distY * distY)
+          // Skip if bubble is clearly outside (broad phase)
+          if (b.x + b.radius < rect.left || b.x - b.radius > rect.right ||
+              b.y + b.radius < rect.top  || b.y - b.radius > rect.bottom) {
+            continue
+          }
 
-          if (dist < b.radius) {
-            colliding = true
+          colliding = true
 
-            const overlapLeft   = b.x + b.radius - rect.left
-            const overlapRight  = rect.right - (b.x - b.radius)
-            const overlapTop    = b.y + b.radius - rect.top
-            const overlapBottom = rect.bottom - (b.y - b.radius)
+          // Find minimum penetration axis
+          const penetrations = [
+            { axis: 'left',   depth: (b.x + b.radius) - rect.left,   pushX: -1, pushY: 0  },
+            { axis: 'right',  depth: rect.right - (b.x - b.radius),  pushX: 1,  pushY: 0  },
+            { axis: 'top',    depth: (b.y + b.radius) - rect.top,     pushX: 0,  pushY: -1 },
+            { axis: 'bottom', depth: rect.bottom - (b.y - b.radius),  pushX: 0,  pushY: 1  },
+          ]
 
-            const minOverlap = Math.min(overlapLeft, overlapRight, overlapTop, overlapBottom)
+          // Only consider positive penetrations (actual overlaps)
+          const valid = penetrations.filter(p => p.depth > 0)
+          if (valid.length === 0) continue
 
-            if (minOverlap === overlapLeft) {
-              b.x = rect.left - b.radius
-              b.vx = Math.min(b.vx, 0)
-              b.scaleX = 0.65; b.scaleY = 1.3
-            } else if (minOverlap === overlapRight) {
-              b.x = rect.right + b.radius
-              b.vx = Math.max(b.vx, 0)
-              b.scaleX = 0.65; b.scaleY = 1.3
-            } else if (minOverlap === overlapTop) {
-              b.y = rect.top - b.radius
-              b.vy = Math.min(b.vy, 0)
-              b.scaleY = 0.65; b.scaleX = 1.3
-            } else {
-              b.y = rect.bottom + b.radius
-              b.vy = Math.max(b.vy, 0)
-              b.scaleY = 0.65; b.scaleX = 1.3
-            }
+          // Pick smallest penetration — that's the cheapest escape direction
+          valid.sort((a, c) => a.depth - c.depth)
+          const escape = valid[0]
+
+          // Push bubble out
+          b.x += escape.pushX * escape.depth
+          b.y += escape.pushY * escape.depth
+
+          // Kill velocity in the collision direction + slight bounce
+          if (escape.pushX !== 0) {
+            b.vx *= -0.1
+            b.scaleX = 0.6
+            b.scaleY = 1.35
+          }
+          if (escape.pushY !== 0) {
+            b.vy *= -0.1
+            b.scaleY = 0.6
+            b.scaleX = 1.35
           }
         }
 
-        // Récupération vers forme ronde
+        // Recovery toward round shape when not colliding
         if (!colliding) {
-          b.scaleX += (1 - b.scaleX) * 0.1
-          b.scaleY += (1 - b.scaleY) * 0.1
+          b.scaleX += (1 - b.scaleX) * 0.12
+          b.scaleY += (1 - b.scaleY) * 0.12
         }
 
-        // Step 4: Damping + mise à jour position
-        b.vx *= 0.82
-        b.vy *= 0.82
+        // Step 4: Damping + position update
+        b.vx *= 0.85
+        b.vy *= 0.85
         b.x += b.vx
         b.y += b.vy
 
-        // Step 5: Bruit de cohésion
-        b.vx += (Math.random() - 0.5) * 0.15
-        b.vy += (Math.random() - 0.5) * 0.15
+        // Step 5: Cohesion noise
+        b.vx += (Math.random() - 0.5) * 0.12
+        b.vy += (Math.random() - 0.5) * 0.12
       }
 
       // Rendu — conversion page-space → viewport-space
