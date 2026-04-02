@@ -70,6 +70,37 @@ body {
   animation: fade-in 0.4s ease-out both;
 }
 
+/* Liquid fill — recipe cards */
+.recipe-card {
+  position: relative;
+}
+
+.recipe-card::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 0%;
+  background: linear-gradient(to top, rgba(245, 158, 11, 0.06), transparent);
+  transition: height 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.recipe-card:hover::before {
+  height: 100%;
+}
+
+.recipe-card:hover {
+  border-color: rgba(245, 158, 11, 0.2);
+}
+
+.recipe-card > * {
+  position: relative;
+  z-index: 1;
+}
+
 /* Cursor glow — landing page uniquement */
 .cursor-glow {
   position: fixed;
@@ -89,5 +120,8 @@ body {
   }
   .cursor-glow {
     display: none;
+  }
+  .recipe-card::before {
+    transition: none;
   }
 }

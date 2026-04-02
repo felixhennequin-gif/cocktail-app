@@ -23,7 +23,7 @@ function RecipeCardGrid({ recipe, isFavorited, onToggleFavorite, userId, compare
   return (
     <Link
       to={`/recipes/${recipe.slug || recipe.id}`}
-      className="group flex flex-col bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-lg hover:border-gold-300 dark:hover:border-gold-600 hover:-translate-y-0.5 transition-all duration-200"
+      className="recipe-card group flex flex-col bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
     >
       {/* Image */}
       <div className="relative w-full h-40 sm:h-44 aspect-video overflow-hidden bg-gray-100 dark:bg-gray-700">

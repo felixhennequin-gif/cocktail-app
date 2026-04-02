@@ -17,7 +17,7 @@ function RecipeCard({ recipe, isFavorited, onToggleFavorite, userId, showAuthorP
   return (
     <Link
       to={`/recipes/${recipe.slug || recipe.id}`}
-      className="flex gap-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 hover:shadow-lg hover:border-gold-300 dark:hover:border-gold-600 hover:-translate-y-0.5 transition-all duration-200"
+      className="recipe-card flex gap-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
     >
       <div className="relative w-20 h-16 sm:w-24 sm:h-20 aspect-[6/5] shrink-0 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700">
         <img
