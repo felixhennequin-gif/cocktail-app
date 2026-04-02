@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cocktails-v3'
+const CACHE_NAME = 'cocktails-v4'
 const FAVORITES_CACHE_NAME = 'cocktail-favorites-v1'
 const OFFLINE_URL = '/offline.html'
 
@@ -161,12 +161,19 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  // Network-first pour : autres appels API, navigations HTML (dont index.html)
-  if (
-    url.pathname.startsWith('/api/') ||
-    request.destination === 'document' ||
-    request.mode === 'navigate'
-  ) {
+  // Navigations HTML (index.html) — network-only, fallback offline.html
+  // Ne PAS cacher index.html : il contient le script inline dark mode
+  // et doit toujours être servi frais pour refléter le dernier build
+  if (request.destination === 'document' || request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request)
+        .catch(() => caches.match(OFFLINE_URL))
+    )
+    return
+  }
+
+  // Network-first pour les appels API
+  if (url.pathname.startsWith('/api/')) {
     event.respondWith(
       fetch(request)
         .then((response) => {
@@ -176,14 +183,7 @@ self.addEventListener('fetch', (event) => {
           }
           return response
         })
-        .catch(() => {
-          return caches.match(request).then((cached) => {
-            if (cached) return cached
-            if (request.destination === 'document' || request.mode === 'navigate') {
-              return caches.match(OFFLINE_URL)
-            }
-          })
-        })
+        .catch(() => caches.match(request))
     )
     return
   }
