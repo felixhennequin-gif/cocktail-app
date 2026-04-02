@@ -8,7 +8,6 @@ export default function CursorGlow() {
   const pos = useRef({ x: -200, y: -200 })
   const scroll = useRef({ x: 0, y: 0 })
   const rectsRef = useRef([])
-  const fixedRectsRef = useRef([])
   const prefersReducedMotion = useRef(false)
 
   useEffect(() => {
@@ -36,6 +35,11 @@ export default function CursorGlow() {
 
     let firstMove = true
 
+    // Cache header height for hard clamp
+    let headerHeight = 0
+    const headerEl = document.querySelector('[data-bubble-fixed]')
+    if (headerEl) headerHeight = headerEl.getBoundingClientRect().height
+
     let w, h
     const resize = () => {
       const cw = document.documentElement.clientWidth
@@ -46,55 +50,43 @@ export default function CursorGlow() {
       canvas.style.height = ch + 'px'
       w = cw
       h = ch
+      if (headerEl) headerHeight = headerEl.getBoundingClientRect().height
     }
     resize()
     window.addEventListener('resize', resize, { passive: true })
 
-    // Mouse en page coordinates
+    // Mouse en viewport coordinates (converti en page-space chaque frame)
     const handleMouseMove = (e) => {
-      mouse.current.x = e.clientX + window.scrollX
-      mouse.current.y = e.clientY + window.scrollY
+      mouse.current.x = e.clientX
+      mouse.current.y = e.clientY
       if (firstMove) {
         firstMove = false
-        pos.current.x = mouse.current.x
-        pos.current.y = mouse.current.y
+        const pageX = e.clientX + window.scrollX
+        const pageY = e.clientY + window.scrollY
+        pos.current.x = pageX
+        pos.current.y = pageY
         for (const b of bubbles) {
-          b.x = mouse.current.x + (Math.random() - 0.5) * 40
-          b.y = mouse.current.y + (Math.random() - 0.5) * 40
+          b.x = pageX + (Math.random() - 0.5) * 40
+          b.y = pageY + (Math.random() - 0.5) * 40
         }
       }
     }
     window.addEventListener('mousemove', handleMouseMove, { passive: true })
 
-    // Cache des rects collidables
+    // Cache des rects collidables (page-space, excluding fixed elements)
     const recalcRects = () => {
       const sx = window.scrollX
       const sy = window.scrollY
-      const elements = document.querySelectorAll('[data-bubble-collider]')
-      const pageRects = []
-      const fixedRects = []
-
-      for (const el of elements) {
+      const elements = document.querySelectorAll('[data-bubble-collider]:not([data-bubble-fixed])')
+      rectsRef.current = Array.from(elements).map(el => {
         const r = el.getBoundingClientRect()
-        if (el.hasAttribute('data-bubble-fixed')) {
-          fixedRects.push({
-            left: r.left,
-            top: r.top,
-            right: r.right,
-            bottom: r.bottom,
-          })
-        } else {
-          pageRects.push({
-            left: r.left + sx,
-            top: r.top + sy,
-            right: r.right + sx,
-            bottom: r.bottom + sy,
-          })
+        return {
+          left: r.left + sx,
+          top: r.top + sy,
+          right: r.right + sx,
+          bottom: r.bottom + sy,
         }
-      }
-
-      rectsRef.current = pageRects
-      fixedRectsRef.current = fixedRects
+      })
     }
 
     // Initial calc + periodic recalc for async-loaded content
@@ -110,7 +102,7 @@ export default function CursorGlow() {
     })
     observer.observe(document.body, { childList: true, subtree: true })
 
-    // Also recalc on scroll and resize
+    // Scroll and resize
     const onScroll = () => {
       scroll.current.x = window.scrollX
       scroll.current.y = window.scrollY
@@ -132,10 +124,14 @@ export default function CursorGlow() {
       // Mise à jour scroll ref chaque frame
       scroll.current.x = window.scrollX
       scroll.current.y = window.scrollY
+      const sx = scroll.current.x
+      const sy = scroll.current.y
 
-      // Lerp du centre vers la souris (page-space)
-      pos.current.x += (mouse.current.x - pos.current.x) * 0.25
-      pos.current.y += (mouse.current.y - pos.current.y) * 0.25
+      // Convert viewport mouse to page-space every frame (handles scroll-without-mousemove)
+      const mousePageX = mouse.current.x + sx
+      const mousePageY = mouse.current.y + sy
+      pos.current.x += (mousePageX - pos.current.x) * 0.25
+      pos.current.y += (mousePageY - pos.current.y) * 0.25
 
       const cx = pos.current.x
       const cy = pos.current.y
@@ -169,17 +165,12 @@ export default function CursorGlow() {
         }
       }
 
-      // Step 3: Collision avec les rects DOM
-      const pageRects = rectsRef.current
-      const fixedRects = fixedRectsRef.current
-      const sx = scroll.current.x
-      const sy = scroll.current.y
-
+      // Step 3: Collision avec les rects DOM (page-space)
+      const rects = rectsRef.current
       for (const b of bubbles) {
         let colliding = false
 
-        // Resolve collision for page-space rects
-        for (const rect of pageRects) {
+        for (const rect of rects) {
           if (b.x + b.radius < rect.left || b.x - b.radius > rect.right ||
               b.y + b.radius < rect.top  || b.y - b.radius > rect.bottom) {
             continue
@@ -206,42 +197,6 @@ export default function CursorGlow() {
           if (escape.py !== 0) { b.vy *= -0.1; b.scaleY = 0.6; b.scaleX = 1.35 }
         }
 
-        // Resolve collision for fixed/sticky rects (viewport-space)
-        // Recompute after page-space collisions may have moved the bubble
-        const viewX2 = b.x - sx
-        const viewY2 = b.y - sy
-
-        for (const rect of fixedRects) {
-          if (viewX2 + b.radius < rect.left || viewX2 - b.radius > rect.right ||
-              viewY2 + b.radius < rect.top  || viewY2 - b.radius > rect.bottom) {
-            continue
-          }
-
-          colliding = true
-
-          const penetrations = [
-            { depth: (viewX2 + b.radius) - rect.left,   px: -1, py: 0  },
-            { depth: rect.right - (viewX2 - b.radius),  px: 1,  py: 0  },
-            { depth: (viewY2 + b.radius) - rect.top,    px: 0,  py: -1 },
-            { depth: rect.bottom - (viewY2 - b.radius),  px: 0,  py: 1  },
-          ]
-
-          const valid = penetrations.filter(p => p.depth > 0)
-          if (valid.length === 0) continue
-          valid.sort((a, c) => a.depth - c.depth)
-          const escape = valid[0]
-
-          // Compute target in viewport-space with buffer, convert to page-space
-          const targetViewX = viewX2 + escape.px * (escape.depth + 2)
-          const targetViewY = viewY2 + escape.py * (escape.depth + 2)
-          b.x = targetViewX + sx
-          b.y = targetViewY + sy
-
-          // Force velocity AWAY from the rect to prevent re-entry
-          if (escape.px !== 0) { b.vx = escape.px * 3; b.scaleX = 0.6; b.scaleY = 1.35 }
-          if (escape.py !== 0) { b.vy = escape.py * 3; b.scaleY = 0.6; b.scaleX = 1.35 }
-        }
-
         // Recovery toward round shape
         if (!colliding) {
           b.scaleX += (1 - b.scaleX) * 0.12
@@ -257,6 +212,33 @@ export default function CursorGlow() {
         // Step 5: Cohesion noise
         b.vx += (Math.random() - 0.5) * 0.12 * b.noiseMult
         b.vy += (Math.random() - 0.5) * 0.12 * b.noiseMult
+      }
+
+      // Viewport boundary clamp (header + edges)
+      for (const b of bubbles) {
+        const viewX = b.x - sx
+        const viewY = b.y - sy
+
+        // Header hard clamp
+        if (headerHeight > 0 && viewY < headerHeight + b.radius) {
+          b.y = sy + headerHeight + b.radius + 1
+          if (b.vy < 0) b.vy = 0
+        }
+        // Bottom
+        if (viewY > h - b.radius) {
+          b.y = sy + h - b.radius
+          if (b.vy > 0) b.vy = 0
+        }
+        // Left
+        if (viewX < b.radius) {
+          b.x = sx + b.radius
+          if (b.vx < 0) b.vx = 0
+        }
+        // Right
+        if (viewX > w - b.radius) {
+          b.x = sx + w - b.radius
+          if (b.vx > 0) b.vx = 0
+        }
       }
 
       // Rendu — conversion page-space → viewport-space
