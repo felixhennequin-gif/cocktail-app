@@ -25,7 +25,7 @@ export default function CursorGlow() {
         pos.current.x = lerp(pos.current.x, mouse.current.x, 0.08)
         pos.current.y = lerp(pos.current.y, mouse.current.y, 0.08)
         glowRef.current.style.transform =
-          `translate(${pos.current.x - 90}px, ${pos.current.y - 90}px)`
+          `translate(${pos.current.x - 60}px, ${pos.current.y - 60}px)`
       }
       rafId = requestAnimationFrame(animate)
     }

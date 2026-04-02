@@ -3,10 +3,12 @@ import { useEffect, useRef } from 'react'
 const BUBBLE_COUNT = 75
 const AMBER = [245, 158, 11]
 
-function createBubble(canvasWidth, canvasHeight) {
+function createBubble(canvasWidth, canvasHeight, initialSpread = false) {
   return {
     x: Math.random() * canvasWidth,
-    y: canvasHeight + Math.random() * canvasHeight,
+    y: initialSpread
+      ? Math.random() * canvasHeight
+      : canvasHeight + Math.random() * 20,
     radius: 0.8 + Math.random() * 2.2,
     speed: 0.15 + Math.random() * 0.35,
     opacity: 0.05 + Math.random() * 0.1,
@@ -36,7 +38,7 @@ export default function BubblesBackground() {
       w = canvas.width = window.innerWidth
       h = canvas.height = window.innerHeight
       if (bubbles.length === 0) {
-        bubbles = Array.from({ length: BUBBLE_COUNT }, () => createBubble(w, h))
+        bubbles = Array.from({ length: BUBBLE_COUNT }, () => createBubble(w, h, true))
       }
     }
 
