@@ -11,10 +11,10 @@ echo "=== Déploiement $(date) ===" >> "$LOG_FILE"
 
 cd "$APP_DIR"
 
-# Basculer sur main et récupérer les dernières modifications
-git fetch origin main >> "$LOG_FILE" 2>&1
-git checkout main >> "$LOG_FILE" 2>&1
-git reset --hard origin/main >> "$LOG_FILE" 2>&1
+# Basculer sur dev et récupérer les dernières modifications
+git fetch origin dev >> "$LOG_FILE" 2>&1
+git checkout dev >> "$LOG_FILE" 2>&1
+git reset --hard origin/dev >> "$LOG_FILE" 2>&1
 
 # Install des dépendances backend (production uniquement)
 cd backend
@@ -33,6 +33,6 @@ cd "$APP_DIR"
 
 # Redémarrer uniquement l'API (inclut désormais le frontend statique dans dist/)
 # NE PAS redémarrer webhook ni cloudflared (boucle infinie)
-pm2 restart ecume-api >> "$LOG_FILE" 2>&1
+pm2 restart cocktail-api >> "$LOG_FILE" 2>&1
 
 echo "=== Déploiement terminé $(date) ===" >> "$LOG_FILE"
