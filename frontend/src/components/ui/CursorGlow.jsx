@@ -80,11 +80,14 @@ export default function CursorGlow() {
       const elements = document.querySelectorAll('[data-bubble-collider]:not([data-bubble-fixed])')
       rectsRef.current = Array.from(elements).map(el => {
         const r = el.getBoundingClientRect()
+        const style = getComputedStyle(el)
+        const br = parseFloat(style.borderTopLeftRadius) || 0
         return {
           left: r.left + sx,
           top: r.top + sy,
           right: r.right + sx,
           bottom: r.bottom + sy,
+          radius: Math.min(br, (r.right - r.left) / 2, (r.bottom - r.top) / 2),
         }
       })
     }
@@ -165,36 +168,78 @@ export default function CursorGlow() {
         }
       }
 
-      // Step 3: Collision avec les rects DOM (page-space)
+      // Step 3: Collision avec les rects DOM (page-space, with rounded corners)
       const rects = rectsRef.current
       for (const b of bubbles) {
         let colliding = false
 
         for (const rect of rects) {
+          // Broad phase AABB
           if (b.x + b.radius < rect.left || b.x - b.radius > rect.right ||
               b.y + b.radius < rect.top  || b.y - b.radius > rect.bottom) {
             continue
           }
 
-          colliding = true
+          const br = rect.radius || 0
 
-          const penetrations = [
-            { depth: (b.x + b.radius) - rect.left,   px: -1, py: 0  },
-            { depth: rect.right - (b.x - b.radius),  px: 1,  py: 0  },
-            { depth: (b.y + b.radius) - rect.top,    px: 0,  py: -1 },
-            { depth: rect.bottom - (b.y - b.radius),  px: 0,  py: 1  },
-          ]
+          // Check if bubble is in a corner zone
+          const inLeftZone   = b.x < rect.left + br
+          const inRightZone  = b.x > rect.right - br
+          const inTopZone    = b.y < rect.top + br
+          const inBottomZone = b.y > rect.bottom - br
 
-          const valid = penetrations.filter(p => p.depth > 0)
-          if (valid.length === 0) continue
-          valid.sort((a, c) => a.depth - c.depth)
-          const escape = valid[0]
+          const inCorner = (inLeftZone || inRightZone) && (inTopZone || inBottomZone)
 
-          b.x += escape.px * escape.depth
-          b.y += escape.py * escape.depth
+          if (inCorner && br > 0) {
+            // Corner collision: test against the corner circle
+            const cornerX = inLeftZone ? rect.left + br : rect.right - br
+            const cornerY = inTopZone  ? rect.top + br  : rect.bottom - br
 
-          if (escape.px !== 0) { b.vx *= -0.1; b.scaleX = 0.6; b.scaleY = 1.35 }
-          if (escape.py !== 0) { b.vy *= -0.1; b.scaleY = 0.6; b.scaleX = 1.35 }
+            const dx = b.x - cornerX
+            const dy = b.y - cornerY
+            const dist = Math.sqrt(dx * dx + dy * dy)
+            const minDist = br + b.radius
+
+            if (dist < minDist && dist > 0.01) {
+              colliding = true
+              const pushDist = minDist - dist
+              const nx = dx / dist
+              const ny = dy / dist
+              b.x += nx * pushDist
+              b.y += ny * pushDist
+
+              const absNx = Math.abs(nx)
+              const absNy = Math.abs(ny)
+              if (absNx > absNy) {
+                b.scaleX = 0.65; b.scaleY = 1.3
+                b.vx *= -0.1
+              } else {
+                b.scaleY = 0.65; b.scaleX = 1.3
+                b.vy *= -0.1
+              }
+            }
+          } else {
+            // Edge collision: standard AABB min-penetration
+            colliding = true
+
+            const penetrations = [
+              { depth: (b.x + b.radius) - rect.left,   px: -1, py: 0  },
+              { depth: rect.right - (b.x - b.radius),  px: 1,  py: 0  },
+              { depth: (b.y + b.radius) - rect.top,    px: 0,  py: -1 },
+              { depth: rect.bottom - (b.y - b.radius),  px: 0,  py: 1  },
+            ]
+
+            const valid = penetrations.filter(p => p.depth > 0)
+            if (valid.length === 0) continue
+            valid.sort((a, c) => a.depth - c.depth)
+            const escape = valid[0]
+
+            b.x += escape.px * escape.depth
+            b.y += escape.py * escape.depth
+
+            if (escape.px !== 0) { b.vx *= -0.1; b.scaleX = 0.6; b.scaleY = 1.35 }
+            if (escape.py !== 0) { b.vy *= -0.1; b.scaleY = 0.6; b.scaleX = 1.35 }
+          }
         }
 
         // Recovery toward round shape
@@ -220,8 +265,8 @@ export default function CursorGlow() {
         const viewY = b.y - sy
 
         // Header hard clamp
-        if (headerHeight > 0 && viewY < headerHeight + b.radius) {
-          b.y = sy + headerHeight + b.radius + 1
+        if (headerHeight > 0 && viewY < headerHeight + b.radius + 3) {
+          b.y = sy + headerHeight + b.radius + 4
           if (b.vy < 0) b.vy = 0
         }
         // Bottom

@@ -274,7 +274,7 @@ export default function LandingPage() {
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
             {t('landing.popularTagsSubtitle')}
           </p>
-          <div className="flex flex-wrap gap-2" data-bubble-collider>
+          <div className="flex flex-wrap gap-2">
             {tags.filter((tag) => tag.recipesCount > 0).slice(0, 20).map((tag) => {
               // Taille proportionnelle au nombre de recettes
               const maxCount = Math.max(...tags.map((t2) => t2.recipesCount || 0), 1)
@@ -286,6 +286,7 @@ export default function LandingPage() {
                 <Link
                   key={tag.id}
                   to={`/tags/${encodeURIComponent(tag.name)}`}
+                  data-bubble-collider
                   className={`${sizeClass} rounded-full font-medium bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-gold-300 dark:hover:border-gold-500 hover:text-gold-600 dark:hover:text-gold-400 transition-colors`}
                 >
                   {tag.name}

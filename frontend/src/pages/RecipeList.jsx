@@ -277,6 +277,7 @@ export default function RecipeList() {
       <div className="flex flex-wrap gap-2 mb-4 overflow-x-auto pb-1">
         <button
           onClick={() => setParam('categoryId', null)}
+          data-bubble-collider
           className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
             categoryId === null
               ? 'bg-gold-400 text-ink-900'
@@ -289,6 +290,7 @@ export default function RecipeList() {
           <button
             key={cat.id}
             onClick={() => setParam('categoryId', cat.id)}
+            data-bubble-collider
             className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
               categoryId === cat.id
                 ? 'bg-gold-400 text-ink-900'
@@ -301,7 +303,7 @@ export default function RecipeList() {
       </div>
 
       {/* Barre de tri + bouton Filtres + toggle vue */}
-      <div className="flex flex-wrap items-center gap-3 md:gap-4 mb-4 py-3 border-t border-b border-gray-100 dark:border-gray-700">
+      <div data-bubble-collider className="flex flex-wrap items-center gap-3 md:gap-4 mb-4 py-3 border-t border-b border-gray-100 dark:border-gray-700">
         {/* Tri */}
         <div className="flex items-center gap-2">
           <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">{t('recipes.sortLabel')}</span>
