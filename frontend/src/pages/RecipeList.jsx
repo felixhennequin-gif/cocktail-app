@@ -19,7 +19,6 @@ function RecipeGrid({ viewMode, recipes, favoriteIds, toggleFavorite, userId, is
   return (
     <div
       ref={revealRef}
-      data-bubble-collider
       className={`scroll-reveal ${
         viewMode === 'grid'
           ? 'grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'

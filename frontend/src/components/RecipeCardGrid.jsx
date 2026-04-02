@@ -25,6 +25,7 @@ function RecipeCardGrid({ recipe, isFavorited, onToggleFavorite, userId, compare
   return (
     <Link
       to={`/recipes/${recipe.slug || recipe.id}`}
+      data-bubble-collider
       className="recipe-card group flex flex-col bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
     >
       {/* Image */}

@@ -30,6 +30,8 @@ export default function CursorGlow() {
       opacity: 0.08 + Math.random() * 0.15,
       scaleX: 1,
       scaleY: 1,
+      speedMult: 0.6 + Math.random() * 0.8,
+      noiseMult: 0.5 + Math.random() * 1.5,
     }))
 
     let firstMove = true
@@ -60,9 +62,6 @@ export default function CursorGlow() {
 
     // Cache des rects collidables (en page-space)
     const recalcRects = () => {
-      const now = performance.now()
-      if (now - lastRecalc.current < 100) return
-      lastRecalc.current = now
       const sx = window.scrollX
       const sy = window.scrollY
       const elements = document.querySelectorAll('[data-bubble-collider]')
@@ -77,7 +76,20 @@ export default function CursorGlow() {
       })
     }
 
+    // Initial calc + periodic recalc for async-loaded content
     recalcRects()
+    const startupInterval = setInterval(recalcRects, 500)
+    setTimeout(() => clearInterval(startupInterval), 3000)
+
+    // MutationObserver: recalc when DOM changes (new cards rendered, etc.)
+    let mutationTimer = null
+    const observer = new MutationObserver(() => {
+      clearTimeout(mutationTimer)
+      mutationTimer = setTimeout(recalcRects, 200)
+    })
+    observer.observe(document.body, { childList: true, subtree: true })
+
+    // Also recalc on scroll and resize
     const onScroll = () => {
       scroll.current.x = window.scrollX
       scroll.current.y = window.scrollY
@@ -113,7 +125,7 @@ export default function CursorGlow() {
         const dy = cy - b.y
         const dist = Math.sqrt(dx * dx + dy * dy)
         if (dist > 0.5) {
-          const strength = Math.min(dist * 0.004, 2.0)
+          const strength = Math.min(dist * 0.004, 2.0) * b.speedMult
           b.vx += (dx / dist) * strength
           b.vy += (dy / dist) * strength
         }
@@ -196,8 +208,8 @@ export default function CursorGlow() {
         b.y += b.vy
 
         // Step 5: Cohesion noise
-        b.vx += (Math.random() - 0.5) * 0.12
-        b.vy += (Math.random() - 0.5) * 0.12
+        b.vx += (Math.random() - 0.5) * 0.12 * b.noiseMult
+        b.vy += (Math.random() - 0.5) * 0.12 * b.noiseMult
       }
 
       // Rendu — conversion page-space → viewport-space
@@ -231,6 +243,9 @@ export default function CursorGlow() {
       window.removeEventListener('scroll', onScroll)
       window.removeEventListener('resize', recalcRects)
       mql.removeEventListener('change', onMqlChange)
+      observer.disconnect()
+      clearInterval(startupInterval)
+      clearTimeout(mutationTimer)
     }
   }, [])
 

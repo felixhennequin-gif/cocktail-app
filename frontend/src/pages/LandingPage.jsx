@@ -317,7 +317,7 @@ export default function LandingPage() {
               {t('preferences.noRecommendations')}
             </p>
           ) : (
-            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" data-bubble-collider>
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {recommendedRecipes.map((recipe) => (
                 <RecipeCardGrid
                   key={recipe.id}
@@ -345,7 +345,7 @@ export default function LandingPage() {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" data-bubble-collider>
+          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {popularRecipes.map((recipe, i) => (
               <div key={recipe.id} className="stagger-child" style={{ transitionDelay: `${i * 60}ms` }}>
                 <RecipeCardGrid
@@ -380,7 +380,7 @@ export default function LandingPage() {
               {t(`recipes.season.${currentSeason}`)}
             </p>
           )}
-          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" data-bubble-collider>
+          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {seasonalRecipes.map((recipe) => (
               <RecipeCardGrid
                 key={recipe.id}
