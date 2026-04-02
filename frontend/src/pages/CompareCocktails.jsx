@@ -50,7 +50,7 @@ function RecipeColumn({ recipe, side }) {
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
         <div className="absolute bottom-3 left-3 right-3">
           <Link
-            to={`/recipes/${recipe.id}`}
+            to={`/recipes/${recipe.slug || recipe.id}`}
             className="text-lg font-serif font-medium text-white hover:text-gold-300 transition-colors drop-shadow-md"
           >
             {recipe.name}
@@ -323,13 +323,13 @@ export default function CompareCocktails() {
       {/* Boutons d'action */}
       <div className="flex flex-wrap justify-center gap-3">
         <Link
-          to={`/recipes/${recipeA.id}`}
+          to={`/recipes/${recipeA.slug || recipeA.id}`}
           className="px-5 py-2 bg-gold-400 text-ink-900 rounded-lg font-medium text-sm hover:bg-gold-300 transition-colors"
         >
           {t('compare.goTo', { name: recipeA.name })}
         </Link>
         <Link
-          to={`/recipes/${recipeB.id}`}
+          to={`/recipes/${recipeB.slug || recipeB.id}`}
           className="px-5 py-2 bg-gold-400 text-ink-900 rounded-lg font-medium text-sm hover:bg-gold-300 transition-colors"
         >
           {t('compare.goTo', { name: recipeB.name })}

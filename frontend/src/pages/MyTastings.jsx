@@ -115,7 +115,7 @@ export default function MyTastings() {
                 {/* En-tête avec photo */}
                 <div className="flex gap-3 p-4">
                   {tasting.recipe?.imageUrl && (
-                    <Link to={`/recipes/${tasting.recipe.id}`} className="shrink-0">
+                    <Link to={`/recipes/${tasting.recipe.slug || tasting.recipe.id}`} className="shrink-0">
                       <img
                         src={getImageUrl(tasting.recipe.imageUrl)}
                         alt={tasting.recipe.name}
@@ -125,7 +125,7 @@ export default function MyTastings() {
                   )}
                   <div className="flex-1 min-w-0">
                     <Link
-                      to={`/recipes/${tasting.recipe?.id}`}
+                      to={`/recipes/${tasting.recipe?.slug || tasting.recipe?.id}`}
                       className="font-serif font-medium text-gray-900 dark:text-gray-100 hover:text-gold-500 dark:hover:text-gold-400 transition-colors"
                     >
                       {tasting.recipe?.name}

@@ -89,7 +89,7 @@ export default function NotificationBell() {
 
   const handleClickNotif = (notif) => {
     setOpen(false)
-    if (notif.data?.recipeId) navigate(`/recipes/${notif.data.recipeId}`)
+    if (notif.data?.recipeId) navigate(`/recipes/${notif.data.recipeSlug || notif.data.recipeId}`)
   }
 
   if (!user) return null

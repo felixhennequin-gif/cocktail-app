@@ -136,7 +136,7 @@ export default function LandingPage() {
       {/* Cocktail du jour */}
       {dailyRecipe && (
         <Link
-          to={`/recipes/${dailyRecipe.id}`}
+          to={`/recipes/${dailyRecipe.slug || dailyRecipe.id}`}
           className="block mb-10 rounded-2xl overflow-hidden bg-gradient-to-r from-gold-100 to-gold-50 dark:from-ink-800 dark:to-ink-900 border border-gold-200 dark:border-gold-700/30 hover:shadow-lg transition-shadow"
         >
           <div className="flex flex-col sm:flex-row">

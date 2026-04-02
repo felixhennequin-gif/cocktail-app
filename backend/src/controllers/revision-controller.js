@@ -1,14 +1,16 @@
 const prisma = require('../prisma');
-const { parseId, badRequest, notFound } = require('../helpers');
+const { parseIdOrSlug, badRequest, notFound } = require('../helpers');
 
 // GET /recipes/:id/history — liste des révisions
 const getRecipeHistory = async (req, res, next) => {
   try {
-    const recipeId = parseId(req.params.id);
-    if (!recipeId) return badRequest(res, 'id invalide');
+    const parsed = parseIdOrSlug(req.params.id);
+    if (!parsed) return badRequest(res, 'id invalide');
+    const where = parsed.id ? { id: parsed.id } : { slug: parsed.slug };
 
-    const recipe = await prisma.recipe.findUnique({ where: { id: recipeId }, select: { id: true, status: true, authorId: true } });
+    const recipe = await prisma.recipe.findUnique({ where, select: { id: true, status: true, authorId: true } });
     if (!recipe) return notFound(res, 'Recette introuvable');
+    const recipeId = recipe.id;
 
     // Les révisions d'une recette non publiée ne sont accessibles qu'à l'auteur ou un admin
     if (recipe.status !== 'PUBLISHED') {
@@ -52,12 +54,13 @@ const getRecipeHistory = async (req, res, next) => {
 // GET /recipes/:id/revisions/:version — contenu d'une révision
 const getRevision = async (req, res, next) => {
   try {
-    const recipeId = parseId(req.params.id);
+    const parsed = parseIdOrSlug(req.params.id);
     const version = parseInt(req.params.version);
-    if (!recipeId || isNaN(version)) return badRequest(res, 'Paramètres invalides');
+    if (!parsed || isNaN(version)) return badRequest(res, 'Paramètres invalides');
+    const where = parsed.id ? { id: parsed.id } : { slug: parsed.slug };
 
     // Vérifier que la recette existe et contrôler l'accès si elle n'est pas publiée
-    const recipe = await prisma.recipe.findUnique({ where: { id: recipeId }, select: { status: true, authorId: true } });
+    const recipe = await prisma.recipe.findUnique({ where, select: { id: true, status: true, authorId: true } });
     if (!recipe) return notFound(res, 'Révision introuvable');
 
     if (recipe.status !== 'PUBLISHED') {
@@ -67,6 +70,7 @@ const getRevision = async (req, res, next) => {
       if (!isAuthor && !isAdmin) return notFound(res, 'Révision introuvable');
     }
 
+    const recipeId = recipe.id;
     const revision = await prisma.recipeRevision.findUnique({
       where: { recipeId_version: { recipeId, version } },
     });

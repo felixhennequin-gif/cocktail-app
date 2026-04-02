@@ -122,7 +122,7 @@ export default function ShoppingList() {
       <div className="mb-6 flex flex-wrap gap-2">
         {recipes.map((r) => (
           <div key={r.id} className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-ink-800 rounded-lg border border-gray-200 dark:border-gray-700 text-sm">
-            <Link to={`/recipes/${r.id}`} className="text-gray-700 dark:text-gray-300 hover:text-gold-500 transition-colors">
+            <Link to={`/recipes/${r.slug || r.id}`} className="text-gray-700 dark:text-gray-300 hover:text-gold-500 transition-colors">
               {r.name}
             </Link>
             <span className="text-gray-400">×</span>

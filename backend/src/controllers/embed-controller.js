@@ -1,23 +1,25 @@
 const prisma = require('../prisma');
+const { parseIdOrSlug } = require('../helpers/parse-id');
 
 // GET /embed/recipes/:id — page HTML autonome pour iframe
 const getRecipeEmbed = async (req, res, next) => {
   try {
-    const id = parseInt(req.params.id);
-    if (isNaN(id)) return res.status(400).send('id invalide');
+    const parsed = parseIdOrSlug(req.params.id);
+    if (!parsed) return res.status(400).send('id invalide');
+    const where = parsed.id ? { id: parsed.id } : { slug: parsed.slug };
 
     const recipe = await prisma.recipe.findUnique({
-      where: { id, status: 'PUBLISHED' },
+      where,
       include: {
         category: true,
         ingredients: { include: { ingredient: true } },
       },
     });
 
-    if (!recipe) return res.status(404).send('Recette introuvable');
+    if (!recipe || recipe.status !== 'PUBLISHED') return res.status(404).send('Recette introuvable');
 
     const ratingAgg = await prisma.rating.aggregate({
-      where: { recipeId: id },
+      where: { recipeId: recipe.id },
       _avg: { score: true },
       _count: { score: true },
     });
@@ -81,7 +83,7 @@ const getRecipeEmbed = async (req, res, next) => {
       ` : ''}
     </div>
     <div class="footer">
-      <a href="${baseUrl}/recipes/${recipe.id}" target="_blank" rel="noopener">Voir sur Écume →</a>
+      <a href="${baseUrl}/recipes/${recipe.slug}" target="_blank" rel="noopener">Voir sur Écume →</a>
     </div>
   </div>
 </body>

@@ -20,11 +20,11 @@ const includeDetail = {
     select: { ratings: true },
   },
   parentRecipe: {
-    select: { id: true, name: true },
+    select: { id: true, name: true, slug: true },
   },
   variants: {
     where: { status: 'PUBLISHED' },
-    select: { id: true, name: true, imageUrl: true, difficulty: true, prepTime: true },
+    select: { id: true, name: true, slug: true, imageUrl: true, difficulty: true, prepTime: true },
   },
   ...includeTags,
 };

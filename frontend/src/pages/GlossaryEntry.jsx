@@ -75,7 +75,7 @@ export default function GlossaryEntry() {
             {entry.relatedRecipes.map((r) => (
               <Link
                 key={r.id}
-                to={`/recipes/${r.id}`}
+                to={`/recipes/${r.slug || r.id}`}
                 className="bg-white dark:bg-ink-900 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow"
               >
                 {r.imageUrl && <img src={r.imageUrl} alt={r.name} className="w-full h-24 object-cover" />}

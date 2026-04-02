@@ -1,6 +1,7 @@
 const prisma = require('../prisma');
 const { parseId, badRequest, notFound } = require('../helpers');
 const { createGlossaryEntrySchema, formatZodError } = require('../schemas');
+const { slugify } = require('../utils/slugify');
 
 // GET /glossary?category=technique&q=shaker&page=1&limit=20
 const getGlossary = async (req, res, next) => {
@@ -76,7 +77,7 @@ const createGlossaryEntry = async (req, res, next) => {
     if (!parsed.success) return badRequest(res, formatZodError(parsed.error));
     const { term, definition, longDescription, category, relatedRecipeIds, relatedEntryIds } = parsed.data;
 
-    const slug = term.toLowerCase().replace(/[^a-z0-9àâäéèêëïîôùûüÿçœæ]+/g, '-').replace(/(^-|-$)/g, '');
+    const slug = slugify(term);
 
     const entry = await prisma.glossaryEntry.create({
       data: {

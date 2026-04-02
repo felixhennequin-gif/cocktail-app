@@ -80,7 +80,7 @@ export default function RecipeMeta({ recipe, avgRating, ratingsCount, isFavorite
           </button>
           {user && (recipe.author?.id === user?.id || user?.role === 'ADMIN') && (
             <Link
-              to={`/recipes/${recipe.id}/edit`}
+              to={`/recipes/${recipe.slug || recipe.id}/edit`}
               className="text-xl leading-none text-gray-300 dark:text-gray-600 hover:text-gold-400 transition-colors"
               title={t('common.edit')}
             >

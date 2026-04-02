@@ -1,26 +1,7 @@
 const prisma = require('../prisma');
 const { createArticleSchema, updateArticleSchema, formatZodError } = require('../schemas');
 const { invalidateCacheByPattern } = require('../cache');
-
-// Génère un slug à partir d'un titre
-const slugify = (title) =>
-  title
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
-
-// Garantit l'unicité du slug en ajoutant un suffixe numérique si nécessaire
-const uniqueSlug = async (base, excludeId = null) => {
-  let slug = base;
-  let i = 1;
-  while (true) {
-    const existing = await prisma.article.findUnique({ where: { slug } });
-    if (!existing || existing.id === excludeId) return slug;
-    slug = `${base}-${i++}`;
-  }
-};
+const { slugify, uniqueSlug } = require('../utils/slugify');
 
 // Inclure les données author et tags dans toutes les réponses
 const articleInclude = {
@@ -93,7 +74,7 @@ const createArticle = async (req, res, next) => {
 
     const { title, content, excerpt, coverImage, status = 'DRAFT', tagIds = [] } = parsed.data;
     const base = slugify(title);
-    const slug = await uniqueSlug(base);
+    const slug = await uniqueSlug(base, prisma, 'article');
 
     const article = await prisma.article.create({
       data: {
@@ -138,7 +119,7 @@ const updateArticle = async (req, res, next) => {
     let slug = existing.slug;
     if (title && title !== existing.title) {
       const base = slugify(title);
-      slug = await uniqueSlug(base, existing.id);
+      slug = await uniqueSlug(base, prisma, 'article', existing.id);
     }
 
     // Gestion du publishedAt : on le positionne seulement au premier passage en PUBLISHED

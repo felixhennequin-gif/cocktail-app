@@ -60,7 +60,7 @@ export default function SearchBar() {
       setActiveIndex(i => Math.max(i - 1, -1))
     } else if (e.key === 'Enter') {
       if (activeIndex >= 0 && results[activeIndex]) {
-        handleSelect(results[activeIndex].id)
+        handleSelect(results[activeIndex].slug || results[activeIndex].id)
       } else if (value.trim().length >= 2) {
         setOpen(false)
         navigate(`/recipes?q=${encodeURIComponent(value.trim())}`)
@@ -121,7 +121,7 @@ export default function SearchBar() {
           {results.map((r, index) => (
             <button
               key={r.id}
-              onClick={() => handleSelect(r.id)}
+              onClick={() => handleSelect(r.slug || r.id)}
               role="option"
               id={`search-option-${r.id}`}
               aria-selected={index === activeIndex}

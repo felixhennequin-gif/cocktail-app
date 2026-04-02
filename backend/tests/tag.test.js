@@ -183,6 +183,7 @@ describe('GET /api/recipes?tags=<ids>', () => {
     const recipe = await prisma.recipe.create({
       data: {
         name: 'Cocktail fruité',
+        slug: `cocktail-fruite-${Date.now()}`,
         difficulty: 'EASY',
         prepTime: 5,
         categoryId: category.id,
@@ -198,6 +199,7 @@ describe('GET /api/recipes?tags=<ids>', () => {
     await prisma.recipe.create({
       data: {
         name: 'Cocktail sans tag',
+        slug: `cocktail-sans-tag-${Date.now()}`,
         difficulty: 'EASY',
         prepTime: 5,
         categoryId: category.id,
