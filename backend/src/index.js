@@ -59,11 +59,17 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'"],
+      scriptSrc: [
+        "'self'",
+        "'sha256-Z3x2+QkXC//7xJ/LmLpx2aSNwTY1uPNk5cFqW4/xsqQ='",
+        "https://static.cloudflareinsights.com",
+        "https://www.googletagmanager.com",
+        "https://www.google-analytics.com",
+      ],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       imgSrc: ["'self'", "data:", "https://placehold.co", "https://*.thecocktaildb.com", "https://cocktail-app.fr"],
-      connectSrc: ["'self'", "https://cocktail-app.fr", "https://*.thecocktaildb.com"],
+      connectSrc: ["'self'", "https://cocktail-app.fr", "https://*.thecocktaildb.com", "https://www.google-analytics.com", "https://analytics.google.com"],
     },
   },
 }));
