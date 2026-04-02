@@ -123,6 +123,8 @@ model Recipe {
   @@index([categoryId])
   @@index([authorId])
   @@index([status, createdAt])
+  @@index([parentRecipeId])
+  @@index([season])
 }
 
 model Category {

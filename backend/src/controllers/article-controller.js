@@ -2,6 +2,7 @@ const prisma = require('../prisma');
 const { createArticleSchema, updateArticleSchema, formatZodError } = require('../schemas');
 const { invalidateCacheByPattern } = require('../cache');
 const { slugify, uniqueSlug } = require('../utils/slugify');
+const { notFound, badRequest } = require('../helpers/errors');
 
 // Inclure les données author et tags dans toutes les réponses
 const articleInclude = {
@@ -48,13 +49,13 @@ const getArticleBySlug = async (req, res, next) => {
       include: articleInclude,
     });
 
-    if (!article) return res.status(404).json({ error: 'Article introuvable' });
+    if (!article) return notFound(res, 'Article introuvable');
 
     // Les drafts ne sont accessibles qu'aux admins
     if (article.status === 'DRAFT') {
       const user = req.user;
       if (!user || user.role !== 'ADMIN') {
-        return res.status(404).json({ error: 'Article introuvable' });
+        return notFound(res, 'Article introuvable');
       }
     }
 
@@ -69,7 +70,7 @@ const createArticle = async (req, res, next) => {
   try {
     const parsed = createArticleSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: formatZodError(parsed.error) });
+      return badRequest(res, formatZodError(parsed.error));
     }
 
     const { title, content, excerpt, coverImage, status = 'DRAFT', tagIds = [] } = parsed.data;
@@ -106,11 +107,11 @@ const createArticle = async (req, res, next) => {
 const updateArticle = async (req, res, next) => {
   try {
     const existing = await prisma.article.findUnique({ where: { slug: req.params.slug } });
-    if (!existing) return res.status(404).json({ error: 'Article introuvable' });
+    if (!existing) return notFound(res, 'Article introuvable');
 
     const parsed = updateArticleSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: formatZodError(parsed.error) });
+      return badRequest(res, formatZodError(parsed.error));
     }
 
     const { title, content, excerpt, coverImage, status, tagIds } = parsed.data;
@@ -163,7 +164,7 @@ const updateArticle = async (req, res, next) => {
 const deleteArticle = async (req, res, next) => {
   try {
     const existing = await prisma.article.findUnique({ where: { slug: req.params.slug } });
-    if (!existing) return res.status(404).json({ error: 'Article introuvable' });
+    if (!existing) return notFound(res, 'Article introuvable');
 
     await prisma.article.delete({ where: { id: existing.id } });
 

@@ -1,11 +1,12 @@
 const prisma = require('../prisma');
+const { notFound } = require('../helpers/errors');
 
 // POST /newsletter/subscribe [auth]
 const subscribe = async (req, res, next) => {
   try {
     const userId = req.user.id;
     const user = await prisma.user.findUnique({ where: { id: userId }, select: { email: true } });
-    if (!user) return res.status(404).json({ error: 'Utilisateur introuvable' });
+    if (!user) return notFound(res, 'Utilisateur introuvable');
 
     const existing = await prisma.newsletterSubscription.findUnique({ where: { userId } });
     if (existing) {
@@ -44,7 +45,7 @@ const unsubscribeByToken = async (req, res, next) => {
   try {
     const { token } = req.params;
     const sub = await prisma.newsletterSubscription.findUnique({ where: { unsubscribeToken: token } });
-    if (!sub) return res.status(404).json({ error: 'Lien invalide ou expiré' });
+    if (!sub) return notFound(res, 'Lien invalide ou expiré');
 
     await prisma.newsletterSubscription.update({
       where: { unsubscribeToken: token },

@@ -1,5 +1,5 @@
 const prisma = require('../prisma');
-const { notFound } = require('../helpers');
+const { notFound, badRequest } = require('../helpers');
 
 // GET /collections/curated — liste des collections curées
 const getCuratedCollections = async (req, res, next) => {
@@ -43,7 +43,7 @@ const getCuratedCollections = async (req, res, next) => {
 const getCuratedCollectionDetail = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id);
-    if (isNaN(id)) return res.status(400).json({ error: 'id invalide' });
+    if (isNaN(id)) return badRequest(res, 'id invalide');
 
     const collection = await prisma.collection.findUnique({
       where: { id, isCurated: true },

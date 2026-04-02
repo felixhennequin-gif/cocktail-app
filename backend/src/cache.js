@@ -13,6 +13,11 @@ try {
   client.on('connect',        () => console.log('[cache] Redis connecté'));
   client.on('error',          (err) => console.error('[cache] Redis erreur:', err.message));
   client.on('reconnecting',   () => console.log('[cache] Redis reconnexion...'));
+
+  // lazyConnect: true → il faut appeler connect() explicitement
+  client.connect().catch((err) => {
+    console.error('[cache] Redis connexion échouée:', err.message);
+  });
 } catch (err) {
   console.error('[cache] Impossible d\'initialiser Redis:', err.message);
   client = null;

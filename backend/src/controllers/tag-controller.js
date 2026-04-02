@@ -1,4 +1,5 @@
 const prisma = require('../prisma');
+const { notFound } = require('../helpers/errors');
 
 // Normalise un nom de tag : trim + lowercase
 const normalizeTagName = (name) => name.trim().toLowerCase();
@@ -8,7 +9,11 @@ const getAllTags = async (req, res, next) => {
   try {
     const tags = await prisma.tag.findMany({
       include: {
-        _count: { select: { recipes: true } },
+        _count: {
+          select: {
+            recipes: { where: { recipe: { status: 'PUBLISHED' } } },
+          },
+        },
       },
       orderBy: {
         recipes: { _count: 'desc' },
@@ -53,7 +58,7 @@ const getTagByName = async (req, res, next) => {
     });
 
     if (!tag) {
-      return res.status(404).json({ error: 'Tag non trouvé' });
+      return notFound(res, 'Tag non trouvé');
     }
 
     // Compter les recettes publiées avec ce tag

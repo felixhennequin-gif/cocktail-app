@@ -1,18 +1,22 @@
 const prisma = require('../prisma');
-const { slugify } = require('../utils/slugify');
+const { notFound } = require('../helpers/errors');
 
 // GET /categories
-const getAllCategories = async (req, res) => {
-  const categories = await prisma.category.findMany({
-    orderBy: { name: 'asc' },
-    include: {
-      _count: { select: { recipes: { where: { status: 'PUBLISHED' } } } },
-    },
-  });
-  res.json(categories.map(({ _count, ...cat }) => ({
-    ...cat,
-    recipesCount: _count.recipes,
-  })));
+const getAllCategories = async (req, res, next) => {
+  try {
+    const categories = await prisma.category.findMany({
+      orderBy: { name: 'asc' },
+      include: {
+        _count: { select: { recipes: { where: { status: 'PUBLISHED' } } } },
+      },
+    });
+    res.json(categories.map(({ _count, ...cat }) => ({
+      ...cat,
+      recipesCount: _count.recipes,
+    })));
+  } catch (err) {
+    next(err);
+  }
 };
 
 // GET /categories/:slug — détail catégorie avec recettes populaires et tags associés
@@ -25,7 +29,7 @@ const getCategoryBySlug = async (req, res, next) => {
     });
 
     if (!category) {
-      return res.status(404).json({ error: 'Catégorie non trouvée' });
+      return notFound(res, 'Catégorie non trouvée');
     }
 
     // Compter les recettes publiées dans cette catégorie

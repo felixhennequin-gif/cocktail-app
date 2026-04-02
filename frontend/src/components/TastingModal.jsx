@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
@@ -15,6 +15,29 @@ export default function TastingModal({ recipeId, recipeName, isOpen, onClose }) 
   const [photoUrl, setPhotoUrl] = useState('')
   const [uploading, setUploading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const modalRef = useRef(null)
+
+  useEffect(() => {
+    if (!isOpen) return
+    if (modalRef.current) {
+      const firstFocusable = modalRef.current.querySelector('button, input, textarea, [tabindex]:not([tabindex="-1"])')
+      firstFocusable?.focus()
+    }
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') { onClose(); return }
+      if (e.key === 'Tab' && modalRef.current) {
+        const focusable = modalRef.current.querySelectorAll('button, input, textarea, select, [tabindex]:not([tabindex="-1"])')
+        if (focusable.length === 0) return
+        const first = focusable[0]
+        const last = focusable[focusable.length - 1]
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus() }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus() }
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, onClose])
 
   if (!isOpen) return null
 
@@ -66,6 +89,7 @@ export default function TastingModal({ recipeId, recipeName, isOpen, onClose }) 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
       <div
+        ref={modalRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="tasting-modal-title"

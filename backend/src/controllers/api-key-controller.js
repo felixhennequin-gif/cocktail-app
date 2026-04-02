@@ -1,5 +1,6 @@
 const crypto = require('crypto');
 const prisma = require('../prisma');
+const { badRequest, notFound, forbidden } = require('../helpers/errors');
 
 // Nombre maximum de clés API par utilisateur
 const MAX_KEYS_PER_USER = 5;
@@ -33,16 +34,16 @@ const createApiKey = async (req, res, next) => {
   try {
     const { name } = req.body;
     if (!name || typeof name !== 'string' || name.trim().length === 0) {
-      return res.status(400).json({ error: 'Le nom de la clé est requis' });
+      return badRequest(res, 'Le nom de la clé est requis');
     }
     if (name.trim().length > 100) {
-      return res.status(400).json({ error: 'Le nom est trop long (max 100 caractères)' });
+      return badRequest(res, 'Le nom est trop long (max 100 caractères)');
     }
 
     // Vérifier la limite de clés par utilisateur
     const count = await prisma.apiKey.count({ where: { userId: req.user.id } });
     if (count >= MAX_KEYS_PER_USER) {
-      return res.status(400).json({ error: `Maximum ${MAX_KEYS_PER_USER} clés API par utilisateur` });
+      return badRequest(res, `Maximum ${MAX_KEYS_PER_USER} clés API par utilisateur`);
     }
 
     const key = generateApiKey();
@@ -71,12 +72,12 @@ const createApiKey = async (req, res, next) => {
 const deleteApiKey = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id);
-    if (isNaN(id)) return res.status(400).json({ error: 'id invalide' });
+    if (isNaN(id)) return badRequest(res, 'id invalide');
 
     const apiKey = await prisma.apiKey.findUnique({ where: { id } });
-    if (!apiKey) return res.status(404).json({ error: 'Clé API introuvable' });
+    if (!apiKey) return notFound(res, 'Clé API introuvable');
     if (apiKey.userId !== req.user.id) {
-      return res.status(403).json({ error: 'Accès refusé' });
+      return forbidden(res);
     }
 
     await prisma.apiKey.delete({ where: { id } });
