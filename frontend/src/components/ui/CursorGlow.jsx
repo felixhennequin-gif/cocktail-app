@@ -38,8 +38,14 @@ export default function CursorGlow() {
 
     let w, h
     const resize = () => {
-      w = canvas.width = document.documentElement.clientWidth
-      h = canvas.height = document.documentElement.clientHeight
+      const cw = document.documentElement.clientWidth
+      const ch = document.documentElement.clientHeight
+      canvas.width = cw
+      canvas.height = ch
+      canvas.style.width = cw + 'px'
+      canvas.style.height = ch + 'px'
+      w = cw
+      h = ch
     }
     resize()
     window.addEventListener('resize', resize, { passive: true })
@@ -201,22 +207,23 @@ export default function CursorGlow() {
         }
 
         // Resolve collision for fixed/sticky rects (viewport-space)
-        const viewX = b.x - sx
-        const viewY = b.y - sy
+        // Recompute after page-space collisions may have moved the bubble
+        const viewX2 = b.x - sx
+        const viewY2 = b.y - sy
 
         for (const rect of fixedRects) {
-          if (viewX + b.radius < rect.left || viewX - b.radius > rect.right ||
-              viewY + b.radius < rect.top  || viewY - b.radius > rect.bottom) {
+          if (viewX2 + b.radius < rect.left || viewX2 - b.radius > rect.right ||
+              viewY2 + b.radius < rect.top  || viewY2 - b.radius > rect.bottom) {
             continue
           }
 
           colliding = true
 
           const penetrations = [
-            { depth: (viewX + b.radius) - rect.left,   px: -1, py: 0  },
-            { depth: rect.right - (viewX - b.radius),  px: 1,  py: 0  },
-            { depth: (viewY + b.radius) - rect.top,    px: 0,  py: -1 },
-            { depth: rect.bottom - (viewY - b.radius),  px: 0,  py: 1  },
+            { depth: (viewX2 + b.radius) - rect.left,   px: -1, py: 0  },
+            { depth: rect.right - (viewX2 - b.radius),  px: 1,  py: 0  },
+            { depth: (viewY2 + b.radius) - rect.top,    px: 0,  py: -1 },
+            { depth: rect.bottom - (viewY2 - b.radius),  px: 0,  py: 1  },
           ]
 
           const valid = penetrations.filter(p => p.depth > 0)
@@ -224,14 +231,15 @@ export default function CursorGlow() {
           valid.sort((a, c) => a.depth - c.depth)
           const escape = valid[0]
 
-          // For fixed rects, compute target viewport position then convert to page-space
-          const targetViewX = viewX + escape.px * escape.depth
-          const targetViewY = viewY + escape.py * escape.depth
+          // Compute target in viewport-space with buffer, convert to page-space
+          const targetViewX = viewX2 + escape.px * (escape.depth + 2)
+          const targetViewY = viewY2 + escape.py * (escape.depth + 2)
           b.x = targetViewX + sx
           b.y = targetViewY + sy
 
-          if (escape.px !== 0) { b.vx *= -0.1; b.scaleX = 0.6; b.scaleY = 1.35 }
-          if (escape.py !== 0) { b.vy *= -0.1; b.scaleY = 0.6; b.scaleX = 1.35 }
+          // Force velocity AWAY from the rect to prevent re-entry
+          if (escape.px !== 0) { b.vx = escape.px * 3; b.scaleX = 0.6; b.scaleY = 1.35 }
+          if (escape.py !== 0) { b.vy = escape.py * 3; b.scaleY = 0.6; b.scaleX = 1.35 }
         }
 
         // Recovery toward round shape
@@ -289,7 +297,7 @@ export default function CursorGlow() {
   return (
     <canvas
       ref={canvasRef}
-      className="bubble-cloud-canvas fixed inset-0 w-full h-full pointer-events-none z-[3]"
+      className="bubble-cloud-canvas fixed top-0 left-0 pointer-events-none z-[3]"
       aria-hidden="true"
     />
   )
