@@ -1,6 +1,6 @@
 {
-  "name": "Cocktails — Recettes & Inspiration",
-  "short_name": "Cocktails",
+  "name": "Écume — Recettes & Inspiration",
+  "short_name": "Écume",
   "description": "Découvrez, créez et partagez des recettes de cocktails.",
   "start_url": "/",
   "display": "standalone",
@@ -9,10 +9,16 @@
   "lang": "fr",
   "icons": [
     {
-      "src": "/vite.svg",
+      "src": "/favicon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
     }
   ]
 }

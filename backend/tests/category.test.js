@@ -5,9 +5,9 @@ const { cleanDb, createTestCategory } = require('./helpers');
 
 beforeEach(cleanDb);
 
-describe('GET /categories', () => {
+describe('GET /api/categories', () => {
   it('retourne une liste vide si aucune catégorie', async () => {
-    const res = await request(app).get('/categories');
+    const res = await request(app).get('/api/categories');
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual([]);
@@ -18,7 +18,7 @@ describe('GET /categories', () => {
     await createTestCategory('Classiques');
     await createTestCategory('Shots');
 
-    const res = await request(app).get('/categories');
+    const res = await request(app).get('/api/categories');
 
     expect(res.status).toBe(200);
     expect(res.body).toHaveLength(3);
@@ -30,7 +30,7 @@ describe('GET /categories', () => {
   it('chaque catégorie a un id et un name', async () => {
     await createTestCategory('Cocktails');
 
-    const res = await request(app).get('/categories');
+    const res = await request(app).get('/api/categories');
 
     expect(res.status).toBe(200);
     expect(res.body[0]).toHaveProperty('id');
@@ -39,7 +39,7 @@ describe('GET /categories', () => {
 
   it('la route est publique (pas de token requis)', async () => {
     // Vérification implicite : aucun header auth, doit quand même répondre 200
-    const res = await request(app).get('/categories');
+    const res = await request(app).get('/api/categories');
     expect(res.status).toBe(200);
   });
 });

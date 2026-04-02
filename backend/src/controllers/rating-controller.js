@@ -1,17 +1,25 @@
 const prisma = require('../prisma');
+const { parseId, badRequest, notFound } = require('../helpers');
+const { ratingSchema, formatZodError } = require('../schemas');
+const { checkAndAwardBadges } = require('../services/badge-service');
+const { recordActivity } = require('../services/streak-service');
 
 // POST /ratings/:recipeId — upsert (crée ou met à jour la note de l'user)
-const upsertRating = async (req, res) => {
+const upsertRating = async (req, res, next) => {
+  try {
   const userId   = req.user.id;
-  const recipeId = parseInt(req.params.recipeId);
-  const score    = parseInt(req.body.score);
+  const recipeId = parseId(req.params.recipeId);
+  if (!recipeId) return badRequest(res, 'recipeId invalide');
 
-  if (!score || score < 1 || score > 5) {
-    return res.status(400).json({ error: 'Le score doit être entre 1 et 5' });
+  const parsed = ratingSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return badRequest(res, formatZodError(parsed.error));
   }
 
+  const { score } = parsed.data;
+
   const recipe = await prisma.recipe.findUnique({ where: { id: recipeId } });
-  if (!recipe) return res.status(404).json({ error: 'Recette introuvable' });
+  if (!recipe) return notFound(res, 'Recette introuvable');
 
   await prisma.rating.upsert({
     where: { userId_recipeId: { userId, recipeId } },
@@ -19,26 +27,45 @@ const upsertRating = async (req, res) => {
     update: { score },
   });
 
-  // Retourne la nouvelle moyenne
-  const ratings = await prisma.rating.findMany({ where: { recipeId }, select: { score: true } });
-  const avgRating =
-    ratings.length > 0
-      ? Math.round((ratings.reduce((sum, r) => sum + r.score, 0) / ratings.length) * 10) / 10
-      : null;
+  // Retourne la nouvelle moyenne via aggregate (pas de chargement en mémoire)
+  const agg = await prisma.rating.aggregate({
+    where: { recipeId },
+    _avg: { score: true },
+    _count: { score: true },
+  });
+  const avgRating = agg._avg.score !== null
+    ? Math.round(agg._avg.score * 10) / 10
+    : null;
 
-  res.json({ avgRating, ratingsCount: ratings.length, userScore: score });
+  res.json({ avgRating, ratingsCount: agg._count.score, userScore: score });
+
+  // Vérifier les badges liés aux notes — fire and forget
+  checkAndAwardBadges(userId).catch(console.error);
+  recordActivity(userId).catch(() => {});
+  // Vérifier aussi les badges "favoris reçus" pour l'auteur de la recette
+  if (recipe.authorId && recipe.authorId !== userId) {
+    checkAndAwardBadges(recipe.authorId).catch(console.error);
+  }
+  } catch (err) {
+    next(err);
+  }
 };
 
 // GET /ratings/:recipeId/me — note de l'utilisateur connecté pour cette recette
-const getMyRating = async (req, res) => {
+const getMyRating = async (req, res, next) => {
+  try {
   const userId   = req.user.id;
-  const recipeId = parseInt(req.params.recipeId);
+  const recipeId = parseId(req.params.recipeId);
+  if (!recipeId) return badRequest(res, 'recipeId invalide');
 
   const rating = await prisma.rating.findUnique({
     where: { userId_recipeId: { userId, recipeId } },
   });
 
   res.json({ score: rating?.score ?? null });
+  } catch (err) {
+    next(err);
+  }
 };
 
 module.exports = { upsertRating, getMyRating };

@@ -1,10 +1,12 @@
 const bcrypt = require('bcrypt');
 const jwt    = require('jsonwebtoken');
 const prisma = require('../src/prisma');
-const { JWT_SECRET } = require('../src/middleware/auth');
+const JWT_SECRET = process.env.JWT_SECRET;
 
 // Vide toutes les tables dans l'ordre correct (FK)
 const cleanDb = async () => {
+  await prisma.collectionRecipe.deleteMany();
+  await prisma.collection.deleteMany();
   await prisma.follow.deleteMany();
   await prisma.notification.deleteMany();
   await prisma.comment.deleteMany();
@@ -12,7 +14,9 @@ const cleanDb = async () => {
   await prisma.favorite.deleteMany();
   await prisma.recipeIngredient.deleteMany();
   await prisma.step.deleteMany();
+  await prisma.recipeTag.deleteMany();
   await prisma.recipe.deleteMany();
+  await prisma.tag.deleteMany();
   await prisma.category.deleteMany();
   await prisma.ingredient.deleteMany();
   await prisma.user.deleteMany();
@@ -24,17 +28,25 @@ const createTestUser = async ({ pseudo, email, password = 'test1234', role = 'US
   const user = await prisma.user.create({
     data: { pseudo, email, passwordHash, role },
   });
-  const token = jwt.sign({ id: user.id, pseudo: user.pseudo, role: user.role }, JWT_SECRET, {
+  const token = jwt.sign({ id: user.id }, JWT_SECRET, {
     expiresIn: '7d',
   });
   return { user, token };
 };
 
+// Génère un slug à partir d'un nom
+const slugify = (name) =>
+  name.trim().toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9 -]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-');
+
 // Crée ou récupère une catégorie de test
 const createTestCategory = async (name = 'Cocktails') => {
   return prisma.category.upsert({
     where:  { name },
-    create: { name },
+    create: { name, slug: slugify(name) },
     update: {},
   });
 };

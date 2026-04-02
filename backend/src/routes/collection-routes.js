@@ -1,5 +1,6 @@
 const { Router } = require('express');
-const { requireAuth } = require('../middleware/auth');
+const { requireAuth, optionalAuth } = require('../middleware/auth');
+const { cacheMiddleware } = require('../cache');
 const {
   createCollection,
   getMyCollections,
@@ -9,12 +10,15 @@ const {
   addRecipeToCollection,
   removeRecipeFromCollection,
 } = require('../controllers/collection-controller');
+const { getCuratedCollections, getCuratedCollectionDetail } = require('../controllers/curated-controller');
 
 const router = Router();
 
+router.get('/curated',                 cacheMiddleware(3600), getCuratedCollections);
+router.get('/curated/:id',            optionalAuth, cacheMiddleware(300), getCuratedCollectionDetail);
 router.post('/',                       requireAuth, createCollection);
 router.get('/me',                      requireAuth, getMyCollections);
-router.get('/:id',                     getCollectionById);
+router.get('/:id',                     optionalAuth, getCollectionById);
 router.put('/:id',                     requireAuth, updateCollection);
 router.delete('/:id',                  requireAuth, deleteCollection);
 router.post('/:id/recipes',           requireAuth, addRecipeToCollection);

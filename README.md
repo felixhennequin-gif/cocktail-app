@@ -1,4 +1,4 @@
-# Cocktail App
+# Écume
 
 [![CI](https://github.com/felixhennequin-gif/cocktail-app/actions/workflows/ci.yml/badge.svg)](https://github.com/felixhennequin-gif/cocktail-app/actions/workflows/ci.yml)
 

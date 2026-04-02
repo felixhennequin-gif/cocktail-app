@@ -3,15 +3,20 @@ import { useSearchParams, Link } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { useTranslation } from 'react-i18next'
 import RecipeCard from '../components/RecipeCard'
-import DifficultyBadge from '../components/DifficultyBadge'
-import { SkeletonCard } from '../components/Skeleton'
+import RecipeCardGrid from '../components/RecipeCardGrid'
+import { SkeletonCard, SkeletonCardGrid } from '../components/Skeleton'
 import { useAuth } from '../contexts/AuthContext'
+import useFavorites from '../hooks/useFavorites'
+import useCompare from '../hooks/useCompare'
+import CompareBar from '../components/CompareBar'
 
 const LIMIT = 12
 
 export default function RecipeList() {
-  const { user, authFetch }               = useAuth()
+  const { user }                           = useAuth()
   const { t }                             = useTranslation()
+  const { favoriteIds, toggleFavorite }   = useFavorites()
+  const { toggle: toggleCompare, isSelected: isCompareSelected } = useCompare()
   const [searchParams, setSearchParams]   = useSearchParams()
 
   // L'URL est la source de vérité pour les filtres
@@ -21,13 +26,11 @@ export default function RecipeList() {
   const maxTime    = searchParams.get('maxTime')     || ''
   const sortBy     = searchParams.get('sortBy')      || 'createdAt'
   const sortOrder  = searchParams.get('sortOrder')   || 'desc'
+  const season     = searchParams.get('season') || ''
   const tagIds     = searchParams.get('tags') ? searchParams.get('tags').split(',').map(Number).filter(Boolean) : []
 
   // Valeur affichée dans l'input de recherche (mise à jour immédiate, envoyée après debounce)
-  const [inputValue, setInputValue]     = useState(q)
   const [maxTimeInput, setMaxTimeInput] = useState(maxTime)
-
-  const [dailyRecipe, setDailyRecipe] = useState(null)
 
   const [recipes, setRecipes]         = useState([])
   const [categories, setCategories]   = useState([])
@@ -37,13 +40,18 @@ export default function RecipeList() {
   const [loading, setLoading]         = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError]             = useState(null)
-  const [favoriteIds, setFavoriteIds] = useState(new Set())
+  const [viewMode, setViewMode] = useState('grid')
+  const [showAllTags, setShowAllTags] = useState(false)
+  const [showFilters, setShowFilters] = useState(false)
 
-  const debounceRef = useRef(null)
+
   const maxTimeDebounceRef = useRef(null)
   const sentinelRef = useRef(null)
   // Clé de filtres : quand elle change, on repart de la page 1
-  const filterKey = `${q}|${categoryId}|${minRating}|${maxTime}|${sortBy}|${sortOrder}|${tagIds.join(',')}`
+  const filterKey = `${q}|${categoryId}|${minRating}|${maxTime}|${season}|${sortBy}|${sortOrder}|${tagIds.join(',')}`
+
+  const hasAdvancedFilters = !!(minRating || maxTime || season || tagIds.length > 0)
+  const hasActiveFilters = categoryId || hasAdvancedFilters
 
   // Met à jour un param URL — réinitialise la page
   const setParam = (key, value) => {
@@ -58,6 +66,11 @@ export default function RecipeList() {
     }, { replace: true })
   }
 
+  // Ouvrir automatiquement le panneau filtres si des filtres avancés sont actifs au chargement
+  useEffect(() => {
+    if (hasAdvancedFilters) setShowFilters(true)
+  }, []) // run once on mount — initialise le panneau filtres selon l'URL initiale uniquement
+
   // Chargement des catégories, tags et cocktail du jour au montage
   useEffect(() => {
     fetch('/api/categories')
@@ -66,19 +79,7 @@ export default function RecipeList() {
     fetch('/api/tags')
       .then((r) => r.ok ? r.json() : [])
       .then(setTags)
-    fetch('/api/recipes/daily')
-      .then((r) => r.ok ? r.json() : null)
-      .then(setDailyRecipe)
-      .catch(() => setDailyRecipe(null))
   }, [])
-
-  // Chargement des favoris si connecté
-  useEffect(() => {
-    if (!user) { setFavoriteIds(new Set()); return }
-    authFetch('/api/favorites')
-      .then((r) => r.ok ? r.json() : [])
-      .then((data) => setFavoriteIds(new Set(data.map((r) => r.id))))
-  }, [user]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Fonction de fetch d'une page de recettes
   const fetchPage = useCallback((page, append = false, signal = undefined) => {
@@ -91,6 +92,7 @@ export default function RecipeList() {
     if (categoryId) params.set('categoryId', categoryId)
     if (minRating)  params.set('minRating', minRating)
     if (maxTime)    params.set('maxTime', maxTime)
+    if (season)     params.set('season', season)
     if (sortBy !== 'createdAt' || sortOrder !== 'desc') {
       params.set('sortBy', sortBy)
       params.set('sortOrder', sortOrder)
@@ -110,19 +112,25 @@ export default function RecipeList() {
         setRecipes((prev) => append ? [...prev, ...newRecipes] : newRecipes)
         setTotal(data.total ?? 0)
         setCurrentPage(page)
+        if (data.tagCounts) {
+          setTags(prevTags => prevTags.map(tag => {
+            const found = data.tagCounts.find(tc => Number(tc.id) === tag.id)
+            return found ? { ...tag, recipesCount: found.count } : { ...tag, recipesCount: 0 }
+          }))
+        }
       })
       .catch((err) => {
         if (err.name !== 'AbortError') setError(err.message)
       })
       .finally(() => { setLoading(false); setLoadingMore(false) })
-  }, [q, categoryId, minRating, maxTime, sortBy, sortOrder, tagIds.join(',')]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [q, categoryId, minRating, maxTime, season, sortBy, sortOrder, tagIds.join(',')]) // eslint-disable-line react-hooks/exhaustive-deps — tagIds.join(',') est intentionnel (array instable)
 
   // Rechargement initial quand les filtres changent
   useEffect(() => {
     const controller = new AbortController()
     fetchPage(1, false, controller.signal)
     return () => controller.abort()
-  }, [filterKey]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [filterKey, fetchPage])
 
   const hasMore = recipes.length < total
 
@@ -139,32 +147,13 @@ export default function RecipeList() {
     )
     observer.observe(sentinelRef.current)
     return () => observer.disconnect()
-  }, [hasMore, loadingMore, loading, currentPage, filterKey]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  const handleSearchChange = (e) => {
-    const val = e.target.value
-    setInputValue(val)
-    clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => setParam('q', val), 300)
-  }
+  }, [hasMore, loadingMore, loading, currentPage, filterKey, fetchPage])
 
   const handleMaxTimeChange = (e) => {
     const val = e.target.value
     setMaxTimeInput(val)
     clearTimeout(maxTimeDebounceRef.current)
     maxTimeDebounceRef.current = setTimeout(() => setParam('maxTime', val), 400)
-  }
-
-  const handleToggleFavorite = async (recipeId) => {
-    if (!user) return
-    const res = await authFetch(`/api/favorites/${recipeId}`, { method: 'POST' })
-    if (!res.ok) return
-    const data = await res.json()
-    setFavoriteIds((prev) => {
-      const next = new Set(prev)
-      data.favorited ? next.add(recipeId) : next.delete(recipeId)
-      return next
-    })
   }
 
   const SORT_OPTIONS = [
@@ -190,8 +179,6 @@ export default function RecipeList() {
     (o) => o.sortBy === sortBy && o.sortOrder === sortOrder
   )
 
-  const hasActiveFilters = categoryId || minRating || maxTime || tagIds.length > 0
-
   const toggleTag = (tagId) => {
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev)
@@ -215,110 +202,35 @@ export default function RecipeList() {
     }, { replace: true })
   }
 
+  // Titre dynamique selon le filtre actif (catégorie, tag, recherche)
+  const activeCategoryName = categoryId ? categories.find((c) => c.id === categoryId)?.name : null
+  const activeTagName = tagIds.length === 1 ? tags.find((t2) => t2.id === tagIds[0])?.name : null
+
   const pageTitle = q
     ? t('recipes.searchPageTitle', { q })
-    : t('recipes.pageTitle')
+    : activeCategoryName
+      ? t('recipes.categoryPageTitle', { category: activeCategoryName })
+      : activeTagName
+        ? t('recipes.tagPageTitle', { tag: activeTagName })
+        : t('recipes.pageTitle')
+
+  const pageDescription = activeCategoryName
+    ? t('recipes.categoryPageTitle', { category: activeCategoryName }) + ' — Écume'
+    : activeTagName
+      ? t('recipes.tagPageTitle', { tag: activeTagName }) + ' — Écume'
+      : t('recipes.pageTitle')
 
   return (
     <div>
       <Helmet>
         <title>{pageTitle}</title>
-        <meta name="description" content="Découvrez et explorez notre catalogue de recettes de cocktails. Filtrez par catégorie, note, temps de préparation et plus encore." />
+        <meta name="description" content={pageDescription} />
         <meta property="og:title" content={pageTitle} />
-        <meta property="og:description" content="Explorez des centaines de recettes de cocktails." />
+        <meta property="og:description" content={pageDescription} />
         <meta property="og:type" content="website" />
+        <link rel="canonical" href="https://cocktail-app.fr/recipes" />
       </Helmet>
-      {/* Hero section */}
-      {!q && !categoryId && !minRating && !maxTime && tagIds.length === 0 && (
-        <div className="mb-10 text-center py-10 sm:py-14">
-          <h1 className="text-4xl sm:text-5xl font-serif font-normal text-gray-900 dark:text-gray-100 leading-tight mb-4">
-            {t('recipes.heroTitle').split(' ').map((word, i) =>
-              word === 'occasion' || word === 'every'
-                ? <em key={i} className="text-gold-400 dark:text-gold-400 not-italic">{word} </em>
-                : word + ' '
-            )}
-          </h1>
-          <p className="text-base sm:text-lg text-gray-500 dark:text-gray-400 max-w-lg mx-auto mb-8">
-            {t('recipes.heroSubtitle')}
-          </p>
-          <div className="flex justify-center gap-3">
-            <a
-              href="#recipes"
-              className="px-6 py-2.5 bg-gold-400 text-ink-900 rounded-xl font-medium text-sm hover:bg-gold-300 transition-colors"
-            >
-              {t('recipes.heroCta')}
-            </a>
-            {!user && (
-              <Link
-                to="/register"
-                className="px-6 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 rounded-xl font-medium text-sm hover:border-gold-400 dark:hover:border-gold-400 hover:text-gold-500 dark:hover:text-gold-400 transition-colors"
-              >
-                {t('recipes.heroCtaSecondary')}
-              </Link>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Cocktail du jour — hero section */}
-      {dailyRecipe && (
-        <Link
-          to={`/recipes/${dailyRecipe.id}`}
-          className="block mb-8 rounded-2xl overflow-hidden bg-gradient-to-r from-gold-100 to-gold-50 dark:from-ink-800 dark:to-ink-900 border border-gold-200 dark:border-gold-700/30 hover:shadow-lg transition-shadow"
-        >
-          <div className="flex flex-col sm:flex-row">
-            {dailyRecipe.imageUrl && (
-              <div className="sm:w-56 h-48 sm:h-auto flex-shrink-0 relative">
-                <img
-                  src={dailyRecipe.imageUrl}
-                  alt={dailyRecipe.name}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-r from-black/10 to-transparent sm:bg-gradient-to-l" />
-              </div>
-            )}
-            <div className="flex-1 p-5 sm:p-6 flex flex-col justify-center">
-              <span className="inline-block text-xs font-semibold uppercase tracking-wider text-gold-600 dark:text-gold-400 mb-2">
-                {t('recipes.dailyCocktail')}
-              </span>
-              <h2 className="text-xl sm:text-2xl font-serif font-medium text-gray-900 dark:text-gray-100 mb-2">
-                {dailyRecipe.name}
-              </h2>
-              {dailyRecipe.description && (
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
-                  {dailyRecipe.description}
-                </p>
-              )}
-              <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400 mb-3">
-                {dailyRecipe.avgRating !== null && (
-                  <span className="flex items-center gap-1">
-                    <span className="text-amber-500">&#9733;</span>
-                    {dailyRecipe.avgRating}
-                  </span>
-                )}
-                <span>{dailyRecipe.prepTime} min</span>
-                <DifficultyBadge difficulty={dailyRecipe.difficulty} />
-              </div>
-              <span className="inline-flex items-center text-sm font-medium text-gold-500 dark:text-gold-400 hover:text-gold-600 dark:hover:text-gold-300">
-                {t('recipes.discover')} &rarr;
-              </span>
-            </div>
-          </div>
-        </Link>
-      )}
-
-      <h1 id="recipes" className="text-3xl font-serif font-medium text-gray-900 dark:text-gray-100 mb-6">{t('recipes.allTitle')}</h1>
-
-      {/* Barre de recherche */}
-      <div className="mb-4">
-        <input
-          type="text"
-          value={inputValue}
-          onChange={handleSearchChange}
-          placeholder={t('recipes.searchPlaceholder')}
-          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gold-400 focus:border-transparent"
-        />
-      </div>
+      <h1 className="text-3xl font-serif font-medium text-gray-900 dark:text-gray-100 mb-6">{t('recipes.allTitle')}</h1>
 
       {/* Filtre par catégorie */}
       <div className="flex flex-wrap gap-2 mb-4 overflow-x-auto pb-1">
@@ -347,31 +259,8 @@ export default function RecipeList() {
         ))}
       </div>
 
-      {/* Filtre par tags */}
-      {tags.length > 0 && (
-        <div className="mb-4">
-          <span className="text-xs text-gray-500 dark:text-gray-400 font-medium mr-2">{t('recipes.filterByTags')}</span>
-          <div className="flex flex-wrap gap-1.5 mt-1.5">
-            {tags.map((tag) => (
-              <button
-                key={tag.id}
-                onClick={() => toggleTag(tag.id)}
-                className={`text-xs px-2.5 py-1 rounded-full font-medium transition-colors ${
-                  tagIds.includes(tag.id)
-                    ? 'bg-gold-400 text-ink-900'
-                    : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-gold-300 dark:hover:border-gold-500'
-                }`}
-              >
-                {tag.name}
-                {tag.recipesCount > 0 && <span className="ml-1 opacity-60">{tag.recipesCount}</span>}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Filtres supplémentaires */}
-      <div className="flex flex-wrap items-center gap-3 md:gap-4 mb-6 py-3 border-t border-b border-gray-100 dark:border-gray-700">
+      {/* Barre de tri + bouton Filtres + toggle vue */}
+      <div className="flex flex-wrap items-center gap-3 md:gap-4 mb-4 py-3 border-t border-b border-gray-100 dark:border-gray-700">
         {/* Tri */}
         <div className="flex items-center gap-2">
           <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">{t('recipes.sortLabel')}</span>
@@ -385,77 +274,233 @@ export default function RecipeList() {
             ))}
           </select>
         </div>
-        {/* Note minimale */}
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">{t('recipes.minRatingLabel')}</span>
-          <div className="flex gap-1">
-            {[0, 1, 2, 3, 4, 5].map((n) => (
-              <button
-                key={n}
-                onClick={() => setParam('minRating', n === 0 ? null : n)}
-                className={`w-7 h-7 rounded-lg text-xs font-medium transition-colors ${
-                  (minRating ? parseInt(minRating) : 0) === n
-                    ? 'bg-gold-400 text-ink-900'
-                    : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-gold-300 dark:hover:border-gold-500'
-                }`}
-              >
-                {n === 0 ? '–' : `${n}★`}
-              </button>
-            ))}
-          </div>
-        </div>
 
-        {/* Temps max */}
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">{t('recipes.maxTimeLabel')}</span>
-          <input
-            type="number"
-            min="1"
-            value={maxTimeInput}
-            onChange={handleMaxTimeChange}
-            placeholder={t('recipes.maxTimeUnit')}
-            className="w-20 px-2 py-1 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-gold-400 focus:border-transparent"
-          />
-          <span className="text-xs text-gray-400 dark:text-gray-500">{t('recipes.maxTimeUnit')}</span>
-        </div>
+        {/* Bouton Filtres avancés */}
+        <button
+          onClick={() => setShowFilters((o) => !o)}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+            showFilters
+              ? 'bg-gold-400 text-ink-900'
+              : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-gold-300 dark:hover:border-gold-500'
+          }`}
+        >
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+          </svg>
+          {t('recipes.advancedFilters')}
+          {hasAdvancedFilters && (
+            <span className="w-5 h-5 flex items-center justify-center rounded-full bg-gold-500 text-ink-900 text-[10px] font-bold leading-none">
+              {(tagIds.length > 0 ? 1 : 0) + (minRating ? 1 : 0) + (maxTime ? 1 : 0) + (season ? 1 : 0)}
+            </span>
+          )}
+        </button>
 
-        {/* Réinitialiser */}
-        {hasActiveFilters && (
+        {/* Toggle vue liste/grille */}
+        <div className="flex items-center gap-1 ml-auto">
           <button
-            onClick={resetFilters}
-            className="text-xs text-gray-400 hover:text-red-500 transition-colors ml-auto"
+            onClick={() => setViewMode('list')}
+            className={`p-1.5 rounded transition-colors ${viewMode === 'list' ? 'text-gold-500 bg-gold-50 dark:bg-gold-900/20' : 'text-gray-400 dark:text-gray-500 hover:text-gray-600'}`}
+            aria-label={t('recipes.viewList')}
+            aria-pressed={viewMode === 'list'}
           >
-            {t('recipes.resetFilters')}
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
           </button>
-        )}
+          <button
+            onClick={() => setViewMode('grid')}
+            className={`p-1.5 rounded transition-colors ${viewMode === 'grid' ? 'text-gold-500 bg-gold-50 dark:bg-gold-900/20' : 'text-gray-400 dark:text-gray-500 hover:text-gray-600'}`}
+            aria-label={t('recipes.viewGrid')}
+            aria-pressed={viewMode === 'grid'}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeWidth={2} d="M4 5h6v6H4zM14 5h6v6h-6zM4 15h6v6H4zM14 15h6v6h-6z" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      {/* Panneau filtres avancés (collapsible) */}
+      <div
+        className={`overflow-hidden transition-all duration-300 ease-in-out ${
+          showFilters ? 'max-h-[500px] opacity-100 mb-6' : 'max-h-0 opacity-0'
+        }`}
+      >
+        <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/30 p-4 space-y-4">
+          {/* Tags */}
+          {tags.length > 0 && (() => {
+            const sorted = [...tags].sort((a, b) => (b.recipesCount || 0) - (a.recipesCount || 0))
+            const visibleTags = showAllTags ? sorted : sorted.slice(0, 10)
+            const hiddenCount = sorted.length - 10
+            return (
+              <div>
+                <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">{t('recipes.filterByTags')}</span>
+                <div className="flex flex-wrap gap-1.5 mt-1.5">
+                  {visibleTags.map((tag) => (
+                    <button
+                      key={tag.id}
+                      onClick={() => toggleTag(tag.id)}
+                      className={`text-xs px-2.5 py-1 rounded-full font-medium transition-colors ${
+                        tagIds.includes(tag.id)
+                          ? 'bg-gold-400 text-ink-900'
+                          : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-gold-300 dark:hover:border-gold-500'
+                      }`}
+                    >
+                      {tag.name}
+                      {tag.recipesCount > 0 && <span className="ml-1 opacity-60">{tag.recipesCount}</span>}
+                    </button>
+                  ))}
+                  {!showAllTags && hiddenCount > 0 && (
+                    <button
+                      onClick={() => setShowAllTags(true)}
+                      className="text-xs px-2.5 py-1 rounded-full font-medium transition-colors bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-400 dark:text-gray-500 hover:border-gold-300 dark:hover:border-gold-500"
+                    >
+                      + {hiddenCount} {t('recipes.moreTags')}
+                    </button>
+                  )}
+                  {showAllTags && hiddenCount > 0 && (
+                    <button
+                      onClick={() => setShowAllTags(false)}
+                      className="text-xs px-2.5 py-1 rounded-full font-medium transition-colors bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-400 dark:text-gray-500 hover:border-gold-300 dark:hover:border-gold-500"
+                    >
+                      {t('recipes.lessTags')}
+                    </button>
+                  )}
+                </div>
+              </div>
+            )
+          })()}
+
+          {/* Note min + Temps max — côte à côte desktop, empilés mobile */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            {/* Note minimale */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">{t('recipes.minRatingLabel')}</span>
+              <div className="flex gap-1">
+                {[0, 1, 2, 3, 4, 5].map((n) => (
+                  <button
+                    key={n}
+                    onClick={() => setParam('minRating', n === 0 ? null : n)}
+                    className={`w-7 h-7 rounded-lg text-xs font-medium transition-colors ${
+                      (minRating ? parseInt(minRating) : 0) === n
+                        ? 'bg-gold-400 text-ink-900'
+                        : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-gold-300 dark:hover:border-gold-500'
+                    }`}
+                  >
+                    {n === 0 ? '–' : `${n}★`}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Temps max */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">{t('recipes.maxTimeLabel')}</span>
+              <input
+                type="number"
+                min="1"
+                value={maxTimeInput}
+                onChange={handleMaxTimeChange}
+                placeholder={t('recipes.maxTimeUnit')}
+                className="w-20 px-2 py-1 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-gold-400 focus:border-transparent"
+              />
+              <span className="text-xs text-gray-400 dark:text-gray-500">{t('recipes.maxTimeUnit')}</span>
+            </div>
+
+            {/* Saison */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">{t('recipes.seasonal')}</span>
+              <select
+                value={season}
+                onChange={(e) => setParam('season', e.target.value || null)}
+                className="text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 px-2 py-1 focus:outline-none focus:ring-2 focus:ring-gold-400"
+              >
+                <option value="">{t('recipes.season.all')}</option>
+                <option value="spring">{t('recipes.season.spring')}</option>
+                <option value="summer">{t('recipes.season.summer')}</option>
+                <option value="autumn">{t('recipes.season.autumn')}</option>
+                <option value="winter">{t('recipes.season.winter')}</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Réinitialiser */}
+          {hasAdvancedFilters && (
+            <button
+              onClick={resetFilters}
+              className="text-xs text-gray-400 hover:text-red-500 transition-colors"
+            >
+              {t('recipes.resetFilters')}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Liste des recettes */}
       {loading ? (
-        <div className="flex flex-col gap-3">
-          {[1, 2, 3, 4, 5].map((i) => <SkeletonCard key={i} />)}
+        <div className={
+          viewMode === 'grid'
+            ? 'grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'
+            : 'flex flex-col gap-3'
+        }>
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+            viewMode === 'grid' ? <SkeletonCardGrid key={i} /> : <SkeletonCard key={i} />
+          ))}
         </div>
       ) : error ? (
         <p className="text-center text-red-500 py-16">{error}</p>
       ) : recipes.length === 0 ? (
-        <p className="text-center text-gray-400 dark:text-gray-500 py-16">{t('recipes.noResults')}</p>
+        <div className="text-center py-16">
+          <p className="text-gray-400 dark:text-gray-500 mb-4">{t('recipes.noResults')}</p>
+          {(q || hasActiveFilters) && (
+            <button
+              onClick={() => setSearchParams({})}
+              className="px-4 py-2 text-sm font-medium text-gold-500 dark:text-gold-400 border border-gold-300 dark:border-gold-600 rounded-lg hover:bg-gold-50 dark:hover:bg-gold-900/20 transition-colors"
+            >
+              {t('recipes.clearFilters')}
+            </button>
+          )}
+        </div>
       ) : (
         <>
-          <div className="flex flex-col gap-3">
-            {recipes.map((recipe) => (
-              <RecipeCard
-                key={recipe.id}
-                recipe={recipe}
-                isFavorited={favoriteIds.has(recipe.id)}
-                onToggleFavorite={handleToggleFavorite}
-              />
-            ))}
+          <div className={
+            viewMode === 'grid'
+              ? 'grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'
+              : 'flex flex-col gap-3'
+          }>
+            {recipes.map((recipe) =>
+              viewMode === 'grid' ? (
+                <RecipeCardGrid
+                  key={recipe.id}
+                  recipe={recipe}
+                  isFavorited={favoriteIds.has(recipe.id)}
+                  onToggleFavorite={toggleFavorite}
+                  userId={user?.id}
+                  compareSelected={isCompareSelected(recipe.id)}
+                  onToggleCompare={toggleCompare}
+                />
+              ) : (
+                <RecipeCard
+                  key={recipe.id}
+                  recipe={recipe}
+                  isFavorited={favoriteIds.has(recipe.id)}
+                  onToggleFavorite={toggleFavorite}
+                  userId={user?.id}
+                />
+              )
+            )}
           </div>
 
           {/* Skeletons pendant le chargement supplémentaire */}
           {loadingMore && (
-            <div className="flex flex-col gap-3 mt-3">
-              {[1, 2, 3].map((i) => <SkeletonCard key={i} />)}
+            <div className={
+              viewMode === 'grid'
+                ? 'grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-4'
+                : 'flex flex-col gap-3 mt-3'
+            }>
+              {[1, 2, 3].map((i) => (
+                viewMode === 'grid' ? <SkeletonCardGrid key={i} /> : <SkeletonCard key={i} />
+              ))}
             </div>
           )}
 
@@ -477,6 +522,8 @@ export default function RecipeList() {
           {t('recipes.totalCount', { count: total })}
         </p>
       )}
+
+      <CompareBar />
     </div>
   )
 }

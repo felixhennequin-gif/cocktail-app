@@ -1,7 +1,7 @@
 {
-  "name": "cocktail-app-backend",
+  "name": "ecume-backend",
   "version": "1.0.0",
-  "description": "API backend pour l'application de recettes de cocktails",
+  "description": "API backend pour Écume — application de recettes de cocktails",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
@@ -11,9 +11,13 @@
     "prisma:seed": "node prisma/seed.js",
     "seed:big": "node prisma/seed-big.js",
     "seed:realistic": "node prisma/seed-realistic.js",
+    "tags:cleanup": "node prisma/cleanup-tags.js",
+    "seed:badges": "node prisma/seed-badges.js",
+    "seed:techniques": "node prisma/seed-techniques.js",
     "test": "jest --runInBand --forceExit",
     "test:watch": "jest --watch --runInBand",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "import:cocktaildb": "node scripts/import-cocktaildb.js"
   },
   "jest": {
     "testEnvironment": "node",
@@ -32,11 +36,17 @@
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "express-rate-limit": "^8.3.1",
+    "file-type": "^16.5.4",
+    "helmet": "^8.1.0",
     "ioredis": "^5.10.0",
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.1.1",
+    "pdfkit": "^0.18.0",
     "pg": "^8.20.0",
     "prisma": "^7.5.0",
+    "resend": "^6.10.0",
+    "sharp": "^0.34.5",
+    "web-push": "^3.6.7",
     "zod": "^4.3.6"
   },
   "devDependencies": {

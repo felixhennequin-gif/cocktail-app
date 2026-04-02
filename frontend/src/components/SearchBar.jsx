@@ -1,13 +1,15 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { getImageUrl } from '../utils/image'
+import VoiceSearch from './VoiceSearch'
 
 export default function SearchBar() {
   const { t }                 = useTranslation()
   const [value, setValue]     = useState('')
   const [results, setResults] = useState([])
   const [open, setOpen]       = useState(false)
+  const [activeIndex, setActiveIndex] = useState(-1)
   const debounceRef           = useRef(null)
   const containerRef          = useRef(null)
   const navigate              = useNavigate()
@@ -40,6 +42,7 @@ export default function SearchBar() {
         if (res.ok) {
           const data = await res.json()
           setResults(data.data || [])
+          setActiveIndex(-1)
           setOpen(true)
         }
       } catch {
@@ -49,11 +52,23 @@ export default function SearchBar() {
   }
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && value.trim().length >= 2) {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setActiveIndex(i => Math.min(i + 1, results.length - 1))
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setActiveIndex(i => Math.max(i - 1, -1))
+    } else if (e.key === 'Enter') {
+      if (activeIndex >= 0 && results[activeIndex]) {
+        handleSelect(results[activeIndex].id)
+      } else if (value.trim().length >= 2) {
+        setOpen(false)
+        navigate(`/recipes?q=${encodeURIComponent(value.trim())}`)
+      }
+    } else if (e.key === 'Escape') {
       setOpen(false)
-      navigate(`/?q=${encodeURIComponent(value.trim())}`)
+      setActiveIndex(-1)
     }
-    if (e.key === 'Escape') setOpen(false)
   }
 
   const handleSelect = (id) => {
@@ -64,27 +79,53 @@ export default function SearchBar() {
 
   const handleViewAll = () => {
     setOpen(false)
-    navigate(`/?q=${encodeURIComponent(value.trim())}`)
+    navigate(`/recipes?q=${encodeURIComponent(value.trim())}`)
   }
 
+  // Callback pour la recherche vocale
+  const handleVoiceResult = useCallback((transcript) => {
+    setValue(transcript)
+    setOpen(false)
+    navigate(`/recipes?q=${encodeURIComponent(transcript.trim())}`)
+  }, [navigate])
+
   return (
-    <div ref={containerRef} className="relative w-56">
-      <input
-        type="text"
-        value={value}
-        onChange={handleChange}
-        onKeyDown={handleKeyDown}
-        placeholder={t('recipes.searchNavPlaceholder')}
-        className="w-full px-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gold-400 focus:border-transparent"
-      />
+    <div ref={containerRef} className="relative w-full">
+      <label htmlFor="search-nav" className="sr-only">{t('recipes.searchNavPlaceholder')}</label>
+      <div className="flex items-center gap-1">
+        <input
+          id="search-nav"
+          type="text"
+          value={value}
+          onChange={handleChange}
+          onKeyDown={handleKeyDown}
+          placeholder={t('recipes.searchNavPlaceholder')}
+          role="combobox"
+          aria-expanded={open && results.length > 0}
+          aria-haspopup="listbox"
+          aria-autocomplete="list"
+          aria-activedescendant={activeIndex >= 0 ? `search-option-${results[activeIndex]?.id}` : undefined}
+          aria-controls="search-listbox"
+          className="w-full px-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gold-400 focus:border-transparent"
+        />
+        <VoiceSearch onResult={handleVoiceResult} />
+      </div>
 
       {open && results.length > 0 && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg z-50 overflow-hidden">
-          {results.map((r) => (
+        <div
+          role="listbox"
+          id="search-listbox"
+          aria-label={t('recipes.searchNavPlaceholder')}
+          className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg z-50 overflow-hidden"
+        >
+          {results.map((r, index) => (
             <button
               key={r.id}
               onClick={() => handleSelect(r.id)}
-              className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gold-50 dark:hover:bg-gold-900/20 text-left transition-colors"
+              role="option"
+              id={`search-option-${r.id}`}
+              aria-selected={index === activeIndex}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gold-50 dark:hover:bg-gold-900/20 text-left transition-colors ${index === activeIndex ? 'bg-gold-50 dark:bg-gold-900/20' : ''}`}
             >
               {r.imageUrl ? (
                 <img

@@ -18,7 +18,7 @@ beforeEach(async () => {
 
   // Crée une recette complète avec toutes les dépendances
   const res = await request(app)
-    .post('/recipes')
+    .post('/api/recipes')
     .set(getAuthHeader(adminToken))
     .send({
       name:        'Cocktail Complet',
@@ -33,26 +33,26 @@ beforeEach(async () => {
 
   // Alice ajoute en favori
   await request(app)
-    .post(`/favorites/${recipeId}`)
+    .post(`/api/favorites/${recipeId}`)
     .set(getAuthHeader(aliceToken));
 
   // Alice note
   await request(app)
-    .post(`/ratings/${recipeId}`)
+    .post(`/api/ratings/${recipeId}`)
     .set(getAuthHeader(aliceToken))
     .send({ score: 4 });
 
   // Bob commente
   await request(app)
-    .post(`/comments/${recipeId}`)
+    .post(`/api/comments/${recipeId}`)
     .set(getAuthHeader(bobToken))
     .send({ content: 'Excellent !', score: 5 });
 });
 
-describe('DELETE /recipes/:id — suppression en cascade', () => {
+describe('DELETE /api/recipes/:id — suppression en cascade', () => {
   it('supprime la recette elle-même', async () => {
     await request(app)
-      .delete(`/recipes/${recipeId}`)
+      .delete(`/api/recipes/${recipeId}`)
       .set(getAuthHeader(adminToken));
 
     const recipe = await prisma.recipe.findUnique({ where: { id: recipeId } });
@@ -61,7 +61,7 @@ describe('DELETE /recipes/:id — suppression en cascade', () => {
 
   it('supprime les comments associés', async () => {
     await request(app)
-      .delete(`/recipes/${recipeId}`)
+      .delete(`/api/recipes/${recipeId}`)
       .set(getAuthHeader(adminToken));
 
     const comments = await prisma.comment.findMany({ where: { recipeId } });
@@ -70,7 +70,7 @@ describe('DELETE /recipes/:id — suppression en cascade', () => {
 
   it('supprime les ratings associés', async () => {
     await request(app)
-      .delete(`/recipes/${recipeId}`)
+      .delete(`/api/recipes/${recipeId}`)
       .set(getAuthHeader(adminToken));
 
     const ratings = await prisma.rating.findMany({ where: { recipeId } });
@@ -79,7 +79,7 @@ describe('DELETE /recipes/:id — suppression en cascade', () => {
 
   it('supprime les favorites associés', async () => {
     await request(app)
-      .delete(`/recipes/${recipeId}`)
+      .delete(`/api/recipes/${recipeId}`)
       .set(getAuthHeader(adminToken));
 
     const favorites = await prisma.favorite.findMany({ where: { recipeId } });
@@ -88,7 +88,7 @@ describe('DELETE /recipes/:id — suppression en cascade', () => {
 
   it('supprime les RecipeIngredient associés', async () => {
     await request(app)
-      .delete(`/recipes/${recipeId}`)
+      .delete(`/api/recipes/${recipeId}`)
       .set(getAuthHeader(adminToken));
 
     const ingredients = await prisma.recipeIngredient.findMany({ where: { recipeId } });
@@ -97,7 +97,7 @@ describe('DELETE /recipes/:id — suppression en cascade', () => {
 
   it('supprime les steps associés', async () => {
     await request(app)
-      .delete(`/recipes/${recipeId}`)
+      .delete(`/api/recipes/${recipeId}`)
       .set(getAuthHeader(adminToken));
 
     const steps = await prisma.step.findMany({ where: { recipeId } });
@@ -106,7 +106,7 @@ describe('DELETE /recipes/:id — suppression en cascade', () => {
 
   it('retourne 204 après suppression', async () => {
     const res = await request(app)
-      .delete(`/recipes/${recipeId}`)
+      .delete(`/api/recipes/${recipeId}`)
       .set(getAuthHeader(adminToken));
 
     expect(res.status).toBe(204);
@@ -114,7 +114,7 @@ describe('DELETE /recipes/:id — suppression en cascade', () => {
 
   it('seul l\'auteur ou admin peut supprimer (403 sinon)', async () => {
     const res = await request(app)
-      .delete(`/recipes/${recipeId}`)
+      .delete(`/api/recipes/${recipeId}`)
       .set(getAuthHeader(aliceToken));  // alice n'est ni auteur ni admin
 
     expect(res.status).toBe(403);
@@ -126,20 +126,20 @@ describe('DELETE /recipes/:id — suppression en cascade', () => {
 
   it('l\'auteur peut supprimer sa propre recette', async () => {
     // Créer une recette par Alice
-    const category2 = await prisma.category.create({ data: { name: 'TestCatDel' } });
+    const category2 = await prisma.category.create({ data: { name: 'TestCatDel', slug: 'testcatdel' } });
     const adminRecipe = await request(app)
-      .post('/recipes')
+      .post('/api/recipes')
       .set(getAuthHeader(adminToken))
       .send({ name: 'Recette Alice', difficulty: 'EASY', prepTime: 5, categoryId: category2.id, ingredients: [], steps: [] });
 
     // Alice reçoit une recette dont elle est auteur
     const aliceRecipe = await request(app)
-      .post('/recipes')
+      .post('/api/recipes')
       .set(getAuthHeader(aliceToken))
       .send({ name: 'Ma recette', difficulty: 'EASY', prepTime: 5, categoryId: category2.id, ingredients: [], steps: [] });
 
     const res = await request(app)
-      .delete(`/recipes/${aliceRecipe.body.id}`)
+      .delete(`/api/recipes/${aliceRecipe.body.id}`)
       .set(getAuthHeader(aliceToken));
 
     expect(res.status).toBe(204);

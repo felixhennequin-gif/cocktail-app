@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { useTranslation } from 'react-i18next'
@@ -7,7 +7,9 @@ import FollowButton from '../components/FollowButton'
 import { SkeletonProfile, SkeletonCard, SkeletonList } from '../components/Skeleton'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
+import { useFavorites } from '../contexts/FavoritesContext'
 import { getImageUrl } from '../utils/image'
+import ChangePasswordForm from '../components/ChangePasswordForm'
 
 const LIMIT = 20
 
@@ -51,6 +53,28 @@ function EditProfileModal({ profile, onClose, onSaved, authFetch }) {
   const [preview, setPreview] = useState(profile.avatar ? getImageUrl(profile.avatar) : null)
   const [saving, setSaving]   = useState(false)
   const [error, setError]     = useState(null)
+  const modalRef              = useRef(null)
+
+  useEffect(() => {
+    if (modalRef.current) {
+      const firstFocusable = modalRef.current.querySelector('button, input, [tabindex]:not([tabindex="-1"])')
+      firstFocusable?.focus()
+    }
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') { onClose(); return }
+      if (e.key === 'Tab' && modalRef.current) {
+        const focusable = modalRef.current.querySelectorAll('button, input, [tabindex]:not([tabindex="-1"])')
+        if (focusable.length === 0) return
+        const first = focusable[0]
+        const last = focusable[focusable.length - 1]
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus() }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus() }
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [onClose])
 
   const handleField = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }))
 
@@ -96,9 +120,9 @@ function EditProfileModal({ profile, onClose, onSaved, authFetch }) {
   }
 
   return (
-    <div className="fixed inset-0 z-[9000] flex items-center justify-center p-4 bg-black/40" onClick={onClose}>
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-sm w-full p-6" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">{t('profile.editTitle')}</h2>
+    <div role="dialog" aria-modal="true" aria-labelledby="edit-profile-modal-title" className="fixed inset-0 z-[9000] flex items-center justify-center p-4 bg-black/40" onClick={onClose}>
+      <div ref={modalRef} className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-sm w-full p-6" onClick={(e) => e.stopPropagation()}>
+        <h2 id="edit-profile-modal-title" className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">{t('profile.editTitle')}</h2>
         {error && <p className="mb-3 text-sm text-red-500">{error}</p>}
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Avatar */}
@@ -149,7 +173,10 @@ function EditProfileModal({ profile, onClose, onSaved, authFetch }) {
 export default function UserProfile() {
   const { id }              = useParams()
   const { user, authFetch } = useAuth()
-  const { t }               = useTranslation()
+  const { t, i18n }         = useTranslation()
+  const authFetchRef = useRef(authFetch)
+  useEffect(() => { authFetchRef.current = authFetch }, [authFetch])
+  const { isFavorited, toggleFavorite } = useFavorites()
 
   const [profile, setProfile]     = useState(null)
   const [activeTab, setActiveTab] = useState('recipes')
@@ -160,7 +187,6 @@ export default function UserProfile() {
   const [total, setTotal]             = useState(0)
   const [page, setPage]               = useState(1)
   const [recipesLoading, setRecipesLoading] = useState(false)
-  const [favoriteIds, setFavoriteIds] = useState(new Set())
 
   // Abonnés
   const [followers, setFollowers]           = useState([])
@@ -179,6 +205,15 @@ export default function UserProfile() {
   const [collectionsLoaded, setCollectionsLoaded] = useState(false)
   const [collectionsLoading, setCollectionsLoading] = useState(false)
 
+  // Badges
+  const [allBadges, setAllBadges]               = useState([])
+  const [userBadges, setUserBadges]             = useState([])
+  const [badgesLoaded, setBadgesLoaded]         = useState(false)
+  const [badgesLoading, setBadgesLoading]       = useState(false)
+
+  // Statistiques du profil
+  const [stats, setStats] = useState(null)
+
   const [loading, setLoading] = useState(true)
   const [error, setError]     = useState(null)
 
@@ -187,13 +222,17 @@ export default function UserProfile() {
     const controller = new AbortController()
     setLoading(true)
     setActiveTab('recipes')
+    setStats(null)
     setFollowers([])
     setFollowing([])
     setFollowersLoaded(false)
     setFollowingLoaded(false)
     setCollections([])
     setCollectionsLoaded(false)
-    authFetch(`/api/users/${id}`, { signal: controller.signal })
+    setAllBadges([])
+    setUserBadges([])
+    setBadgesLoaded(false)
+    authFetchRef.current(`/api/users/${id}`, { signal: controller.signal })
       .then((r) => {
         if (!r.ok) throw new Error('Utilisateur introuvable')
         return r.json()
@@ -204,7 +243,17 @@ export default function UserProfile() {
       })
       .finally(() => setLoading(false))
     return () => controller.abort()
-  }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [id])
+
+  // Chargement des statistiques du profil
+  useEffect(() => {
+    const controller = new AbortController()
+    fetch(`/api/users/${id}/stats`, { signal: controller.signal })
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => { if (data) setStats(data) })
+      .catch((err) => { if (err.name !== 'AbortError') console.error(err) })
+    return () => controller.abort()
+  }, [id])
 
   // Chargement des recettes paginées
   useEffect(() => {
@@ -221,59 +270,52 @@ export default function UserProfile() {
     return () => controller.abort()
   }, [id, page])
 
-  // Chargement des favoris si connecté
-  useEffect(() => {
-    if (!user) return
-    const controller = new AbortController()
-    authFetch('/api/favorites', { signal: controller.signal })
-      .then((r) => r.ok ? r.json() : [])
-      .then((data) => setFavoriteIds(new Set(data.map((r) => r.id))))
-      .catch(() => {})
-    return () => controller.abort()
-  }, [user]) // eslint-disable-line react-hooks/exhaustive-deps
-
   // Chargement lazy des abonnés quand l'onglet est activé
   useEffect(() => {
     if (activeTab !== 'followers' || followersLoaded) return
     setFollowersLoading(true)
-    authFetch(`/api/users/${id}/followers?limit=50`)
+    authFetchRef.current(`/api/users/${id}/followers?limit=50`)
       .then((r) => r.ok ? r.json() : { data: [], total: 0 })
       .then(({ data, total: t }) => { setFollowers(data); setFollowersTotal(t); setFollowersLoaded(true) })
       .finally(() => setFollowersLoading(false))
-  }, [activeTab, id]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [activeTab, id])
 
   // Chargement lazy des abonnements quand l'onglet est activé
   useEffect(() => {
     if (activeTab !== 'following' || followingLoaded) return
     setFollowingLoading(true)
-    authFetch(`/api/users/${id}/following?limit=50`)
+    authFetchRef.current(`/api/users/${id}/following?limit=50`)
       .then((r) => r.ok ? r.json() : { data: [], total: 0 })
       .then(({ data, total: t }) => { setFollowing(data); setFollowingTotal(t); setFollowingLoaded(true) })
       .finally(() => setFollowingLoading(false))
-  }, [activeTab, id]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [activeTab, id])
+
+  // Chargement lazy des badges quand l'onglet est activé
+  useEffect(() => {
+    if (activeTab !== 'badges' || badgesLoaded) return
+    setBadgesLoading(true)
+    Promise.all([
+      fetch('/api/badges').then((r) => r.ok ? r.json() : []),
+      fetch(`/api/badges/user/${id}`).then((r) => r.ok ? r.json() : []),
+    ])
+      .then(([all, earned]) => {
+        setAllBadges(all)
+        setUserBadges(earned)
+        setBadgesLoaded(true)
+      })
+      .finally(() => setBadgesLoading(false))
+  }, [activeTab, id])
 
   // Chargement lazy des collections (propre profil uniquement)
   useEffect(() => {
     if (activeTab !== 'collections' || collectionsLoaded) return
     if (!user || user.id !== parseInt(id)) return
     setCollectionsLoading(true)
-    authFetch('/api/collections/me')
+    authFetchRef.current('/api/collections/me')
       .then((r) => r.ok ? r.json() : [])
       .then((data) => { setCollections(data); setCollectionsLoaded(true) })
       .finally(() => setCollectionsLoading(false))
-  }, [activeTab, id]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  const handleToggleFavorite = async (recipeId) => {
-    if (!user) return
-    const res = await authFetch(`/api/favorites/${recipeId}`, { method: 'POST' })
-    if (!res.ok) return
-    const data = await res.json()
-    setFavoriteIds((prev) => {
-      const next = new Set(prev)
-      data.favorited ? next.add(recipeId) : next.delete(recipeId)
-      return next
-    })
-  }
+  }, [activeTab, id])
 
   const totalPages = Math.ceil(total / LIMIT)
 
@@ -295,20 +337,29 @@ export default function UserProfile() {
     { key: 'recipes',   label: t('profile.tabs.recipes', { count: total }) },
     { key: 'followers', label: t('profile.tabs.followers', { count: profile.followersCount }) },
     { key: 'following', label: t('profile.tabs.following', { count: profile.followingCount }) },
+    { key: 'badges', label: t('badges.title') },
     // Onglet collections uniquement sur son propre profil
     ...(user?.id === parseInt(id) ? [{ key: 'collections', label: t('collections.title') }] : []),
+    ...(user?.id === parseInt(id) ? [{ key: 'security', label: t('profile.tabs.security') }] : []),
   ]
 
   const isOwnProfile = user?.id === parseInt(id)
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-4xl mx-auto">
       <Helmet>
         <title>{t('profile.title', { pseudo: profile.pseudo })}</title>
         <meta name="description" content={profile.bio || `Profil de ${profile.pseudo} — ${profile.followersCount} abonné(s), ${profile.recipes?.length ?? 0} recette(s) publiée(s).`} />
+        <meta property="og:site_name" content="Écume" />
         <meta property="og:title" content={`${profile.pseudo} sur Cocktails`} />
+        <meta property="og:description" content={profile.bio || `Profil de ${profile.pseudo} sur Écume`} />
         <meta property="og:type" content="profile" />
+        <meta property="og:url" content={`https://cocktail-app.fr/users/${profile.id}`} />
         {profile.avatar && <meta property="og:image" content={getImageUrl(profile.avatar)} />}
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content={`${profile.pseudo} sur Cocktails`} />
+        <meta name="twitter:description" content={profile.bio || `Profil de ${profile.pseudo} sur Écume`} />
+        <link rel="canonical" href={`https://cocktail-app.fr/users/${profile.id}`} />
       </Helmet>
       {/* Modale d'édition de profil */}
       {editOpen && (
@@ -339,6 +390,14 @@ export default function UserProfile() {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{profile.pseudo}</h1>
+            {profile.plan === 'PREMIUM' && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-700">
+                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+                Premium
+              </span>
+            )}
             {isOwnProfile ? (
               <button
                 onClick={() => setEditOpen(true)}
@@ -359,6 +418,31 @@ export default function UserProfile() {
           )}
         </div>
       </div>
+
+      {/* Statistiques du profil */}
+      {stats && (
+        <div className="grid grid-cols-4 sm:grid-cols-4 gap-3 mb-6">
+          {[
+            { emoji: '\u{1F379}', value: stats.recipesCount,          label: t('stats.recipes') },
+            { emoji: '\u2764\uFE0F',  value: stats.totalFavoritesReceived, label: t('stats.favoritesReceived') },
+            { emoji: '\u2B50', value: stats.averageRating !== null ? stats.averageRating.toFixed(1) : '\u2014', label: t('stats.avgRating') },
+            { emoji: '\u{1F465}', value: stats.followersCount,         label: t('stats.followers') },
+            { emoji: '\u2795', value: stats.followingCount,         label: t('stats.following') },
+            { emoji: '\u{1F4AC}', value: stats.commentsCount,          label: t('stats.comments') },
+            { emoji: '\u{1F3C5}', value: stats.badgesCount,            label: t('stats.badges') },
+            { emoji: '\u{1F4C2}', value: stats.collectionsCount,       label: t('stats.collections') },
+          ].map(({ emoji, value, label }) => (
+            <div
+              key={label}
+              className="flex flex-col items-center gap-1 p-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 text-center"
+            >
+              <span className="text-xl" role="img" aria-hidden="true">{emoji}</span>
+              <span className="text-lg font-bold text-gray-900 dark:text-gray-100 leading-tight">{value}</span>
+              <span className="text-[11px] text-gray-400 dark:text-gray-500 leading-tight">{label}</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Onglets */}
       <div className="flex gap-1 mb-6 border-b border-gray-200 dark:border-gray-700">
@@ -392,8 +476,8 @@ export default function UserProfile() {
                 <RecipeCard
                   key={recipe.id}
                   recipe={recipe}
-                  isFavorited={favoriteIds.has(recipe.id)}
-                  onToggleFavorite={handleToggleFavorite}
+                  isFavorited={isFavorited(recipe.id)}
+                  onToggleFavorite={toggleFavorite}
                 />
               ))}
             </div>
@@ -461,6 +545,53 @@ export default function UserProfile() {
             )}
           </div>
         )
+      )}
+
+      {/* Onglet Badges */}
+      {activeTab === 'badges' && (
+        badgesLoading ? (
+          <SkeletonList count={4} />
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {allBadges.map((badge) => {
+              const earned = userBadges.find((ub) => ub.badgeId === badge.id)
+              return (
+                <div
+                  key={badge.id}
+                  className={`flex flex-col items-center gap-2 p-4 rounded-xl border text-center transition-all ${
+                    earned
+                      ? 'bg-white dark:bg-gray-800 border-gold-300 dark:border-gold-600 shadow-sm'
+                      : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 opacity-50 grayscale'
+                  }`}
+                >
+                  <span className="text-3xl" role="img" aria-label={badge.name}>{badge.icon}</span>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{badge.name}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{badge.description}</p>
+                  </div>
+                  {earned ? (
+                    <p className="text-[10px] text-gold-500 dark:text-gold-400 font-medium">
+                      {t('badges.earned', { date: new Date(earned.unlockedAt).toLocaleDateString(i18n.language) })}
+                    </p>
+                  ) : (
+                    <p className="text-[10px] text-gray-400 dark:text-gray-500">{t('badges.locked')}</p>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )
+      )}
+
+      {/* Onglet Sécurité (propre profil uniquement) */}
+      {activeTab === 'security' && isOwnProfile && (
+        <div className="max-w-sm">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">{t('auth.changePassword.title')}</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+            <ChangePasswordForm />
+          </div>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-3">{t('auth.changePassword.logoutWarning')}</p>
+        </div>
       )}
 
       {/* Onglet Collections (propre profil uniquement) */}

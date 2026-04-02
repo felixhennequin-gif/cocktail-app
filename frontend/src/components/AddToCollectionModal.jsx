@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
@@ -26,29 +26,16 @@ export default function AddToCollectionModal({ isOpen, onClose, recipeId }) {
   const [creating, setCreating]   = useState(false)
 
   // Charger les collections de l'utilisateur à l'ouverture
+  // Le paramètre recipeId permet au backend de calculer containsRecipe en une seule requête
   useEffect(() => {
     if (!isOpen) return
     setLoading(true)
-    authFetch('/api/collections/me')
+    authFetch(`/api/collections/me?recipeId=${parseInt(recipeId)}`)
       .then((r) => r.ok ? r.json() : [])
-      .then(async (list) => {
+      .then((list) => {
         setCollections(list)
-        // Déterminer quelles collections contiennent déjà la recette
-        // On charge le détail de chaque collection pour vérifier
-        const ids = new Set()
-        await Promise.all(
-          list.map(async (col) => {
-            try {
-              const res = await authFetch(`/api/collections/${col.id}`)
-              if (res.ok) {
-                const data = await res.json()
-                if (data.recipes?.some((r) => r.id === parseInt(recipeId))) {
-                  ids.add(col.id)
-                }
-              }
-            } catch { /* ignorer */ }
-          })
-        )
+        // Construire l'ensemble des ids à partir du champ containsRecipe fourni par le backend
+        const ids = new Set(list.filter((col) => col.containsRecipe).map((col) => col.id))
         setIncludedIds(ids)
       })
       .catch(() => {})
@@ -136,15 +123,40 @@ export default function AddToCollectionModal({ isOpen, onClose, recipeId }) {
     }
   }
 
+  const modalRef = useRef(null)
+
+  useEffect(() => {
+    if (!isOpen) return
+    if (modalRef.current) {
+      const firstFocusable = modalRef.current.querySelector('button, input, [tabindex]:not([tabindex="-1"])')
+      firstFocusable?.focus()
+    }
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') { onClose(); return }
+      if (e.key === 'Tab' && modalRef.current) {
+        const focusable = modalRef.current.querySelectorAll('button, input, [tabindex]:not([tabindex="-1"])')
+        if (focusable.length === 0) return
+        const first = focusable[0]
+        const last = focusable[focusable.length - 1]
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus() }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus() }
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, onClose])
+
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-[9000] flex items-center justify-center p-4 bg-black/40" onClick={onClose}>
+    <div role="dialog" aria-modal="true" aria-labelledby="collection-modal-title" className="fixed inset-0 z-[9000] flex items-center justify-center p-4 bg-black/40" onClick={onClose}>
       <div
+        ref={modalRef}
         className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-sm w-full p-6 max-h-[80vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">
+        <h2 id="collection-modal-title" className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">
           {t('collections.addRecipe')}
         </h2>
 

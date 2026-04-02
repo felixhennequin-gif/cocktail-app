@@ -11,10 +11,10 @@ beforeEach(async () => {
   ({ user: bob,   token: bobToken   } = await createTestUser({ pseudo: 'bob',   email: 'bob@test.com'   }));
 });
 
-describe('POST /users/:id/follow', () => {
+describe('POST /api/users/:id/follow', () => {
   it('crée la relation follow', async () => {
     const res = await request(app)
-      .post(`/users/${bob.id}/follow`)
+      .post(`/api/users/${bob.id}/follow`)
       .set(getAuthHeader(aliceToken));
 
     expect(res.status).toBe(200);
@@ -22,8 +22,8 @@ describe('POST /users/:id/follow', () => {
   });
 
   it('est idempotent (double follow → pas d\'erreur)', async () => {
-    await request(app).post(`/users/${bob.id}/follow`).set(getAuthHeader(aliceToken));
-    const res = await request(app).post(`/users/${bob.id}/follow`).set(getAuthHeader(aliceToken));
+    await request(app).post(`/api/users/${bob.id}/follow`).set(getAuthHeader(aliceToken));
+    const res = await request(app).post(`/api/users/${bob.id}/follow`).set(getAuthHeader(aliceToken));
 
     expect(res.status).toBe(200);
     expect(res.body.following).toBe(true);
@@ -31,24 +31,24 @@ describe('POST /users/:id/follow', () => {
 
   it('400 si on se suit soi-même', async () => {
     const res = await request(app)
-      .post(`/users/${alice.id}/follow`)
+      .post(`/api/users/${alice.id}/follow`)
       .set(getAuthHeader(aliceToken));
 
     expect(res.status).toBe(400);
   });
 
   it('401 si non connecté', async () => {
-    const res = await request(app).post(`/users/${bob.id}/follow`);
+    const res = await request(app).post(`/api/users/${bob.id}/follow`);
     expect(res.status).toBe(401);
   });
 });
 
-describe('DELETE /users/:id/follow', () => {
+describe('DELETE /api/users/:id/follow', () => {
   it('supprime la relation', async () => {
-    await request(app).post(`/users/${bob.id}/follow`).set(getAuthHeader(aliceToken));
+    await request(app).post(`/api/users/${bob.id}/follow`).set(getAuthHeader(aliceToken));
 
     const res = await request(app)
-      .delete(`/users/${bob.id}/follow`)
+      .delete(`/api/users/${bob.id}/follow`)
       .set(getAuthHeader(aliceToken));
 
     expect(res.status).toBe(200);
@@ -57,7 +57,7 @@ describe('DELETE /users/:id/follow', () => {
 
   it('silencieux si la relation n\'existe pas', async () => {
     const res = await request(app)
-      .delete(`/users/${bob.id}/follow`)
+      .delete(`/api/users/${bob.id}/follow`)
       .set(getAuthHeader(aliceToken));
 
     expect(res.status).toBe(200);
@@ -65,14 +65,14 @@ describe('DELETE /users/:id/follow', () => {
   });
 });
 
-describe('GET /feed', () => {
+describe('GET /api/feed', () => {
   it('retourne les recettes des utilisateurs suivis', async () => {
     const category = await createTestCategory();
     await createTestRecipe({ authorId: bob.id, categoryId: category.id, name: 'Recette de Bob' });
-    await request(app).post(`/users/${bob.id}/follow`).set(getAuthHeader(aliceToken));
+    await request(app).post(`/api/users/${bob.id}/follow`).set(getAuthHeader(aliceToken));
 
     const res = await request(app)
-      .get('/feed')
+      .get('/api/feed')
       .set(getAuthHeader(aliceToken));
 
     expect(res.status).toBe(200);
@@ -82,7 +82,7 @@ describe('GET /feed', () => {
 
   it('retourne un feed vide si aucun suivi', async () => {
     const res = await request(app)
-      .get('/feed')
+      .get('/api/feed')
       .set(getAuthHeader(aliceToken));
 
     expect(res.status).toBe(200);
@@ -91,7 +91,7 @@ describe('GET /feed', () => {
   });
 
   it('401 si non connecté', async () => {
-    const res = await request(app).get('/feed');
+    const res = await request(app).get('/api/feed');
     expect(res.status).toBe(401);
   });
 });

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, Link, useSearchParams } from 'react-router-dom'
+import { useNavigate, Link, useSearchParams, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
@@ -23,13 +23,20 @@ export default function RecipeSubmit() {
   const { t }               = useTranslation()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
+  const { id: editId } = useParams()
 
-  const [form, setForm]             = useState(defaultForm)
-  const [ingredients, setIngredients] = useState([{ ...EMPTY_INGREDIENT }])
-  const [steps, setSteps]           = useState([{ ...EMPTY_STEP }])
+  // Restaurer le brouillon depuis sessionStorage (seulement en mode création)
+  const draftKey = editId ? null : 'recipe-draft'
+  const savedDraft = !editId ? (() => {
+    try { return JSON.parse(sessionStorage.getItem('recipe-draft')) } catch { return null }
+  })() : null
+
+  const [form, setForm]             = useState(savedDraft?.form ?? defaultForm)
+  const [ingredients, setIngredients] = useState(savedDraft?.ingredients ?? [{ ...EMPTY_INGREDIENT }])
+  const [steps, setSteps]           = useState(savedDraft?.steps ?? [{ ...EMPTY_STEP }])
   const [categories, setCategories] = useState([])
   const [allTags, setAllTags]       = useState([])
-  const [selectedTags, setSelectedTags] = useState([])
+  const [selectedTags, setSelectedTags] = useState(savedDraft?.selectedTags ?? [])
   const [tagInput, setTagInput]     = useState('')
   const [saving, setSaving]         = useState(false)
   const [uploading, setUploading]   = useState(false)
@@ -62,6 +69,48 @@ export default function RecipeSubmit() {
     }
   }, [user]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Pré-remplissage du formulaire en mode édition
+  useEffect(() => {
+    if (!editId) return
+    fetch(`/api/recipes/${editId}`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (!data) return
+        setForm({
+          name: data.name ?? '',
+          description: data.description ?? '',
+          categoryId: String(data.categoryId ?? ''),
+          difficulty: data.difficulty ?? 'EASY',
+          prepTime: String(data.prepTime ?? ''),
+          imageUrl: data.imageUrl ?? '',
+        })
+        if (data.imageUrl) setPreview(data.imageUrl)
+        if (data.ingredients?.length) {
+          setIngredients(data.ingredients.map((i) => ({
+            name: i.ingredient?.name ?? i.name ?? '',
+            quantity: String(i.quantity ?? ''),
+            unit: i.unit ?? '',
+          })))
+        }
+        if (data.steps?.length) {
+          setSteps([...data.steps].sort((a, b) => a.order - b.order).map((s) => ({ description: s.description })))
+        }
+        if (data.tags?.length) {
+          setSelectedTags(data.tags.map((t) => ({ id: t.id, name: t.name })))
+        }
+      })
+      .catch(() => {})
+  }, [editId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Sauvegarder le brouillon en mode création
+  useEffect(() => {
+    if (!draftKey) return
+    const timer = setTimeout(() => {
+      sessionStorage.setItem(draftKey, JSON.stringify({ form, ingredients, steps, selectedTags }))
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [form, ingredients, steps, selectedTags, draftKey])
+
   const handleField = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }))
 
   const handleImageFile = async (e) => {
@@ -92,6 +141,15 @@ export default function RecipeSubmit() {
     setSteps((list) => list.map((s, i) => i === index ? { description: value } : s))
   const addStep    = () => setSteps((l) => [...l, { ...EMPTY_STEP }])
   const removeStep = (index) => setSteps((l) => l.filter((_, i) => i !== index))
+  const moveStep   = (index, dir) => setSteps((l) => {
+    const next = [...l]
+    const target = index + dir
+    if (target < 0 || target >= next.length) return next
+    ;[next[index], next[target]] = [next[target], next[index]]
+    return next
+  })
+
+  const isAdmin = user?.role === 'ADMIN'
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -129,8 +187,10 @@ export default function RecipeSubmit() {
     }
 
     try {
-      const res = await authFetch('/api/recipes', {
-        method: 'POST',
+      const url    = editId ? `/api/recipes/${editId}` : '/api/recipes'
+      const method = editId ? 'PUT' : 'POST'
+      const res = await authFetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       })
@@ -138,8 +198,14 @@ export default function RecipeSubmit() {
         const data = await res.json()
         throw new Error(data.error || 'Erreur lors de la soumission')
       }
-      showToast(isAdmin ? t('submit.publishedToast') : t('submit.submittedToast'), 'success')
-      navigate('/')
+      if (editId) {
+        showToast(t('submit.editSuccess'), 'success')
+        navigate(`/recipes/${editId}`)
+      } else {
+        sessionStorage.removeItem('recipe-draft')
+        showToast(isAdmin ? t('submit.publishedToast') : t('submit.submittedToast'), 'success')
+        navigate('/recipes')
+      }
     } catch (err) {
       setError(err.message)
     } finally {
@@ -147,20 +213,18 @@ export default function RecipeSubmit() {
     }
   }
 
-  const isAdmin = user?.role === 'ADMIN'
-
   const inputClass = 'w-full px-3 py-2 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold-400'
 
   return (
     <div className="max-w-2xl mx-auto p-8 bg-white dark:bg-gray-800 rounded-xl shadow-sm">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('submit.title')}</h1>
-          {!isAdmin && (
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{editId ? t('submit.editTitle') : t('submit.title')}</h1>
+          {!isAdmin && !editId && (
             <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">{t('submit.pendingHint')}</p>
           )}
         </div>
-        <Link to="/" className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200">{t('submit.back')}</Link>
+        <Link to="/recipes" className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200">{t('submit.back')}</Link>
       </div>
 
       {/* Bannière variante */}
@@ -307,16 +371,19 @@ export default function RecipeSubmit() {
               <div key={i} className="flex gap-2 items-center">
                 <input
                   placeholder={t('submit.fields.ingredientName')} value={ing.name}
+                  aria-label={`${t('submit.fields.ingredientName')} ${i + 1}`}
                   onChange={(e) => updateIngredient(i, 'name', e.target.value)}
                   className={`flex-1 ${inputClass}`}
                 />
                 <input
                   placeholder={t('submit.fields.ingredientQty')} type="number" step="0.1" min="0" value={ing.quantity}
+                  aria-label={`${t('submit.fields.ingredientQty')} ${i + 1}`}
                   onChange={(e) => updateIngredient(i, 'quantity', e.target.value)}
                   className={`w-20 ${inputClass}`}
                 />
                 <input
                   placeholder={t('submit.fields.ingredientUnit')} value={ing.unit}
+                  aria-label={`${t('submit.fields.ingredientUnit')} ${i + 1}`}
                   onChange={(e) => updateIngredient(i, 'unit', e.target.value)}
                   className={`w-20 ${inputClass}`}
                 />
@@ -343,10 +410,25 @@ export default function RecipeSubmit() {
                   {i + 1}
                 </span>
                 <textarea
-                  placeholder={`Étape ${i + 1}`} value={step.description} rows={2}
+                  placeholder={t('recipes.stepAlt', { order: i + 1 })} value={step.description} rows={2}
+                  aria-label={t('recipes.stepAlt', { order: i + 1 })}
                   onChange={(e) => updateStep(i, e.target.value)}
                   className={`flex-1 ${inputClass} resize-none`}
                 />
+                <div className="flex flex-col gap-0.5 mt-1">
+                  <button
+                    type="button" onClick={() => moveStep(i, -1)}
+                    disabled={i === 0}
+                    className="text-gray-400 hover:text-gold-500 disabled:opacity-30 text-xs px-1"
+                    aria-label={`Move step ${i + 1} up`}
+                  >▲</button>
+                  <button
+                    type="button" onClick={() => moveStep(i, 1)}
+                    disabled={i === steps.length - 1}
+                    className="text-gray-400 hover:text-gold-500 disabled:opacity-30 text-xs px-1"
+                    aria-label={`Move step ${i + 1} down`}
+                  >▼</button>
+                </div>
                 <button
                   type="button" onClick={() => removeStep(i)}
                   disabled={steps.length === 1}
@@ -368,7 +450,7 @@ export default function RecipeSubmit() {
             {saving ? t('submit.sending') : isAdmin ? t('submit.publish') : t('submit.submit')}
           </button>
           <Link
-            to="/"
+            to="/recipes"
             className="px-6 py-2.5 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 text-sm font-medium rounded-lg hover:border-gray-300 dark:hover:border-gray-500 transition-colors"
           >
             {t('submit.cancel')}

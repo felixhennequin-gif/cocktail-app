@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../contexts/AuthContext'
+import usePushNotifications from '../hooks/usePushNotifications'
 
 // Texte affiché pour chaque type de notification
 const formatNotif = (notif, t) => {
@@ -13,6 +14,10 @@ const formatNotif = (notif, t) => {
       return t('common.notifComment', { commenter: d.commenterPseudo, recipe: d.recipeName, preview: d.commentPreview })
     case 'RECIPE_APPROVED':
       return t('common.notifApproved', { recipe: d.recipeName })
+    case 'NEW_FOLLOWER':
+      return t('common.notifNewFollower', { follower: d.followerPseudo })
+    case 'NEW_BADGE':
+      return t('common.notifNewBadge', { badge: `${d.badgeIcon || ''} ${d.badgeName || ''}`.trim() })
     default:
       return notif.type
   }
@@ -20,35 +25,31 @@ const formatNotif = (notif, t) => {
 
 export default function NotificationBell() {
   const { user, authFetch }           = useAuth()
-  const { t }                         = useTranslation()
+  const { t, i18n }                   = useTranslation()
   const [notifications, setNotifications] = useState([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [open, setOpen]               = useState(false)
   const containerRef                  = useRef(null)
   const navigate                      = useNavigate()
+  const { supported, permission, subscribed, loading: pushLoading, subscribe, unsubscribe } = usePushNotifications()
 
-  // Polling toutes les 60s, uniquement si l'onglet est actif
+  // Polling léger : ne charge que le compteur non lu (pas les notifications complètes)
   useEffect(() => {
     if (!user) return
 
-    const load = () => {
+    const loadCount = () => {
       if (document.visibilityState !== 'visible') return
-      authFetch('/api/notifications')
+      authFetch('/api/notifications?countOnly=true')
         .then((r) => r.ok ? r.json() : null)
-        .then((data) => {
-          if (!data) return
-          setNotifications(data.data)
-          setUnreadCount(data.unreadCount)
-        })
+        .then((data) => { if (data) setUnreadCount(data.unreadCount) })
         .catch(() => {})
     }
 
-    load()
-    const interval = setInterval(load, 60_000)
+    loadCount()
+    const interval = setInterval(loadCount, 60_000)
 
-    // Reprendre le polling dès que l'onglet redevient visible
     const handleVisibility = () => {
-      if (document.visibilityState === 'visible') load()
+      if (document.visibilityState === 'visible') loadCount()
     }
     document.addEventListener('visibilitychange', handleVisibility)
 
@@ -56,7 +57,7 @@ export default function NotificationBell() {
       clearInterval(interval)
       document.removeEventListener('visibilitychange', handleVisibility)
     }
-  }, [user]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [user, authFetch])
 
   // Fermer au clic extérieur
   useEffect(() => {
@@ -72,10 +73,17 @@ export default function NotificationBell() {
   const handleToggle = () => {
     const next = !open
     setOpen(next)
-    // À l'ouverture, marquer tout comme lu
-    if (next && unreadCount > 0) {
-      setUnreadCount(0)
-      authFetch('/api/notifications/read-all', { method: 'PUT' }).catch(() => {})
+    if (next) {
+      // À l'ouverture : charger les notifications complètes
+      authFetch('/api/notifications')
+        .then((r) => r.ok ? r.json() : null)
+        .then((data) => { if (data) setNotifications(data.data) })
+        .catch(() => {})
+      // Marquer tout comme lu
+      if (unreadCount > 0) {
+        setUnreadCount(0)
+        authFetch('/api/notifications/read-all', { method: 'PUT' }).catch(() => {})
+      }
     }
   }
 
@@ -91,9 +99,12 @@ export default function NotificationBell() {
       <button
         onClick={handleToggle}
         className="relative text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 transition-colors"
-        title={t('common.notifications')}
+        aria-label={t('common.notifications')}
+        aria-expanded={open}
       >
-        🔔
+        <svg aria-hidden="true" className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+        </svg>
         {unreadCount > 0 && (
           <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-0.5 leading-none">
             {unreadCount > 9 ? '9+' : unreadCount}
@@ -128,7 +139,7 @@ export default function NotificationBell() {
                         {formatNotif(notif, t)}
                       </p>
                       <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                        {new Date(notif.createdAt).toLocaleDateString('fr-FR', {
+                        {new Date(notif.createdAt).toLocaleDateString(i18n.language, {
                           day: 'numeric', month: 'short',
                           hour: '2-digit', minute: '2-digit',
                         })}
@@ -137,6 +148,35 @@ export default function NotificationBell() {
                   </div>
                 </button>
               ))}
+            </div>
+          )}
+
+          {/* Bouton activation/désactivation des push notifications */}
+          {supported && permission !== 'denied' && (
+            <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-700">
+              <button
+                onClick={subscribed ? unsubscribe : subscribe}
+                disabled={pushLoading}
+                className="w-full flex items-center justify-center gap-2 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 transition-colors disabled:opacity-50"
+              >
+                <svg aria-hidden="true" className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  {subscribed
+                    ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                  }
+                </svg>
+                {pushLoading
+                  ? '...'
+                  : subscribed
+                    ? t('push.disable')
+                    : t('push.enable')
+                }
+              </button>
+            </div>
+          )}
+          {supported && permission === 'denied' && (
+            <div className="px-4 py-2 border-t border-gray-100 dark:border-gray-700">
+              <p className="text-xs text-gray-400 dark:text-gray-500 text-center">{t('push.denied')}</p>
             </div>
           )}
         </div>

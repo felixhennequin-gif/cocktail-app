@@ -7,6 +7,7 @@ import './i18n/i18n.js'
 import App from './App.jsx'
 import { AuthProvider } from './contexts/AuthContext.jsx'
 import { ToastProvider } from './contexts/ToastContext.jsx'
+import { FavoritesProvider } from './contexts/FavoritesContext.jsx'
 
 // Enregistrement du Service Worker (PWA)
 if ('serviceWorker' in navigator) {
@@ -21,7 +22,9 @@ createRoot(document.getElementById('root')).render(
       <BrowserRouter>
         <AuthProvider>
           <ToastProvider>
-            <App />
+            <FavoritesProvider>
+              <App />
+            </FavoritesProvider>
           </ToastProvider>
         </AuthProvider>
       </BrowserRouter>

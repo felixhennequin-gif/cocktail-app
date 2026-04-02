@@ -4,6 +4,7 @@ import { Helmet } from 'react-helmet-async'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
+import { useFavorites } from '../contexts/FavoritesContext'
 import RecipeCard from '../components/RecipeCard'
 import ConfirmModal from '../components/ConfirmModal'
 import { getImageUrl } from '../utils/image'
@@ -13,12 +14,12 @@ export default function CollectionDetail() {
   const { user, authFetch } = useAuth()
   const { showToast }       = useToast()
   const { t }               = useTranslation()
+  const { isFavorited, toggleFavorite } = useFavorites()
   const navigate            = useNavigate()
 
   const [collection, setCollection] = useState(null)
   const [loading, setLoading]       = useState(true)
   const [error, setError]           = useState(null)
-  const [favoriteIds, setFavoriteIds] = useState(new Set())
 
   // État pour l'édition inline
   const [editing, setEditing]       = useState(false)
@@ -55,29 +56,6 @@ export default function CollectionDetail() {
       .finally(() => setLoading(false))
     return () => controller.abort()
   }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Chargement des favoris si connecté
-  useEffect(() => {
-    if (!user) return
-    const controller = new AbortController()
-    authFetch('/api/favorites', { signal: controller.signal })
-      .then((r) => r.ok ? r.json() : [])
-      .then((data) => setFavoriteIds(new Set(data.map((r) => r.id))))
-      .catch(() => {})
-    return () => controller.abort()
-  }, [user]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  const handleToggleFavorite = async (recipeId) => {
-    if (!user) return
-    const res = await authFetch(`/api/favorites/${recipeId}`, { method: 'POST' })
-    if (!res.ok) return
-    const data = await res.json()
-    setFavoriteIds((prev) => {
-      const next = new Set(prev)
-      data.favorited ? next.add(recipeId) : next.delete(recipeId)
-      return next
-    })
-  }
 
   // Sauvegarder les modifications de la collection
   const handleEditSave = async (e) => {
@@ -158,6 +136,15 @@ export default function CollectionDetail() {
     <div className="max-w-2xl mx-auto">
       <Helmet>
         <title>{collection.name} — Cocktails</title>
+        <link rel="canonical" href={`https://cocktail-app.fr/collections/${id}`} />
+        <meta name="description" content={collection.description || `Collection de cocktails par ${collection.user?.pseudo}`} />
+        <meta property="og:site_name" content="Écume" />
+        <meta property="og:title" content={`${collection.name} — Collection`} />
+        <meta property="og:description" content={collection.description || `Collection de cocktails par ${collection.user?.pseudo}`} />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={`https://cocktail-app.fr/collections/${collection.id}`} />
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content={`${collection.name} — Collection`} />
       </Helmet>
 
       {/* Modale de confirmation de suppression */}
@@ -285,7 +272,7 @@ export default function CollectionDetail() {
       {collection.recipes?.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-gray-400 dark:text-gray-500 text-sm mb-3">{t('collections.empty')}</p>
-          <Link to="/" className="text-sm text-gold-500 dark:text-gold-400 hover:underline">
+          <Link to="/recipes" className="text-sm text-gold-500 dark:text-gold-400 hover:underline">
             {t('collections.browseLink')}
           </Link>
         </div>
@@ -295,8 +282,8 @@ export default function CollectionDetail() {
             <div key={recipe.id} className="relative">
               <RecipeCard
                 recipe={recipe}
-                isFavorited={favoriteIds.has(recipe.id)}
-                onToggleFavorite={handleToggleFavorite}
+                isFavorited={isFavorited(recipe.id)}
+                onToggleFavorite={toggleFavorite}
               />
               {/* Bouton retirer (propriétaire uniquement) */}
               {isOwner && (

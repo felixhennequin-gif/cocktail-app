@@ -20,15 +20,15 @@ beforeEach(async () => {
   recipe = await createTestRecipe({ authorId: bob.id, categoryId: category.id });
 });
 
-describe('GET /comments/:recipeId', () => {
+describe('GET /api/comments/:recipeId', () => {
   it('retourne la liste des commentaires (public)', async () => {
     // Alice laisse un commentaire
     await request(app)
-      .post(`/comments/${recipe.id}`)
+      .post(`/api/comments/${recipe.id}`)
       .set(getAuthHeader(aliceToken))
       .send({ content: 'Excellent cocktail !', score: 5 });
 
-    const res = await request(app).get(`/comments/${recipe.id}`);
+    const res = await request(app).get(`/api/comments/${recipe.id}`);
 
     expect(res.status).toBe(200);
     expect(res.body.comments).toHaveLength(1);
@@ -38,7 +38,7 @@ describe('GET /comments/:recipeId', () => {
   });
 
   it('retourne une liste vide si aucun commentaire', async () => {
-    const res = await request(app).get(`/comments/${recipe.id}`);
+    const res = await request(app).get(`/api/comments/${recipe.id}`);
 
     expect(res.status).toBe(200);
     expect(res.body.comments).toHaveLength(0);
@@ -46,12 +46,12 @@ describe('GET /comments/:recipeId', () => {
 
   it('inclut myComment si l\'utilisateur est connecté', async () => {
     await request(app)
-      .post(`/comments/${recipe.id}`)
+      .post(`/api/comments/${recipe.id}`)
       .set(getAuthHeader(aliceToken))
       .send({ content: 'Super recette', score: 4 });
 
     const res = await request(app)
-      .get(`/comments/${recipe.id}`)
+      .get(`/api/comments/${recipe.id}`)
       .set(getAuthHeader(aliceToken));
 
     expect(res.status).toBe(200);
@@ -60,10 +60,10 @@ describe('GET /comments/:recipeId', () => {
   });
 });
 
-describe('POST /comments/:recipeId', () => {
+describe('POST /api/comments/:recipeId', () => {
   it('crée un commentaire avec une note (score obligatoire)', async () => {
     const res = await request(app)
-      .post(`/comments/${recipe.id}`)
+      .post(`/api/comments/${recipe.id}`)
       .set(getAuthHeader(aliceToken))
       .send({ content: 'Délicieux !', score: 4 });
 
@@ -74,7 +74,7 @@ describe('POST /comments/:recipeId', () => {
 
   it('retourne 400 si le contenu est vide', async () => {
     const res = await request(app)
-      .post(`/comments/${recipe.id}`)
+      .post(`/api/comments/${recipe.id}`)
       .set(getAuthHeader(aliceToken))
       .send({ content: '   ', score: 3 });
 
@@ -83,7 +83,7 @@ describe('POST /comments/:recipeId', () => {
 
   it('retourne 400 si le score est absent', async () => {
     const res = await request(app)
-      .post(`/comments/${recipe.id}`)
+      .post(`/api/comments/${recipe.id}`)
       .set(getAuthHeader(aliceToken))
       .send({ content: 'Bon cocktail' });
 
@@ -92,7 +92,7 @@ describe('POST /comments/:recipeId', () => {
 
   it('retourne 400 si le score est hors range', async () => {
     const res = await request(app)
-      .post(`/comments/${recipe.id}`)
+      .post(`/api/comments/${recipe.id}`)
       .set(getAuthHeader(aliceToken))
       .send({ content: 'Bof', score: 6 });
 
@@ -101,7 +101,7 @@ describe('POST /comments/:recipeId', () => {
 
   it('retourne 401 sans token', async () => {
     const res = await request(app)
-      .post(`/comments/${recipe.id}`)
+      .post(`/api/comments/${recipe.id}`)
       .send({ content: 'Test', score: 3 });
 
     expect(res.status).toBe(401);
@@ -109,7 +109,7 @@ describe('POST /comments/:recipeId', () => {
 
   it('retourne 403 si l\'auteur commente sa propre recette', async () => {
     const res = await request(app)
-      .post(`/comments/${recipe.id}`)
+      .post(`/api/comments/${recipe.id}`)
       .set(getAuthHeader(bobToken))
       .send({ content: 'Moi-même', score: 5 });
 
@@ -118,12 +118,12 @@ describe('POST /comments/:recipeId', () => {
 
   it('retourne 409 si l\'utilisateur a déjà commenté (unique userId+recipeId)', async () => {
     await request(app)
-      .post(`/comments/${recipe.id}`)
+      .post(`/api/comments/${recipe.id}`)
       .set(getAuthHeader(aliceToken))
       .send({ content: 'Premier', score: 3 });
 
     const res = await request(app)
-      .post(`/comments/${recipe.id}`)
+      .post(`/api/comments/${recipe.id}`)
       .set(getAuthHeader(aliceToken))
       .send({ content: 'Second', score: 4 });
 
@@ -132,7 +132,7 @@ describe('POST /comments/:recipeId', () => {
 
   it('retourne 404 si la recette n\'existe pas', async () => {
     const res = await request(app)
-      .post('/comments/999999')
+      .post('/api/comments/999999')
       .set(getAuthHeader(aliceToken))
       .send({ content: 'Inexistant', score: 3 });
 
@@ -140,12 +140,12 @@ describe('POST /comments/:recipeId', () => {
   });
 });
 
-describe('PUT /comments/:id', () => {
+describe('PUT /api/comments/:id', () => {
   let commentId;
 
   beforeEach(async () => {
     const res = await request(app)
-      .post(`/comments/${recipe.id}`)
+      .post(`/api/comments/${recipe.id}`)
       .set(getAuthHeader(aliceToken))
       .send({ content: 'Commentaire initial', score: 3 });
     commentId = res.body.id;
@@ -153,7 +153,7 @@ describe('PUT /comments/:id', () => {
 
   it('modifie le commentaire si auteur', async () => {
     const res = await request(app)
-      .put(`/comments/${commentId}`)
+      .put(`/api/comments/${commentId}`)
       .set(getAuthHeader(aliceToken))
       .send({ content: 'Commentaire modifié' });
 
@@ -163,7 +163,7 @@ describe('PUT /comments/:id', () => {
 
   it('retourne 403 si pas l\'auteur', async () => {
     const res = await request(app)
-      .put(`/comments/${commentId}`)
+      .put(`/api/comments/${commentId}`)
       .set(getAuthHeader(carolToken))
       .send({ content: 'Tentative' });
 
@@ -172,7 +172,7 @@ describe('PUT /comments/:id', () => {
 
   it('retourne 400 si le nouveau contenu est vide', async () => {
     const res = await request(app)
-      .put(`/comments/${commentId}`)
+      .put(`/api/comments/${commentId}`)
       .set(getAuthHeader(aliceToken))
       .send({ content: '' });
 
@@ -180,12 +180,12 @@ describe('PUT /comments/:id', () => {
   });
 });
 
-describe('DELETE /comments/:id', () => {
+describe('DELETE /api/comments/:id', () => {
   let commentId;
 
   beforeEach(async () => {
     const res = await request(app)
-      .post(`/comments/${recipe.id}`)
+      .post(`/api/comments/${recipe.id}`)
       .set(getAuthHeader(aliceToken))
       .send({ content: 'À supprimer', score: 3 });
     commentId = res.body.id;
@@ -193,7 +193,7 @@ describe('DELETE /comments/:id', () => {
 
   it('supprime par l\'auteur du commentaire', async () => {
     const res = await request(app)
-      .delete(`/comments/${commentId}`)
+      .delete(`/api/comments/${commentId}`)
       .set(getAuthHeader(aliceToken));
 
     expect(res.status).toBe(204);
@@ -201,7 +201,7 @@ describe('DELETE /comments/:id', () => {
 
   it('supprime par l\'auteur de la recette', async () => {
     const res = await request(app)
-      .delete(`/comments/${commentId}`)
+      .delete(`/api/comments/${commentId}`)
       .set(getAuthHeader(bobToken));
 
     expect(res.status).toBe(204);
@@ -209,7 +209,7 @@ describe('DELETE /comments/:id', () => {
 
   it('supprime par un admin', async () => {
     const res = await request(app)
-      .delete(`/comments/${commentId}`)
+      .delete(`/api/comments/${commentId}`)
       .set(getAuthHeader(adminToken));
 
     expect(res.status).toBe(204);
@@ -217,14 +217,14 @@ describe('DELETE /comments/:id', () => {
 
   it('retourne 403 si ni auteur, ni auteur de la recette, ni admin', async () => {
     const res = await request(app)
-      .delete(`/comments/${commentId}`)
+      .delete(`/api/comments/${commentId}`)
       .set(getAuthHeader(carolToken));
 
     expect(res.status).toBe(403);
   });
 
   it('retourne 401 sans token', async () => {
-    const res = await request(app).delete(`/comments/${commentId}`);
+    const res = await request(app).delete(`/api/comments/${commentId}`);
     expect(res.status).toBe(401);
   });
 });

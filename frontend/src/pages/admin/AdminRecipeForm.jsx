@@ -275,10 +275,10 @@ export default function AdminRecipeForm() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Verres / portions</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('admin.fields.servings')}</label>
               <input
                 name="servings" type="number" min="1" value={form.servings} onChange={handleField}
-                placeholder="ex : 2"
+                placeholder={t('admin.fields.servingsPlaceholder')}
                 className={inputClass}
               />
             </div>
@@ -359,7 +359,7 @@ export default function AdminRecipeForm() {
                 </span>
                 <div className="flex-1 space-y-2">
                   <textarea
-                    placeholder={`Étape ${i + 1}`} value={step.description} rows={2}
+                    placeholder={t('admin.fields.stepPlaceholder', { number: i + 1 })} value={step.description} rows={2}
                     onChange={(e) => updateStep(i, 'description', e.target.value)}
                     className={`${inputClass} resize-none`}
                   />

@@ -1,9 +1,15 @@
 const prisma = require('../prisma');
 const { createNotification } = require('../services/notification-service');
+const { parseId, badRequest, notFound, forbidden, conflict } = require('../helpers');
+const { createCommentSchema, updateCommentSchema, formatZodError } = require('../schemas');
+const { checkAndAwardBadges } = require('../services/badge-service');
+const { recordActivity } = require('../services/streak-service');
 
 // GET /comments/:recipeId — optionalAuth pour exposer myComment + avgRating
-const getComments = async (req, res) => {
-  const recipeId = parseInt(req.params.recipeId);
+const getComments = async (req, res, next) => {
+  try {
+  const recipeId = parseId(req.params.recipeId);
+  if (!recipeId) return badRequest(res, 'recipeId invalide');
 
   const [comments, ratingAgg] = await Promise.all([
     prisma.comment.findMany({
@@ -30,42 +36,45 @@ const getComments = async (req, res) => {
     : null;
 
   res.json({ comments, myComment, avgRating, ratingsCount });
+  } catch (err) {
+    next(err);
+  }
 };
 
 // POST /comments/:recipeId — auth requise
 // body: { content, score (1-5, obligatoire) }
-const createComment = async (req, res) => {
+const createComment = async (req, res, next) => {
+  try {
   const userId   = req.user.id;
-  const recipeId = parseInt(req.params.recipeId);
-  const { content, score } = req.body;
+  const recipeId = parseId(req.params.recipeId);
+  if (!recipeId) return badRequest(res, 'recipeId invalide');
 
-  if (!content || !content.trim()) {
-    return res.status(400).json({ error: 'Le commentaire ne peut pas être vide' });
+  const parsed = createCommentSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return badRequest(res, formatZodError(parsed.error));
   }
 
-  const scoreInt = parseInt(score);
-  if (!score || isNaN(scoreInt) || scoreInt < 1 || scoreInt > 5) {
-    return res.status(400).json({ error: 'Une note entre 1 et 5 est obligatoire' });
-  }
+  const { content, score: scoreInt } = parsed.data;
 
   const recipe = await prisma.recipe.findUnique({ where: { id: recipeId } });
-  if (!recipe) return res.status(404).json({ error: 'Recette introuvable' });
+  if (!recipe) return notFound(res, 'Recette introuvable');
 
   if (recipe.authorId === userId) {
-    return res.status(403).json({ error: 'Vous ne pouvez pas commenter votre propre recette' });
+    return forbidden(res, 'Vous ne pouvez pas commenter votre propre recette');
   }
 
-  const existing = await prisma.comment.findUnique({
-    where: { userId_recipeId: { userId, recipeId } },
+  // Vérifier si l'utilisateur a déjà commenté cette recette
+  const existingComment = await prisma.comment.findFirst({
+    where: { userId, recipeId },
   });
-  if (existing) {
-    return res.status(409).json({ error: 'Vous avez déjà commenté cette recette', commentId: existing.id });
+  if (existingComment) {
+    return conflict(res, 'Vous avez déjà commenté cette recette');
   }
 
   // Créer le commentaire et upsert la note dans une transaction
   const comment = await prisma.$transaction(async (tx) => {
     const created = await tx.comment.create({
-      data: { content: content.trim(), userId, recipeId },
+      data: { content, userId, recipeId },
       include: {
         user: { select: { id: true, pseudo: true, avatar: true } },
       },
@@ -92,45 +101,48 @@ const createComment = async (req, res) => {
         recipeName:      recipe.name,
         commenterId:     userId,
         commenterPseudo: comment.user.pseudo,
-        commentPreview:  content.trim().slice(0, 50),
+        commentPreview:  content.slice(0, 50),
       },
     }).catch(console.error);
+  }
+
+  // Vérifier les badges liés aux commentaires — fire and forget
+  checkAndAwardBadges(userId).catch(console.error);
+  recordActivity(userId).catch(() => {});
+  } catch (err) {
+    next(err);
   }
 };
 
 // PUT /comments/:id — auteur uniquement
 // body: { content, score? (1-5, optionnel) }
-const updateComment = async (req, res) => {
-  const id = parseInt(req.params.id);
-  const { content, score } = req.body;
+const updateComment = async (req, res, next) => {
+  try {
+  const id = parseId(req.params.id);
+  if (!id) return badRequest(res, 'id invalide');
 
-  if (!content || !content.trim()) {
-    return res.status(400).json({ error: 'Le commentaire ne peut pas être vide' });
+  const parsed = updateCommentSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return badRequest(res, formatZodError(parsed.error));
   }
+
+  const { content, score: scoreInt } = parsed.data;
 
   const comment = await prisma.comment.findUnique({ where: { id } });
-  if (!comment) return res.status(404).json({ error: 'Commentaire introuvable' });
+  if (!comment) return notFound(res, 'Commentaire introuvable');
 
   if (comment.userId !== req.user.id) {
-    return res.status(403).json({ error: 'Non autorisé' });
-  }
-
-  let scoreInt = null;
-  if (score !== undefined && score !== null && score !== '') {
-    scoreInt = parseInt(score);
-    if (isNaN(scoreInt) || scoreInt < 1 || scoreInt > 5) {
-      return res.status(400).json({ error: 'Le score doit être compris entre 1 et 5' });
-    }
+    return forbidden(res);
   }
 
   const updated = await prisma.$transaction(async (tx) => {
     const result = await tx.comment.update({
       where: { id },
-      data:  { content: content.trim() },
+      data:  { content },
       include: { user: { select: { id: true, pseudo: true, avatar: true } } },
     });
 
-    if (scoreInt !== null) {
+    if (scoreInt != null) {
       await tx.rating.upsert({
         where:  { userId_recipeId: { userId: comment.userId, recipeId: comment.recipeId } },
         create: { userId: comment.userId, recipeId: comment.recipeId, score: scoreInt },
@@ -142,28 +154,40 @@ const updateComment = async (req, res) => {
   });
 
   res.json(updated);
+  } catch (err) {
+    next(err);
+  }
 };
 
 // DELETE /comments/:id — auteur du commentaire, auteur de la recette ou admin
-const deleteComment = async (req, res) => {
-  const id = parseInt(req.params.id);
+const deleteComment = async (req, res, next) => {
+  try {
+  const id = parseId(req.params.id);
+  if (!id) return badRequest(res, 'id invalide');
 
   const comment = await prisma.comment.findUnique({
     where: { id },
     include: { recipe: { select: { authorId: true } } },
   });
-  if (!comment) return res.status(404).json({ error: 'Commentaire introuvable' });
+  if (!comment) return notFound(res, 'Commentaire introuvable');
 
   const isAdmin        = req.user.role === 'ADMIN';
   const isCommentAuthor = comment.userId === req.user.id;
   const isRecipeAuthor  = comment.recipe.authorId === req.user.id;
 
   if (!isAdmin && !isCommentAuthor && !isRecipeAuthor) {
-    return res.status(403).json({ error: 'Non autorisé' });
+    return forbidden(res);
   }
 
-  await prisma.comment.delete({ where: { id } });
+  // Supprimer le commentaire et la note associée dans une transaction
+  await prisma.$transaction([
+    prisma.rating.deleteMany({ where: { userId: comment.userId, recipeId: comment.recipeId } }),
+    prisma.comment.delete({ where: { id } }),
+  ]);
   res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
 };
 
 module.exports = { getComments, createComment, updateComment, deleteComment };

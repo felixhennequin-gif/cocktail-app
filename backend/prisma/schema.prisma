@@ -12,8 +12,15 @@ model User {
   pseudo       String    @unique
   passwordHash String
   role         Role      @default(USER)
+  plan         Plan      @default(FREE)
   avatar       String?
   bio          String?
+  showInLeaderboard Boolean   @default(true)
+  emailVerified      Boolean   @default(false)
+  emailVerifyToken   String?   @unique
+  emailVerifyExpires DateTime?
+  resetToken         String?   @unique
+  resetExpires       DateTime?
   createdAt    DateTime  @default(now())
   recipes      Recipe[]
   favorites    Favorite[]
@@ -24,6 +31,54 @@ model User {
   followers      Follow[]       @relation("Following")
   notifications  Notification[]
   collections    Collection[]
+  refreshTokens  RefreshToken[]
+  bar              UserIngredient[]
+  badges           UserBadge[]
+  challengeEntries  ChallengeEntry[]
+  pushSubscriptions PushSubscription[]
+  apiKeys           ApiKey[]
+  preferences       UserPreference?
+  articles          Article[]
+  tastingLogs       TastingLog[]
+  streak            UserStreak?
+  newsletterSub     NewsletterSubscription?
+}
+
+model PushSubscription {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model UserPreference {
+  id                  Int    @id @default(autoincrement())
+  userId              Int    @unique
+  sweetness           Int    @default(3) // 1-5 : goût sucré
+  bitterness          Int    @default(3) // 1-5 : goût amer
+  sourness            Int    @default(3) // 1-5 : goût acide
+  strength            Int    @default(3) // 1-5 : force alcoolique
+  excludedIngredients Int[]  // IDs d'ingrédients à éviter
+  user                User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    Int
+  token     String   @unique
+  family    String   @default(dbgenerated("gen_random_uuid()")) // Groupe de rotation — détection de réutilisation
+  consumed  Boolean  @default(false) // Marqué true lors de la rotation (au lieu d'être supprimé)
+  expiresAt DateTime
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([family])
+  @@index([userId])
 }
 
 model Recipe {
@@ -40,7 +95,7 @@ model Recipe {
   categoryId  Int
   category    Category           @relation(fields: [categoryId], references: [id])
   authorId    Int?
-  author      User?              @relation(fields: [authorId], references: [id])
+  author      User?              @relation(fields: [authorId], references: [id], onDelete: SetNull)
   ingredients RecipeIngredient[]
   steps       Step[]
   favorites     Favorite[]
@@ -48,24 +103,45 @@ model Recipe {
   comments      Comment[]
   searchVector  Unsupported("tsvector")?
   tags          RecipeTag[]
+  // Partenariat / sponsoring (champs réservés aux admins)
+  isSponsored    Boolean  @default(false)
+  sponsorName    String?
+  sponsorLogo    String?
+  // Saison (null = toutes saisons)
+  season         String?  // "spring", "summer", "autumn", "winter"
   // Variantes (Feature 4)
   parentRecipeId Int?
   parentRecipe   Recipe?  @relation("RecipeVariants", fields: [parentRecipeId], references: [id])
   variants       Recipe[] @relation("RecipeVariants")
   // Collections (Feature 2)
   collections    CollectionRecipe[]
+  challengeEntries ChallengeEntry[]
+  tastingLogs      TastingLog[]
+  revisions        RecipeRevision[] @relation("RecipeRevisions")
+
+  @@index([categoryId])
+  @@index([authorId])
+  @@index([status, createdAt])
 }
 
 model Category {
-  id      Int      @id @default(autoincrement())
-  name    String   @unique
-  recipes Recipe[]
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  recipes     Recipe[]
 }
 
 model Ingredient {
-  id      Int                @id @default(autoincrement())
-  name    String             @unique
-  recipes RecipeIngredient[]
+  id           Int                @id @default(autoincrement())
+  name         String             @unique
+  affiliateUrl         String?    // Lien affilié pour acheter l'ingrédient (optionnel)
+  estimatedPricePerUnit Float?   // Prix estimé par unité standard (cl ou g)
+  unitSize             Float?    // Taille de l'unité de référence (ex: 70 pour une bouteille de 70cl)
+  recipes      RecipeIngredient[]
+  userBars     UserIngredient[]
+  substitutesFor IngredientSubstitution[] @relation("SubstituteFor")
+  substitutedBy  IngredientSubstitution[] @relation("SubstitutedBy")
 }
 
 model RecipeIngredient {
@@ -73,9 +149,12 @@ model RecipeIngredient {
   quantity     Float
   unit         String
   recipeId     Int
-  recipe       Recipe     @relation(fields: [recipeId], references: [id])
+  recipe       Recipe     @relation(fields: [recipeId], references: [id], onDelete: Cascade)
   ingredientId Int
   ingredient   Ingredient @relation(fields: [ingredientId], references: [id])
+
+  @@index([recipeId])
+  @@index([ingredientId])
 }
 
 model Step {
@@ -84,17 +163,20 @@ model Step {
   description String
   imageUrl    String?
   recipeId    Int
-  recipe      Recipe  @relation(fields: [recipeId], references: [id])
+  recipe      Recipe  @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@index([recipeId])
 }
 
 model Favorite {
   userId    Int
   recipeId  Int
   createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id])
-  recipe    Recipe   @relation(fields: [recipeId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
 
   @@id([userId, recipeId])
+  @@index([userId, createdAt])
 }
 
 model Rating {
@@ -103,10 +185,11 @@ model Rating {
   createdAt DateTime @default(now())
   userId    Int
   recipeId  Int
-  user      User     @relation(fields: [userId], references: [id])
-  recipe    Recipe   @relation(fields: [recipeId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
 
   @@unique([userId, recipeId])
+  @@index([recipeId])
 }
 
 model Comment {
@@ -116,10 +199,11 @@ model Comment {
   updatedAt DateTime @updatedAt
   userId    Int
   recipeId  Int
-  user      User     @relation(fields: [userId], references: [id])
-  recipe    Recipe   @relation(fields: [recipeId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, recipeId])
+  @@index([recipeId])
+  @@index([userId, recipeId])
 }
 
 model Follow {
@@ -128,9 +212,9 @@ model Follow {
   followingId Int
   createdAt   DateTime @default(now())
   // followerId est le "follower" (user qui suit)
-  follower    User     @relation("Followers", fields: [followerId], references: [id])
+  follower    User     @relation("Followers", fields: [followerId], references: [id], onDelete: Cascade)
   // followingId est le "following" (user suivi)
-  following   User     @relation("Following", fields: [followingId], references: [id])
+  following   User     @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
 
   @@unique([followerId, followingId])
   @@index([followerId])
@@ -151,10 +235,12 @@ model Notification {
 }
 
 model Tag {
-  id        Int         @id @default(autoincrement())
-  name      String      @unique
-  createdAt DateTime    @default(now())
-  recipes   RecipeTag[]
+  id         Int         @id @default(autoincrement())
+  name       String      @unique
+  createdAt  DateTime    @default(now())
+  recipes    RecipeTag[]
+  challenges Challenge[]
+  articles   ArticleTag[]
 }
 
 model RecipeTag {
@@ -164,18 +250,26 @@ model RecipeTag {
   tag      Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@id([recipeId, tagId])
+  @@index([tagId])
 }
 
 model Collection {
-  id          Int                @id @default(autoincrement())
-  name        String
-  description String?
-  isPublic    Boolean            @default(true)
-  userId      Int
-  user        User               @relation(fields: [userId], references: [id])
-  createdAt   DateTime           @default(now())
-  updatedAt   DateTime           @updatedAt
-  recipes     CollectionRecipe[]
+  id             Int                @id @default(autoincrement())
+  name           String
+  description    String?
+  isPublic       Boolean            @default(true)
+  isCurated      Boolean            @default(false)
+  curatorName    String?
+  curatorBio     String?
+  curatorAvatar  String?
+  userId         Int
+  user           User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  recipes        CollectionRecipe[]
+
+  @@index([userId])
+  @@index([isCurated])
 }
 
 model CollectionRecipe {
@@ -186,6 +280,212 @@ model CollectionRecipe {
   recipe       Recipe     @relation(fields: [recipeId], references: [id], onDelete: Cascade)
 
   @@id([collectionId, recipeId])
+  @@index([recipeId])
+}
+
+model UserIngredient {
+  userId       Int
+  ingredientId Int
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+
+  @@id([userId, ingredientId])
+}
+
+model Badge {
+  id          Int         @id @default(autoincrement())
+  code        String      @unique
+  name        String
+  description String
+  icon        String
+  condition   String
+  threshold   Int
+  createdAt   DateTime    @default(now())
+  users       UserBadge[]
+}
+
+model UserBadge {
+  userId     Int
+  badgeId    Int
+  unlockedAt DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge      Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@id([userId, badgeId])
+}
+
+model Challenge {
+  id          Int              @id @default(autoincrement())
+  title       String
+  description String
+  startDate   DateTime
+  endDate     DateTime
+  tagId       Int?
+  tag         Tag?             @relation(fields: [tagId], references: [id])
+  active      Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  entries     ChallengeEntry[]
+
+  @@index([active, startDate, endDate])
+}
+
+model ChallengeEntry {
+  id          Int       @id @default(autoincrement())
+  challengeId Int
+  recipeId    Int
+  userId      Int
+  createdAt   DateTime  @default(now())
+  challenge   Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  recipe      Recipe    @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([challengeId, recipeId])
+  @@index([challengeId])
+}
+
+model Technique {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  slug        String   @unique
+  description String
+  videoUrl    String?
+  iconUrl     String?
+  createdAt   DateTime @default(now())
+}
+
+model TastingLog {
+  id             Int      @id @default(autoincrement())
+  userId         Int
+  recipeId       Int
+  notes          String?
+  photoUrl       String?
+  personalRating Int?     // 1-5 — distinct de la note publique
+  adjustments    String?  // modifications perso
+  madeAt         DateTime @default(now())
+  createdAt      DateTime @default(now())
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe         Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@index([userId, madeAt])
+  @@index([recipeId])
+}
+
+model ApiKey {
+  id         Int       @id @default(autoincrement())
+  userId     Int
+  key        String    @unique
+  name       String
+  createdAt  DateTime  @default(now())
+  lastUsedAt DateTime?
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// --- Blog / articles de mixologie ---
+
+model Article {
+  id          Int           @id @default(autoincrement())
+  title       String
+  slug        String        @unique
+  content     String        // Markdown
+  excerpt     String
+  coverImage  String?
+  authorId    Int
+  author      User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  status      ArticleStatus @default(DRAFT)
+  publishedAt DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  tags        ArticleTag[]
+
+  @@index([status, publishedAt])
+  @@index([authorId])
+}
+
+model ArticleTag {
+  articleId Int
+  tagId     Int
+  article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([articleId, tagId])
+}
+
+// --- Substitutions d'ingrédients (#214) ---
+
+model IngredientSubstitution {
+  id            Int        @id @default(autoincrement())
+  ingredientId  Int
+  substituteId  Int
+  ratio         Float      @default(1.0)  // Facteur de conversion de quantité
+  notes         String?    // Ex: "plus sucré, réduire la quantité"
+  ingredient    Ingredient @relation("SubstituteFor", fields: [ingredientId], references: [id], onDelete: Cascade)
+  substitute    Ingredient @relation("SubstitutedBy", fields: [substituteId], references: [id], onDelete: Cascade)
+
+  @@unique([ingredientId, substituteId])
+}
+
+// --- Streaks (#216) ---
+
+model UserStreak {
+  id                    Int       @id @default(autoincrement())
+  userId                Int       @unique
+  currentStreak         Int       @default(0)
+  longestStreak         Int       @default(0)
+  lastActiveDate        DateTime?
+  streakFreezeAvailable Int       @default(1) // Pour les premium
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// --- Versioning recettes (#229) ---
+
+model RecipeRevision {
+  id        Int      @id @default(autoincrement())
+  recipeId  Int
+  recipe    Recipe   @relation("RecipeRevisions", fields: [recipeId], references: [id], onDelete: Cascade)
+  version   Int
+  data      Json     // Snapshot complet de la recette
+  authorId  Int
+  message   String?  // Description du changement
+  createdAt DateTime @default(now())
+
+  @@unique([recipeId, version])
+  @@index([recipeId, createdAt])
+}
+
+// --- Newsletter (#225) ---
+
+model NewsletterSubscription {
+  id               Int      @id @default(autoincrement())
+  userId           Int      @unique
+  email            String
+  active           Boolean  @default(true)
+  unsubscribeToken String   @unique @default(uuid())
+  createdAt        DateTime @default(now())
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// --- Glossaire (#223) ---
+
+model GlossaryEntry {
+  id              Int      @id @default(autoincrement())
+  term            String   @unique
+  slug            String   @unique
+  definition      String
+  longDescription String?  // Markdown
+  category        String   // "technique", "ingredient", "glass", "style", "history"
+  relatedRecipeIds Int[]
+  relatedEntryIds  Int[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([category])
+}
+
+enum ArticleStatus {
+  PUBLISHED
+  DRAFT
 }
 
 enum NotificationType {
@@ -193,6 +493,7 @@ enum NotificationType {
   COMMENT_ON_RECIPE
   RECIPE_APPROVED
   NEW_FOLLOWER
+  NEW_BADGE
 }
 
 enum Difficulty {
@@ -204,6 +505,11 @@ enum Difficulty {
 enum Role {
   USER
   ADMIN
+}
+
+enum Plan {
+  FREE
+  PREMIUM
 }
 
 enum RecipeStatus {
