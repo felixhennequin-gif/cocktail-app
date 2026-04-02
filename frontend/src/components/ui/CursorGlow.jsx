@@ -105,7 +105,7 @@ export default function CursorGlow() {
     const observer = new MutationObserver(() => {
       // After any DOM change, recalc rects every frame for 500ms
       // This catches CSS transitions that shift layout
-      recalcUntil = Math.max(recalcUntil, performance.now() + 500)
+      recalcUntil = Math.max(recalcUntil, performance.now() + 1000)
     })
     observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] })
 
@@ -164,6 +164,7 @@ export default function CursorGlow() {
       // Step 2: Séparation inter-bulles
       for (let i = 0; i < bubbles.length; i++) {
         for (let j = i + 1; j < bubbles.length; j++) {
+          if (bubbles[i].isResting || bubbles[j].isResting) continue
           const dx = bubbles[j].x - bubbles[i].x
           const dy = bubbles[j].y - bubbles[i].y
           const dist = Math.sqrt(dx * dx + dy * dy)
@@ -293,8 +294,8 @@ export default function CursorGlow() {
 
         // Step 4: Damping + position update
         if (b.isResting) {
-          b.vx *= 0.3
-          b.vy *= 0.3
+          b.vx = 0
+          b.vy = 0
         } else {
           b.vx *= 0.85
           b.vy *= 0.85
