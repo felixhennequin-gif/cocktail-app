@@ -1,4 +1,4 @@
-import { memo } from 'react'
+import { memo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { getImageUrl } from '../utils/image'
@@ -7,11 +7,13 @@ import Stars from './Stars'
 
 function RecipeCardGrid({ recipe, isFavorited, onToggleFavorite, userId, compareSelected, onToggleCompare }) {
   const { t } = useTranslation()
+  const [heartPop, setHeartPop] = useState(false)
 
   const handleFavorite = (e) => {
     e.preventDefault()
     e.stopPropagation()
     if (onToggleFavorite) onToggleFavorite(recipe.id)
+    setHeartPop(true)
   }
 
   const handleCompare = (e) => {
@@ -23,7 +25,8 @@ function RecipeCardGrid({ recipe, isFavorited, onToggleFavorite, userId, compare
   return (
     <Link
       to={`/recipes/${recipe.slug || recipe.id}`}
-      className="group flex flex-col bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-lg hover:border-gold-300 dark:hover:border-gold-600 hover:-translate-y-0.5 transition-all duration-200"
+      data-bubble-collider
+      className="recipe-card group flex flex-col bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
     >
       {/* Image */}
       <div className="relative w-full h-40 sm:h-44 aspect-video overflow-hidden bg-gray-100 dark:bg-gray-700">
@@ -53,7 +56,8 @@ function RecipeCardGrid({ recipe, isFavorited, onToggleFavorite, userId, compare
         {userId && (
           <button
             onClick={handleFavorite}
-            className={`absolute top-2 right-2 text-lg leading-none transition-colors drop-shadow ${isFavorited ? 'text-red-500' : 'text-white/70 hover:text-red-400'}`}
+            onAnimationEnd={() => setHeartPop(false)}
+            className={`absolute top-2 right-2 text-lg leading-none transition-colors drop-shadow ${heartPop ? 'heart-pop' : ''} ${isFavorited ? 'text-red-500' : 'text-white/70 hover:text-red-400'}`}
             aria-label={isFavorited ? t('recipes.removeFavorite') : t('recipes.addFavorite')}
             title={isFavorited ? t('recipes.removeFavorite') : t('recipes.addFavorite')}
           >

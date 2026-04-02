@@ -8,6 +8,13 @@ import { SkeletonCardGrid } from '../components/Skeleton'
 import { useAuth } from '../contexts/AuthContext'
 import useFavorites from '../hooks/useFavorites'
 import { getImageUrl } from '../utils/image'
+import CursorGlow from '../components/ui/CursorGlow'
+import { useScrollReveal } from '../hooks/useScrollReveal'
+
+function RevealSection({ className = '', children, ...props }) {
+  const ref = useScrollReveal()
+  return <section ref={ref} className={`scroll-reveal ${className}`} {...props}>{children}</section>
+}
 
 export default function LandingPage() {
   const { user, authFetch } = useAuth()
@@ -68,6 +75,7 @@ export default function LandingPage() {
 
   return (
     <div>
+      <CursorGlow />
       <Helmet>
         <title>Écume — Recettes & Inspiration</title>
         <meta name="description" content="Découvrez des centaines de recettes de cocktails. Recherchez, filtrez, notez et partagez vos cocktails préférés." />
@@ -107,12 +115,14 @@ export default function LandingPage() {
         <div className="flex justify-center gap-3">
           <Link
             to="/recipes"
+            data-bubble-collider
             className="px-6 py-2.5 bg-gold-400 text-ink-900 rounded-xl font-medium text-sm hover:bg-gold-300 transition-colors"
           >
             {t('recipes.heroCta')}
           </Link>
           <Link
             to="/roulette"
+            data-bubble-collider
             className="px-6 py-2.5 border border-gold-300 dark:border-gold-600 text-gold-600 dark:text-gold-400 rounded-xl font-medium text-sm hover:bg-gold-50 dark:hover:bg-ink-800 transition-colors"
           >
             {t('roulette.landingCta')}
@@ -120,6 +130,7 @@ export default function LandingPage() {
           {!user && (
             <Link
               to="/register"
+              data-bubble-collider
               className="px-6 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 rounded-xl font-medium text-sm hover:border-gold-400 dark:hover:border-gold-400 hover:text-gold-500 dark:hover:text-gold-400 transition-colors"
             >
               {t('recipes.heroCtaSecondary')}
@@ -135,9 +146,10 @@ export default function LandingPage() {
 
       {/* Cocktail du jour */}
       {dailyRecipe && (
+        <div className="daily-card-wrapper mb-10" data-bubble-collider>
         <Link
           to={`/recipes/${dailyRecipe.slug || dailyRecipe.id}`}
-          className="block mb-10 rounded-2xl overflow-hidden bg-gradient-to-r from-gold-100 to-gold-50 dark:from-ink-800 dark:to-ink-900 border border-gold-200 dark:border-gold-700/30 hover:shadow-lg transition-shadow"
+          className="daily-card block rounded-2xl overflow-hidden bg-gradient-to-r from-gold-100 to-gold-50 dark:from-ink-800 dark:to-ink-900 transition-shadow relative"
         >
           <div className="flex flex-col sm:flex-row">
             {dailyRecipe.imageUrl && (
@@ -180,6 +192,7 @@ export default function LandingPage() {
             </div>
           </div>
         </Link>
+        </div>
       )}
 
       {/* Défi de la semaine */}
@@ -215,7 +228,7 @@ export default function LandingPage() {
 
       {/* Explorer par catégorie */}
       {categories.length > 0 && (
-        <section className="mb-12">
+        <RevealSection className="mb-12">
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-2xl font-serif font-medium text-gray-900 dark:text-gray-100">
               {t('landing.exploreByCategory')}
@@ -235,6 +248,7 @@ export default function LandingPage() {
               <Link
                 key={cat.id}
                 to={`/categories/${cat.slug}`}
+                data-bubble-collider
                 className="group relative rounded-xl overflow-hidden bg-gradient-to-br from-gold-100 to-gold-50 dark:from-ink-800 dark:to-ink-900 border border-gold-200 dark:border-gold-700/30 p-5 hover:shadow-lg hover:border-gold-300 dark:hover:border-gold-600 transition-all"
               >
                 <h3 className="text-lg font-serif font-medium text-gray-900 dark:text-gray-100 mb-1 group-hover:text-gold-600 dark:group-hover:text-gold-400 transition-colors">
@@ -246,12 +260,12 @@ export default function LandingPage() {
               </Link>
             ))}
           </div>
-        </section>
+        </RevealSection>
       )}
 
       {/* Tags populaires — nuage de tags */}
       {tags.length > 0 && (
-        <section className="mb-12">
+        <RevealSection className="mb-12">
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-2xl font-serif font-medium text-gray-900 dark:text-gray-100">
               {t('landing.popularTags')}
@@ -272,6 +286,7 @@ export default function LandingPage() {
                 <Link
                   key={tag.id}
                   to={`/tags/${encodeURIComponent(tag.name)}`}
+                  data-bubble-collider
                   className={`${sizeClass} rounded-full font-medium bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-gold-300 dark:hover:border-gold-500 hover:text-gold-600 dark:hover:text-gold-400 transition-colors`}
                 >
                   {tag.name}
@@ -280,12 +295,12 @@ export default function LandingPage() {
               )
             })}
           </div>
-        </section>
+        </RevealSection>
       )}
 
       {/* Recommandations personnalisées — visible uniquement pour les utilisateurs connectés */}
       {user && (
-        <section className="mb-12">
+        <RevealSection className="mb-12">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-serif font-medium text-gray-900 dark:text-gray-100">
               {t('preferences.forYou')}
@@ -315,11 +330,11 @@ export default function LandingPage() {
               ))}
             </div>
           )}
-        </section>
+        </RevealSection>
       )}
 
       {/* Recettes populaires */}
-      <section>
+      <RevealSection>
         <h2 className="text-2xl font-serif font-medium text-gray-900 dark:text-gray-100 mb-6">
           {t('landing.popularTitle')}
         </h2>
@@ -332,14 +347,15 @@ export default function LandingPage() {
           </div>
         ) : (
           <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {popularRecipes.map((recipe) => (
-              <RecipeCardGrid
-                key={recipe.id}
-                recipe={recipe}
-                isFavorited={favoriteIds.has(recipe.id)}
-                onToggleFavorite={toggleFavorite}
-                userId={user?.id}
-              />
+            {popularRecipes.map((recipe, i) => (
+              <div key={recipe.id} className="stagger-child" style={{ transitionDelay: `${i * 60}ms` }}>
+                <RecipeCardGrid
+                  recipe={recipe}
+                  isFavorited={favoriteIds.has(recipe.id)}
+                  onToggleFavorite={toggleFavorite}
+                  userId={user?.id}
+                />
+              </div>
             ))}
           </div>
         )}
@@ -352,11 +368,11 @@ export default function LandingPage() {
             {t('landing.seeAllRecipes', { count: totalRecipes })} &rarr;
           </Link>
         </div>
-      </section>
+      </RevealSection>
 
       {/* Cocktails de saison */}
       {seasonalRecipes.length > 0 && (
-        <section className="mt-12">
+        <RevealSection className="mt-12">
           <h2 className="text-2xl font-serif font-medium text-gray-900 dark:text-gray-100 mb-1">
             {t('recipes.seasonal')}
           </h2>
@@ -376,7 +392,7 @@ export default function LandingPage() {
               />
             ))}
           </div>
-        </section>
+        </RevealSection>
       )}
     </div>
   )

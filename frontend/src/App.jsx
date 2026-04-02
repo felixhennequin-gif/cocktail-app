@@ -11,6 +11,7 @@ import ThemeToggle      from './components/ThemeToggle'
 import LanguageToggle   from './components/LanguageToggle'
 import Footer           from './components/Footer'
 import OfflineBanner    from './components/OfflineBanner'
+import BubblesBackground from './components/ui/BubblesBackground'
 
 // Pages d'entrée courantes — import statique
 import LandingPage      from './pages/LandingPage'
@@ -131,7 +132,7 @@ function Header() {
   const closeMenu = () => setMenuOpen(false)
 
   return (
-    <header role="banner" className="sticky top-0 z-40 bg-white/80 dark:bg-ink-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-700 px-4 md:px-6 py-4 transition-colors">
+    <header role="banner" data-bubble-collider data-bubble-fixed className="sticky top-0 z-40 bg-white/80 dark:bg-ink-950/70 backdrop-blur-xl border-b border-gray-200 dark:border-white/[0.06] px-4 md:px-6 py-4 transition-colors">
       {/* Ligne principale */}
       <div className="flex items-center gap-4">
         <Link
@@ -206,7 +207,7 @@ function Header() {
       {/* Menu déroulant mobile — toujours dans le DOM pour permettre la transition CSS */}
       <nav
         aria-label="Menu mobile"
-        className={`md:hidden absolute top-full left-0 right-0 bg-white dark:bg-ink-900 border-b border-gray-200 dark:border-gray-700 shadow-lg z-50 px-4 flex flex-col gap-3 text-sm overflow-hidden transition-all duration-200 ease-in-out ${
+        className={`md:hidden absolute top-full left-0 right-0 bg-white/95 dark:bg-ink-950/90 backdrop-blur-xl border-b border-gray-200 dark:border-white/[0.06] shadow-lg z-50 px-4 flex flex-col gap-3 text-sm overflow-hidden transition-all duration-200 ease-in-out ${
           menuOpen ? 'max-h-96 opacity-100 py-3' : 'max-h-0 opacity-0 pointer-events-none'
         }`}
       >
@@ -251,6 +252,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gold-50 dark:bg-ink-950 transition-colors">
+      <BubblesBackground />
       <Helmet defaultTitle={'Écume — ' + t('recipes.heroTitle')} />
       <a
         href="#main-content"
@@ -261,7 +263,7 @@ export default function App() {
       <Header />
       <OfflineBanner />
 
-      <main id="main-content" role="main" className="max-w-5xl mx-auto px-4 py-6 md:py-8">
+      <main id="main-content" role="main" className="relative z-1 max-w-5xl mx-auto px-4 py-6 md:py-8">
         <ErrorBoundary key={location.pathname}>
           <Suspense fallback={<div className="flex justify-center py-16" role="status"><div className="w-6 h-6 border-2 border-gold-400 border-t-transparent rounded-full animate-spin" /><span className="sr-only">Loading...</span></div>}>
           <Routes>

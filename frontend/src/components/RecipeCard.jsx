@@ -1,4 +1,4 @@
-import { memo } from 'react'
+import { memo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { getImageUrl } from '../utils/image'
@@ -7,17 +7,19 @@ import Stars from './Stars'
 
 function RecipeCard({ recipe, isFavorited, onToggleFavorite, userId, showAuthorProminent }) {
   const { t } = useTranslation()
+  const [heartPop, setHeartPop] = useState(false)
 
   const handleFavorite = (e) => {
     e.preventDefault()
     e.stopPropagation()
     if (onToggleFavorite) onToggleFavorite(recipe.id)
+    setHeartPop(true)
   }
 
   return (
     <Link
       to={`/recipes/${recipe.slug || recipe.id}`}
-      className="flex gap-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 hover:shadow-lg hover:border-gold-300 dark:hover:border-gold-600 hover:-translate-y-0.5 transition-all duration-200"
+      className="recipe-card flex gap-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
     >
       <div className="relative w-20 h-16 sm:w-24 sm:h-20 aspect-[6/5] shrink-0 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700">
         <img
@@ -51,7 +53,8 @@ function RecipeCard({ recipe, isFavorited, onToggleFavorite, userId, showAuthorP
             {userId && (
               <button
                 onClick={handleFavorite}
-                className={`text-lg leading-none transition-all duration-200 active:scale-125 ${isFavorited ? 'text-red-500' : 'text-gray-300 dark:text-gray-600 hover:text-red-400'}`}
+                onAnimationEnd={() => setHeartPop(false)}
+                className={`text-lg leading-none transition-all duration-200 ${heartPop ? 'heart-pop' : ''} ${isFavorited ? 'text-red-500' : 'text-gray-300 dark:text-gray-600 hover:text-red-400'}`}
                 aria-label={isFavorited ? t('recipes.removeFavorite') : t('recipes.addFavorite')}
                 title={isFavorited ? t('recipes.removeFavorite') : t('recipes.addFavorite')}
               >

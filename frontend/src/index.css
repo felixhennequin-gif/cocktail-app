@@ -70,9 +70,185 @@ body {
   animation: fade-in 0.4s ease-out both;
 }
 
+/* Scroll reveal */
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.scroll-reveal.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Staggered children — inherit parent reveal */
+.scroll-reveal .stagger-child {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.scroll-reveal.revealed .stagger-child {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Favorite heart bounce */
+@keyframes heart-pop {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.3); }
+  60% { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+
+.heart-pop {
+  animation: heart-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Liquid fill — recipe cards */
+.recipe-card {
+  position: relative;
+}
+
+.recipe-card::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 0%;
+  background: linear-gradient(to top, rgba(245, 158, 11, 0.06), transparent);
+  transition: height 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.recipe-card:hover::before {
+  height: 100%;
+}
+
+.recipe-card:hover {
+  border-color: rgba(245, 158, 11, 0.2);
+}
+
+.recipe-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Toast glassmorphism */
+.toast-glass {
+  background: rgba(23, 23, 23, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(100px) scale(0.8); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@keyframes toast-out {
+  from { opacity: 1; transform: translateX(0) scale(1); }
+  to   { opacity: 0; transform: translateX(60px) scale(0.9); }
+}
+
+.toast-in {
+  animation: toast-in 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.toast-out {
+  animation: toast-out 0.25s ease-in forwards;
+}
+
+/* Daily cocktail — rotating border glow */
+.daily-card-wrapper {
+  position: relative;
+  border-radius: 1rem;
+  padding: 2px;
+  background: conic-gradient(
+    from var(--border-angle, 0deg),
+    rgba(212, 160, 71, 0.5),
+    rgba(245, 158, 11, 0.15),
+    rgba(184, 115, 51, 0.4),
+    rgba(245, 158, 11, 0.15),
+    rgba(212, 160, 71, 0.5)
+  );
+  animation: rotate-border 6s linear infinite;
+}
+
+@property --border-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes rotate-border {
+  to { --border-angle: 360deg; }
+}
+
+.daily-card {
+  border-radius: calc(1rem - 2px);
+}
+
+/* Shimmer on hover */
+.daily-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    rgba(245, 158, 11, 0.06) 45%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(245, 158, 11, 0.06) 55%,
+    transparent 70%
+  );
+  transform: translateX(-100%);
+  transition: none;
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: 1;
+}
+
+.daily-card:hover::after {
+  animation: shimmer 0.8s ease forwards;
+}
+
+@keyframes shimmer {
+  to { transform: translateX(100%); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-slide-down,
   .animate-fade-in {
+    animation: none;
+  }
+  #bubbles-canvas,
+  .bubble-cloud-canvas {
+    display: none;
+  }
+  .recipe-card::before {
+    transition: none;
+  }
+  .heart-pop,
+  .toast-in,
+  .toast-out {
+    animation: none;
+  }
+  .scroll-reveal,
+  .scroll-reveal .stagger-child {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .daily-card-wrapper {
+    animation: none;
+    background: none;
+    border: 1px solid rgba(212, 160, 71, 0.3);
+  }
+  .daily-card:hover::after {
     animation: none;
   }
 }

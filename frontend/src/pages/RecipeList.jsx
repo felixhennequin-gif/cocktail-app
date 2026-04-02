@@ -9,8 +9,48 @@ import { useAuth } from '../contexts/AuthContext'
 import useFavorites from '../hooks/useFavorites'
 import useCompare from '../hooks/useCompare'
 import CompareBar from '../components/CompareBar'
+import { useScrollReveal } from '../hooks/useScrollReveal'
+import CursorGlow from '../components/ui/CursorGlow'
 
 const LIMIT = 12
+
+function RecipeGrid({ viewMode, recipes, favoriteIds, toggleFavorite, userId, isCompareSelected, toggleCompare }) {
+  const revealRef = useScrollReveal()
+  return (
+    <div
+      ref={revealRef}
+      className={`scroll-reveal ${
+        viewMode === 'grid'
+          ? 'grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'
+          : 'flex flex-col gap-3'
+      }`}
+    >
+      {recipes.map((recipe, i) =>
+        viewMode === 'grid' ? (
+          <div key={recipe.id} className="stagger-child" style={{ transitionDelay: `${i * 60}ms` }}>
+            <RecipeCardGrid
+              recipe={recipe}
+              isFavorited={favoriteIds.has(recipe.id)}
+              onToggleFavorite={toggleFavorite}
+              userId={userId}
+              compareSelected={isCompareSelected(recipe.id)}
+              onToggleCompare={toggleCompare}
+            />
+          </div>
+        ) : (
+          <div key={recipe.id} className="stagger-child" style={{ transitionDelay: `${i * 60}ms` }}>
+            <RecipeCard
+              recipe={recipe}
+              isFavorited={favoriteIds.has(recipe.id)}
+              onToggleFavorite={toggleFavorite}
+              userId={userId}
+            />
+          </div>
+        )
+      )}
+    </div>
+  )
+}
 
 export default function RecipeList() {
   const { user }                           = useAuth()
@@ -222,6 +262,7 @@ export default function RecipeList() {
 
   return (
     <div>
+      <CursorGlow />
       <Helmet>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
@@ -236,6 +277,7 @@ export default function RecipeList() {
       <div className="flex flex-wrap gap-2 mb-4 overflow-x-auto pb-1">
         <button
           onClick={() => setParam('categoryId', null)}
+          data-bubble-collider
           className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
             categoryId === null
               ? 'bg-gold-400 text-ink-900'
@@ -248,6 +290,7 @@ export default function RecipeList() {
           <button
             key={cat.id}
             onClick={() => setParam('categoryId', cat.id)}
+            data-bubble-collider
             className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
               categoryId === cat.id
                 ? 'bg-gold-400 text-ink-900'
@@ -267,6 +310,7 @@ export default function RecipeList() {
           <select
             value={currentSortIndex === -1 ? 0 : currentSortIndex}
             onChange={handleSortChange}
+            data-bubble-collider
             className="text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 px-2 py-1 focus:outline-none focus:ring-2 focus:ring-gold-400"
           >
             {SORT_OPTIONS.map((o, i) => (
@@ -278,6 +322,7 @@ export default function RecipeList() {
         {/* Bouton Filtres avancés */}
         <button
           onClick={() => setShowFilters((o) => !o)}
+          data-bubble-collider
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
             showFilters
               ? 'bg-gold-400 text-ink-900'
@@ -326,7 +371,7 @@ export default function RecipeList() {
           showFilters ? 'max-h-[500px] opacity-100 mb-6' : 'max-h-0 opacity-0'
         }`}
       >
-        <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/30 p-4 space-y-4">
+        <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/30 p-4 space-y-4" {...(showFilters ? { 'data-bubble-collider': '' } : {})}>
           {/* Tags */}
           {tags.length > 0 && (() => {
             const sorted = [...tags].sort((a, b) => (b.recipesCount || 0) - (a.recipesCount || 0))
@@ -463,33 +508,17 @@ export default function RecipeList() {
         </div>
       ) : (
         <>
-          <div className={
-            viewMode === 'grid'
-              ? 'grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'
-              : 'flex flex-col gap-3'
-          }>
-            {recipes.map((recipe) =>
-              viewMode === 'grid' ? (
-                <RecipeCardGrid
-                  key={recipe.id}
-                  recipe={recipe}
-                  isFavorited={favoriteIds.has(recipe.id)}
-                  onToggleFavorite={toggleFavorite}
-                  userId={user?.id}
-                  compareSelected={isCompareSelected(recipe.id)}
-                  onToggleCompare={toggleCompare}
-                />
-              ) : (
-                <RecipeCard
-                  key={recipe.id}
-                  recipe={recipe}
-                  isFavorited={favoriteIds.has(recipe.id)}
-                  onToggleFavorite={toggleFavorite}
-                  userId={user?.id}
-                />
-              )
-            )}
-          </div>
+          <RecipeGrid
+            key={viewMode}
+            viewMode={viewMode}
+            recipes={recipes}
+            favoriteIds={favoriteIds}
+            toggleFavorite={toggleFavorite}
+            userId={user?.id}
+            isCompareSelected={isCompareSelected}
+            toggleCompare={toggleCompare}
+          >
+          </RecipeGrid>
 
           {/* Skeletons pendant le chargement supplémentaire */}
           {loadingMore && (
