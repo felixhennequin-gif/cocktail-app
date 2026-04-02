@@ -6,6 +6,7 @@ export default function CursorGlow() {
   const canvasRef = useRef(null)
   const mouse = useRef({ x: -200, y: -200 })
   const pos = useRef({ x: -200, y: -200 })
+  const scroll = useRef({ x: 0, y: 0 })
   const rectsRef = useRef([])
   const lastRecalc = useRef(0)
   const prefersReducedMotion = useRef(false)
@@ -19,7 +20,7 @@ export default function CursorGlow() {
     const canvas = canvasRef.current
     const ctx = canvas.getContext('2d')
 
-    // Initialiser les bulles
+    // Initialiser les bulles (positions en page-space)
     const bubbles = Array.from({ length: BUBBLE_COUNT }, () => ({
       x: -200,
       y: -200,
@@ -41,35 +42,47 @@ export default function CursorGlow() {
     resize()
     window.addEventListener('resize', resize, { passive: true })
 
+    // Mouse en page coordinates
     const handleMouseMove = (e) => {
-      mouse.current.x = e.clientX
-      mouse.current.y = e.clientY
+      mouse.current.x = e.clientX + window.scrollX
+      mouse.current.y = e.clientY + window.scrollY
       if (firstMove) {
         firstMove = false
-        pos.current.x = e.clientX
-        pos.current.y = e.clientY
+        pos.current.x = mouse.current.x
+        pos.current.y = mouse.current.y
         for (const b of bubbles) {
-          b.x = e.clientX + (Math.random() - 0.5) * 40
-          b.y = e.clientY + (Math.random() - 0.5) * 40
+          b.x = mouse.current.x + (Math.random() - 0.5) * 40
+          b.y = mouse.current.y + (Math.random() - 0.5) * 40
         }
       }
     }
     window.addEventListener('mousemove', handleMouseMove, { passive: true })
 
-    // Cache des rects collidables
+    // Cache des rects collidables (en page-space)
     const recalcRects = () => {
       const now = performance.now()
       if (now - lastRecalc.current < 100) return
       lastRecalc.current = now
+      const sx = window.scrollX
+      const sy = window.scrollY
       const elements = document.querySelectorAll('[data-bubble-collider]')
       rectsRef.current = Array.from(elements).map(el => {
         const r = el.getBoundingClientRect()
-        return { left: r.left, top: r.top, right: r.right, bottom: r.bottom }
+        return {
+          left: r.left + sx,
+          top: r.top + sy,
+          right: r.right + sx,
+          bottom: r.bottom + sy,
+        }
       })
     }
 
     recalcRects()
-    const onScroll = () => requestAnimationFrame(recalcRects)
+    const onScroll = () => {
+      scroll.current.x = window.scrollX
+      scroll.current.y = window.scrollY
+      requestAnimationFrame(recalcRects)
+    }
     window.addEventListener('scroll', onScroll, { passive: true })
     window.addEventListener('resize', recalcRects, { passive: true })
 
@@ -83,7 +96,11 @@ export default function CursorGlow() {
 
       ctx.clearRect(0, 0, w, h)
 
-      // Lerp du centre vers la souris
+      // Mise à jour scroll ref chaque frame
+      scroll.current.x = window.scrollX
+      scroll.current.y = window.scrollY
+
+      // Lerp du centre vers la souris (page-space)
       pos.current.x += (mouse.current.x - pos.current.x) * 0.25
       pos.current.y += (mouse.current.y - pos.current.y) * 0.25
 
@@ -119,7 +136,7 @@ export default function CursorGlow() {
         }
       }
 
-      // Step 3: Collision avec les rects DOM
+      // Step 3: Collision avec les rects DOM (page-space)
       const rects = rectsRef.current
       for (const b of bubbles) {
         let colliding = false
@@ -178,11 +195,18 @@ export default function CursorGlow() {
         b.vy += (Math.random() - 0.5) * 0.15
       }
 
-      // Rendu
+      // Rendu — conversion page-space → viewport-space
+      const sx = scroll.current.x
+      const sy = scroll.current.y
       for (const b of bubbles) {
+        const screenX = b.x - sx
+        const screenY = b.y - sy
+
+        if (screenX < -50 || screenX > w + 50 || screenY < -50 || screenY > h + 50) continue
+
         ctx.beginPath()
         ctx.save()
-        ctx.translate(b.x, b.y)
+        ctx.translate(screenX, screenY)
         ctx.scale(b.scaleX, b.scaleY)
         ctx.arc(0, 0, b.radius, 0, Math.PI * 2)
         ctx.fillStyle = `rgba(245, 158, 11, ${b.opacity})`
