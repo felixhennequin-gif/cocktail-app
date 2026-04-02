@@ -8,6 +8,7 @@ import { SkeletonCardGrid } from '../components/Skeleton'
 import { useAuth } from '../contexts/AuthContext'
 import useFavorites from '../hooks/useFavorites'
 import { getImageUrl } from '../utils/image'
+import CursorGlow from '../components/ui/CursorGlow'
 
 export default function LandingPage() {
   const { user, authFetch } = useAuth()
@@ -68,6 +69,7 @@ export default function LandingPage() {
 
   return (
     <div>
+      <CursorGlow />
       <Helmet>
         <title>Écume — Recettes & Inspiration</title>
         <meta name="description" content="Découvrez des centaines de recettes de cocktails. Recherchez, filtrez, notez et partagez vos cocktails préférés." />
