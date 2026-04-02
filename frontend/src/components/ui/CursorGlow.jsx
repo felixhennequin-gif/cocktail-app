@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 
-const BUBBLE_COUNT = 22
+const BUBBLE_COUNT = 30
 
 export default function CursorGlow() {
   const canvasRef = useRef(null)
@@ -30,7 +30,9 @@ export default function CursorGlow() {
       scaleX: 1,
       scaleY: 1,
       speedMult: 0.6 + Math.random() * 0.8,
-      noiseMult: 0.5 + Math.random() * 1.5,
+      noiseMult: 0.6 + Math.random() * 0.8,
+      restingFrames: 0,
+      isResting: false,
     }))
 
     let firstMove = true
@@ -103,7 +105,7 @@ export default function CursorGlow() {
     const observer = new MutationObserver(() => {
       // After any DOM change, recalc rects every frame for 500ms
       // This catches CSS transitions that shift layout
-      recalcUntil = Math.max(recalcUntil, performance.now() + 500)
+      recalcUntil = Math.max(recalcUntil, performance.now() + 1000)
     })
     observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] })
 
@@ -148,11 +150,12 @@ export default function CursorGlow() {
 
       // Step 1: Attraction vers le curseur — force proportionnelle à la distance
       for (const b of bubbles) {
+        if (b.isResting) continue
         const dx = cx - b.x
         const dy = cy - b.y
         const dist = Math.sqrt(dx * dx + dy * dy)
         if (dist > 0.5) {
-          const strength = Math.min(dist * 0.004, 2.0) * b.speedMult
+          const strength = Math.min(dist * 0.008, 4.0) * b.speedMult
           b.vx += (dx / dist) * strength
           b.vy += (dy / dist) * strength
         }
@@ -161,6 +164,7 @@ export default function CursorGlow() {
       // Step 2: Séparation inter-bulles
       for (let i = 0; i < bubbles.length; i++) {
         for (let j = i + 1; j < bubbles.length; j++) {
+          if (bubbles[i].isResting || bubbles[j].isResting) continue
           const dx = bubbles[j].x - bubbles[i].x
           const dy = bubbles[j].y - bubbles[i].y
           const dist = Math.sqrt(dx * dx + dy * dy)
@@ -224,6 +228,15 @@ export default function CursorGlow() {
                 b.scaleY = 0.65; b.scaleX = 1.3
                 b.vy *= -0.1
               }
+
+              // Check if attraction points into the hitbox
+              const attractDx = cx - b.x
+              const attractDy = cy - b.y
+              const dot = attractDx * (-nx) + attractDy * (-ny)
+              if (dot > 0) {
+                b.isResting = true
+                b.restingFrames = 30
+              }
             }
           } else if (!inCorner) {
             // Edge/center zone: standard AABB min-penetration
@@ -246,24 +259,55 @@ export default function CursorGlow() {
 
             if (escape.px !== 0) { b.vx *= -0.1; b.scaleX = 0.6; b.scaleY = 1.35 }
             if (escape.py !== 0) { b.vy *= -0.1; b.scaleY = 0.6; b.scaleX = 1.35 }
+
+            // Check if attraction points into the hitbox
+            const attractDx = cx - b.x
+            const attractDy = cy - b.y
+            const dot = attractDx * escape.px + attractDy * escape.py
+            if (dot < 0) {
+              b.isResting = true
+              b.restingFrames = 30
+            }
           }
         }
 
+        // Resting state management
+        if (b.isResting && !colliding) {
+          b.restingFrames--
+          if (b.restingFrames <= 0) {
+            b.isResting = false
+          }
+        }
+        if (b.isResting && colliding) {
+          b.restingFrames = 30
+        }
+
         // Recovery toward round shape
-        if (!colliding) {
+        if (!colliding && !b.isResting) {
           b.scaleX += (1 - b.scaleX) * 0.12
           b.scaleY += (1 - b.scaleY) * 0.12
         }
+        if (!colliding && b.isResting) {
+          b.scaleX += (1 - b.scaleX) * 0.04
+          b.scaleY += (1 - b.scaleY) * 0.04
+        }
 
         // Step 4: Damping + position update
-        b.vx *= 0.85
-        b.vy *= 0.85
+        if (b.isResting) {
+          b.vx = 0
+          b.vy = 0
+        } else {
+          b.vx *= 0.85
+          b.vy *= 0.85
+        }
         b.x += b.vx
         b.y += b.vy
 
         // Step 5: Cohesion noise
-        b.vx += (Math.random() - 0.5) * 0.12 * b.noiseMult
-        b.vy += (Math.random() - 0.5) * 0.12 * b.noiseMult
+        if (!b.isResting) {
+          b.vx += (Math.random() - 0.5) * 0.05 * b.noiseMult
+          b.vy += (Math.random() - 0.5) * 0.05 * b.noiseMult
+        }
       }
 
       // Viewport boundary clamp (header + edges)

@@ -284,12 +284,12 @@ const logger = require('./logger');
 app.use((err, req, res, next) => {
   logger.error('server', err.message, { stack: err.stack, path: req.path });
   if (err.type === 'entity.parse.failed') {
-    return res.status(400).json({ error: 'JSON invalide' });
+    return res.status(400).json({ error: 'Invalid JSON' });
   }
   if (err.message && err.message.includes('non autorisé')) {
-    return res.status(400).json({ error: 'Fichier non autorisé : images uniquement' });
+    return res.status(400).json({ error: 'Unauthorized file: images only' });
   }
-  res.status(err.status || 500).json({ error: 'Erreur interne du serveur' });
+  res.status(err.status || 500).json({ error: 'Internal server error' });
 });
 
 // Nettoyage périodique des refresh tokens expirés (toutes les 24h)

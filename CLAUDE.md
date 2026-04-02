@@ -25,12 +25,13 @@ Serveur Debian local : `192.168.1.85`
 
 ## Git Workflow
 
-- Branche par défaut pour le développement : `dev`
-- Ne JAMAIS commit directement sur `main`
-- Toujours vérifier qu'on est sur `dev` avant de commencer (`git checkout dev`)
-- Commit sur `dev`, merge vers `main` uniquement après review
-- Ne pas push sauf demande explicite
-- Commit messages : conventional commits (`fix:`, `feat:`, `chore:`, etc.)
+- **Branche de travail : `dev`** — TOUJOURS travailler sur `dev`. Vérifier avec `git checkout dev` avant toute modification.
+- **Ne JAMAIS commit ni push sur `main`** — `main` est la branche de production, elle ne reçoit des changements que via PR ou merge explicite depuis `dev`.
+- **Push sur `dev`** — sauf indication contraire, tous les commits doivent être push sur `dev`.
+- **Merge vers `main`** — uniquement via Pull Request après review, ou merge manuel demandé explicitement par l'utilisateur.
+- **Deploy** — `scripts/deploy.sh` pull `main` automatiquement. Donc pour déployer en prod : merge `dev` → `main` puis le webhook déclenche le deploy.
+- **Dev server** — pour tester sur `dev`, utiliser Vite sur `:5173` (`npm run dev -- --host` dans `frontend/`).
+- Commit messages : conventional commits (`fix:`, `feat:`, `chore:`, `tweak:`, `debug:`, etc.)
 
 ## Architecture des dossiers
 
