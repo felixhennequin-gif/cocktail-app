@@ -303,7 +303,7 @@ export default function RecipeList() {
       </div>
 
       {/* Barre de tri + bouton Filtres + toggle vue */}
-      <div data-bubble-collider className="flex flex-wrap items-center gap-3 md:gap-4 mb-4 py-3 border-t border-b border-gray-100 dark:border-gray-700">
+      <div {...(showFilters ? { 'data-bubble-collider': '' } : {})} className="flex flex-wrap items-center gap-3 md:gap-4 mb-4 py-3 border-t border-b border-gray-100 dark:border-gray-700">
         {/* Tri */}
         <div className="flex items-center gap-2">
           <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">{t('recipes.sortLabel')}</span>
