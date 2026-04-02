@@ -10,6 +10,12 @@ import useFavorites from '../hooks/useFavorites'
 import { getImageUrl } from '../utils/image'
 import CursorGlow from '../components/ui/CursorGlow'
 import BubblesBackground from '../components/ui/BubblesBackground'
+import { useScrollReveal } from '../hooks/useScrollReveal'
+
+function RevealSection({ className = '', children, ...props }) {
+  const ref = useScrollReveal()
+  return <section ref={ref} className={`scroll-reveal ${className}`} {...props}>{children}</section>
+}
 
 export default function LandingPage() {
   const { user, authFetch } = useAuth()
@@ -219,7 +225,7 @@ export default function LandingPage() {
 
       {/* Explorer par catégorie */}
       {categories.length > 0 && (
-        <section className="mb-12">
+        <RevealSection className="mb-12">
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-2xl font-serif font-medium text-gray-900 dark:text-gray-100">
               {t('landing.exploreByCategory')}
@@ -250,12 +256,12 @@ export default function LandingPage() {
               </Link>
             ))}
           </div>
-        </section>
+        </RevealSection>
       )}
 
       {/* Tags populaires — nuage de tags */}
       {tags.length > 0 && (
-        <section className="mb-12">
+        <RevealSection className="mb-12">
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-2xl font-serif font-medium text-gray-900 dark:text-gray-100">
               {t('landing.popularTags')}
@@ -284,12 +290,12 @@ export default function LandingPage() {
               )
             })}
           </div>
-        </section>
+        </RevealSection>
       )}
 
       {/* Recommandations personnalisées — visible uniquement pour les utilisateurs connectés */}
       {user && (
-        <section className="mb-12">
+        <RevealSection className="mb-12">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-serif font-medium text-gray-900 dark:text-gray-100">
               {t('preferences.forYou')}
@@ -319,11 +325,11 @@ export default function LandingPage() {
               ))}
             </div>
           )}
-        </section>
+        </RevealSection>
       )}
 
       {/* Recettes populaires */}
-      <section>
+      <RevealSection>
         <h2 className="text-2xl font-serif font-medium text-gray-900 dark:text-gray-100 mb-6">
           {t('landing.popularTitle')}
         </h2>
@@ -336,14 +342,15 @@ export default function LandingPage() {
           </div>
         ) : (
           <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {popularRecipes.map((recipe) => (
-              <RecipeCardGrid
-                key={recipe.id}
-                recipe={recipe}
-                isFavorited={favoriteIds.has(recipe.id)}
-                onToggleFavorite={toggleFavorite}
-                userId={user?.id}
-              />
+            {popularRecipes.map((recipe, i) => (
+              <div key={recipe.id} className="stagger-child" style={{ transitionDelay: `${i * 60}ms` }}>
+                <RecipeCardGrid
+                  recipe={recipe}
+                  isFavorited={favoriteIds.has(recipe.id)}
+                  onToggleFavorite={toggleFavorite}
+                  userId={user?.id}
+                />
+              </div>
             ))}
           </div>
         )}
@@ -356,11 +363,11 @@ export default function LandingPage() {
             {t('landing.seeAllRecipes', { count: totalRecipes })} &rarr;
           </Link>
         </div>
-      </section>
+      </RevealSection>
 
       {/* Cocktails de saison */}
       {seasonalRecipes.length > 0 && (
-        <section className="mt-12">
+        <RevealSection className="mt-12">
           <h2 className="text-2xl font-serif font-medium text-gray-900 dark:text-gray-100 mb-1">
             {t('recipes.seasonal')}
           </h2>
@@ -380,7 +387,7 @@ export default function LandingPage() {
               />
             ))}
           </div>
-        </section>
+        </RevealSection>
       )}
     </div>
   )

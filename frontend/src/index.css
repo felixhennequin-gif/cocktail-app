@@ -70,6 +70,30 @@ body {
   animation: fade-in 0.4s ease-out both;
 }
 
+/* Scroll reveal */
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.scroll-reveal.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Staggered children — inherit parent reveal */
+.scroll-reveal .stagger-child {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.scroll-reveal.revealed .stagger-child {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 /* Liquid fill — recipe cards */
 .recipe-card {
   position: relative;
@@ -122,6 +146,12 @@ body {
     display: none;
   }
   .recipe-card::before {
+    transition: none;
+  }
+  .scroll-reveal,
+  .scroll-reveal .stagger-child {
+    opacity: 1;
+    transform: none;
     transition: none;
   }
 }
