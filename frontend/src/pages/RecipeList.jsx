@@ -509,6 +509,7 @@ export default function RecipeList() {
       ) : (
         <>
           <RecipeGrid
+            key={viewMode}
             viewMode={viewMode}
             recipes={recipes}
             favoriteIds={favoriteIds}
