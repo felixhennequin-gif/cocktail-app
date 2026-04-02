@@ -93,7 +93,7 @@ export default function LandingPage() {
       </Helmet>
 
       {/* Hero */}
-      <div className="mb-10 text-center py-10 sm:py-14">
+      <div className="mb-10 text-center py-10 sm:py-14" data-bubble-collider>
         <h1 className="text-4xl sm:text-5xl font-serif font-normal text-gray-900 dark:text-gray-100 leading-tight mb-4">
           {(() => {
             const highlights = new Set(t('recipes.heroTitleHighlight').split(','))
@@ -143,7 +143,7 @@ export default function LandingPage() {
 
       {/* Cocktail du jour */}
       {dailyRecipe && (
-        <div className="daily-card-wrapper mb-10">
+        <div className="daily-card-wrapper mb-10" data-bubble-collider>
         <Link
           to={`/recipes/${dailyRecipe.slug || dailyRecipe.id}`}
           className="daily-card block rounded-2xl overflow-hidden bg-gradient-to-r from-gold-100 to-gold-50 dark:from-ink-800 dark:to-ink-900 transition-shadow relative"
@@ -245,6 +245,7 @@ export default function LandingPage() {
               <Link
                 key={cat.id}
                 to={`/categories/${cat.slug}`}
+                data-bubble-collider
                 className="group relative rounded-xl overflow-hidden bg-gradient-to-br from-gold-100 to-gold-50 dark:from-ink-800 dark:to-ink-900 border border-gold-200 dark:border-gold-700/30 p-5 hover:shadow-lg hover:border-gold-300 dark:hover:border-gold-600 transition-all"
               >
                 <h3 className="text-lg font-serif font-medium text-gray-900 dark:text-gray-100 mb-1 group-hover:text-gold-600 dark:group-hover:text-gold-400 transition-colors">
@@ -270,7 +271,7 @@ export default function LandingPage() {
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
             {t('landing.popularTagsSubtitle')}
           </p>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2" data-bubble-collider>
             {tags.filter((tag) => tag.recipesCount > 0).slice(0, 20).map((tag) => {
               // Taille proportionnelle au nombre de recettes
               const maxCount = Math.max(...tags.map((t2) => t2.recipesCount || 0), 1)
@@ -313,7 +314,7 @@ export default function LandingPage() {
               {t('preferences.noRecommendations')}
             </p>
           ) : (
-            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" data-bubble-collider>
               {recommendedRecipes.map((recipe) => (
                 <RecipeCardGrid
                   key={recipe.id}
@@ -341,7 +342,7 @@ export default function LandingPage() {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" data-bubble-collider>
             {popularRecipes.map((recipe, i) => (
               <div key={recipe.id} className="stagger-child" style={{ transitionDelay: `${i * 60}ms` }}>
                 <RecipeCardGrid
@@ -376,7 +377,7 @@ export default function LandingPage() {
               {t(`recipes.season.${currentSeason}`)}
             </p>
           )}
-          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" data-bubble-collider>
             {seasonalRecipes.map((recipe) => (
               <RecipeCardGrid
                 key={recipe.id}

@@ -10,6 +10,7 @@ import useFavorites from '../hooks/useFavorites'
 import useCompare from '../hooks/useCompare'
 import CompareBar from '../components/CompareBar'
 import { useScrollReveal } from '../hooks/useScrollReveal'
+import CursorGlow from '../components/ui/CursorGlow'
 
 const LIMIT = 12
 
@@ -18,6 +19,7 @@ function RecipeGrid({ viewMode, recipes, favoriteIds, toggleFavorite, userId, is
   return (
     <div
       ref={revealRef}
+      data-bubble-collider
       className={`scroll-reveal ${
         viewMode === 'grid'
           ? 'grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'
@@ -261,6 +263,7 @@ export default function RecipeList() {
 
   return (
     <div>
+      <CursorGlow />
       <Helmet>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
@@ -365,7 +368,7 @@ export default function RecipeList() {
           showFilters ? 'max-h-[500px] opacity-100 mb-6' : 'max-h-0 opacity-0'
         }`}
       >
-        <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/30 p-4 space-y-4">
+        <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/30 p-4 space-y-4" data-bubble-collider>
           {/* Tags */}
           {tags.length > 0 && (() => {
             const sorted = [...tags].sort((a, b) => (b.recipesCount || 0) - (a.recipesCount || 0))

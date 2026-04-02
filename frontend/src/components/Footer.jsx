@@ -6,7 +6,7 @@ export default function Footer() {
   const { t } = useTranslation()
 
   return (
-    <footer className="relative z-1 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-ink-900 transition-colors">
+    <footer data-bubble-collider className="relative z-1 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-ink-900 transition-colors">
       <div className="max-w-5xl mx-auto px-4 md:px-6 py-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
         <Logo className="h-8 text-gray-900 dark:text-gray-100" />
 

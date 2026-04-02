@@ -225,7 +225,8 @@ body {
   .animate-fade-in {
     animation: none;
   }
-  #bubbles-canvas {
+  #bubbles-canvas,
+  .bubble-cloud-canvas {
     display: none;
   }
   .recipe-card::before {
