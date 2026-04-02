@@ -308,6 +308,7 @@ export default function RecipeList() {
           <select
             value={currentSortIndex === -1 ? 0 : currentSortIndex}
             onChange={handleSortChange}
+            data-bubble-collider
             className="text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 px-2 py-1 focus:outline-none focus:ring-2 focus:ring-gold-400"
           >
             {SORT_OPTIONS.map((o, i) => (
@@ -319,6 +320,7 @@ export default function RecipeList() {
         {/* Bouton Filtres avancés */}
         <button
           onClick={() => setShowFilters((o) => !o)}
+          data-bubble-collider
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
             showFilters
               ? 'bg-gold-400 text-ink-900'
