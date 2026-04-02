@@ -5,4 +5,11 @@ const parseId = (value) => {
   return id;
 };
 
-module.exports = { parseId };
+const parseIdOrSlug = (value) => {
+  if (!value) return null;
+  const asInt = parseInt(value);
+  if (!isNaN(asInt) && asInt > 0 && String(asInt) === value) return { id: asInt };
+  return { slug: value };
+};
+
+module.exports = { parseId, parseIdOrSlug };

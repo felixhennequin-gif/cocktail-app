@@ -81,7 +81,7 @@ export default function RecipeDetail() {
   }
 
   if (loading) return <p className="text-center text-gray-400 dark:text-gray-500 py-16">{t('common.loading')}</p>
-  if (error) return (
+  if (error || !recipe) return (
     <div className="flex flex-col items-center justify-center min-h-[50vh] text-center px-4">
       <div className="text-5xl mb-4">🍹</div>
       <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-2">{t('recipes.notFound')}</h2>
@@ -144,14 +144,14 @@ export default function RecipeDetail() {
         <meta property="og:title" content={recipe.name} />
         <meta property="og:description" content={metaDescription} />
         <meta property="og:type" content="article" />
-        <meta property="og:url" content={`${window.location.origin}/recipes/${recipe.id}`} />
+        <meta property="og:url" content={`${window.location.origin}/recipes/${recipe.slug || recipe.id}`} />
         {recipe.imageUrl && <meta property="og:image" content={getImageUrl(recipe.imageUrl)} />}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={recipe.name} />
         <meta name="twitter:description" content={metaDescription} />
         {recipe.imageUrl && <meta name="twitter:image" content={getImageUrl(recipe.imageUrl)} />}
         <script type="application/ld+json">{jsonLd}</script>
-        <link rel="canonical" href={`https://cocktail-app.fr/recipes/${recipe.id}`} />
+        <link rel="canonical" href={`https://cocktail-app.fr/recipes/${recipe.slug || recipe.id}`} />
       </Helmet>
 
       <AddToCollectionModal
@@ -174,7 +174,7 @@ export default function RecipeDetail() {
       {recipe.parentRecipe && (
         <div className="mb-4 px-4 py-3 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-700 rounded-lg text-sm text-indigo-700 dark:text-indigo-400">
           {t('recipes.variantOfFull')}{' '}
-          <Link to={`/recipes/${recipe.parentRecipe.id}`} className="font-semibold hover:underline">
+          <Link to={`/recipes/${recipe.parentRecipe.slug || recipe.parentRecipe.id}`} className="font-semibold hover:underline">
             {recipe.parentRecipe.name}
           </Link>
         </div>
@@ -273,7 +273,7 @@ export default function RecipeDetail() {
                 {recipe.variants.map((v) => (
                   <Link
                     key={v.id}
-                    to={`/recipes/${v.id}`}
+                    to={`/recipes/${v.slug || v.id}`}
                     className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md hover:border-gold-300 dark:hover:border-gold-500 transition-all"
                   >
                     <img
@@ -311,7 +311,7 @@ export default function RecipeDetail() {
           {recipe.steps?.length > 0 && (
             <div className="mb-8">
               <Link
-                to={`/recipes/${recipe.id}/party`}
+                to={`/recipes/${recipe.slug || recipe.id}/party`}
                 onMouseEnter={() => { import('../pages/PartyMode') }}
                 className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-700 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
               >

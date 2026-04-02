@@ -3,6 +3,7 @@ const { Pool } = require('pg');
 const { PrismaPg } = require('@prisma/adapter-pg');
 const { PrismaClient } = require('@prisma/client');
 const data = require('./seed-data.json');
+const { slugify } = require('../src/utils/slugify');
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
@@ -18,7 +19,7 @@ async function seed() {
   // Créer toutes les catégories et les indexer par nom
   const categoryMap = {};
   for (const name of data.categories) {
-    const slug = name.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9 -]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-');
+    const slug = slugify(name);
     const category = await prisma.category.create({ data: { name, slug } });
     categoryMap[name] = category.id;
   }
@@ -37,6 +38,7 @@ async function seed() {
     const recipe = await prisma.recipe.create({
       data: {
         name:        recette.name,
+        slug:        slugify(recette.name),
         description: recette.description,
         difficulty:  recette.difficulty,
         prepTime:    recette.prepTime,

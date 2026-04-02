@@ -51,10 +51,14 @@ const createTestCategory = async (name = 'Cocktails') => {
   });
 };
 
+// Compteur pour générer des slugs uniques dans les tests
+let recipeSlugCounter = 0;
+
 // Crée une recette de test minimale
 const createTestRecipe = async ({ authorId = null, categoryId, status = 'PUBLISHED', name = 'Test Mojito' } = {}) => {
+  const slug = `${slugify(name)}-${++recipeSlugCounter}-${Date.now()}`;
   return prisma.recipe.create({
-    data: { name, difficulty: 'EASY', prepTime: 5, categoryId, authorId, status },
+    data: { name, slug, difficulty: 'EASY', prepTime: 5, categoryId, authorId, status },
   });
 };
 

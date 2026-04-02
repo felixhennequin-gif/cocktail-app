@@ -337,13 +337,13 @@ export default function CocktailRoulette() {
               </div>
               <div className="flex gap-3">
                 <Link
-                  to={`/recipes/${result.id}`}
+                  to={`/recipes/${result.slug || result.id}`}
                   className="px-5 py-2 bg-gold-400 text-ink-900 rounded-lg font-medium text-sm hover:bg-gold-300 transition-colors"
                 >
                   {t('roulette.seeRecipe')}
                 </Link>
                 <Link
-                  to={`/recipes/${result.id}/party`}
+                  to={`/recipes/${result.slug || result.id}/party`}
                   className="px-5 py-2 border border-gold-300 dark:border-gold-600 text-gold-600 dark:text-gold-400 rounded-lg font-medium text-sm hover:bg-gold-50 dark:hover:bg-ink-800 transition-colors"
                 >
                   {t('roulette.partyMode')}

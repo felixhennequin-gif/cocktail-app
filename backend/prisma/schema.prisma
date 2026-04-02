@@ -84,6 +84,7 @@ model RefreshToken {
 model Recipe {
   id          Int                @id @default(autoincrement())
   name        String
+  slug        String             @unique
   description String?
   imageUrl    String?
   difficulty  Difficulty

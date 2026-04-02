@@ -194,13 +194,13 @@ export default function RecipeSubmit() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       })
+      const data = await res.json()
       if (!res.ok) {
-        const data = await res.json()
         throw new Error(data.error || 'Erreur lors de la soumission')
       }
       if (editId) {
         showToast(t('submit.editSuccess'), 'success')
-        navigate(`/recipes/${editId}`)
+        navigate(`/recipes/${data.slug || editId}`)
       } else {
         sessionStorage.removeItem('recipe-draft')
         showToast(isAdmin ? t('submit.publishedToast') : t('submit.submittedToast'), 'success')

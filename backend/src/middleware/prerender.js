@@ -112,12 +112,14 @@ async function prerenderMiddleware(req, res, next) {
   const fullUrl = `${siteUrl}${req.originalUrl}`;
 
   try {
-    // Page de détail recette : /recipes/:id
-    const recipeMatch = req.path.match(/^\/recipes\/(\d+)$/);
+    // Page de détail recette : /recipes/:id ou /recipes/:slug
+    const recipeMatch = req.path.match(/^\/recipes\/([a-z0-9-]+)$/);
     if (recipeMatch) {
-      const id = parseInt(recipeMatch[1], 10);
+      const param = recipeMatch[1];
+      const asInt = parseInt(param);
+      const where = (!isNaN(asInt) && String(asInt) === param) ? { id: asInt } : { slug: param };
       const recipe = await prisma.recipe.findUnique({
-        where: { id },
+        where,
         include: {
           category: true,
           author: true,
@@ -129,13 +131,13 @@ async function prerenderMiddleware(req, res, next) {
         const desc = recipe.description || `${recipe.name} — Recette de cocktail`;
         // Calcul de la note moyenne pour le JSON-LD
         const agg = await prisma.rating.aggregate({
-          where: { recipeId: id },
+          where: { recipeId: recipe.id },
           _avg: { score: true },
           _count: { score: true },
         });
         const jsonLd = buildRecipeJsonLd(recipe, siteUrl, agg._avg.score, agg._count.score);
         // OG image dynamique générée par l'endpoint /api/recipes/:id/og-image
-        const ogImage = `${siteUrl}/api/recipes/${id}/og-image`;
+        const ogImage = `${siteUrl}/api/recipes/${recipe.id}/og-image`;
         return res.send(renderMetaPage({
           title: `${recipe.name} — Écume`,
           description: desc.substring(0, 160),

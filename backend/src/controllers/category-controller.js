@@ -1,12 +1,5 @@
 const prisma = require('../prisma');
-
-// Génère un slug URL-friendly à partir d'un nom
-const generateSlug = (name) =>
-  name.trim().toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // retirer les accents
-    .replace(/[^a-z0-9 -]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-');
+const { slugify } = require('../utils/slugify');
 
 // GET /categories
 const getAllCategories = async (req, res) => {
@@ -62,4 +55,4 @@ const getCategoryBySlug = async (req, res, next) => {
   }
 };
 
-module.exports = { getAllCategories, getCategoryBySlug, generateSlug };
+module.exports = { getAllCategories, getCategoryBySlug };

@@ -1,21 +1,7 @@
 const prisma = require('../prisma');
 const { badRequest, notFound } = require('../helpers');
 const { createTechniqueSchema, updateTechniqueSchema, formatZodError } = require('../schemas');
-
-/**
- * Génère un slug à partir d'un nom :
- * - minuscules
- * - espaces → tirets
- * - supprime les caractères spéciaux (accents, ponctuation…)
- */
-const generateSlug = (name) =>
-  name
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '') // supprime les diacritiques
-    .replace(/[^a-z0-9\s-]/g, '')
-    .trim()
-    .replace(/\s+/g, '-');
+const { slugify } = require('../utils/slugify');
 
 // GET /techniques — liste toutes les techniques (ordre alphabétique)
 const getTechniques = async (req, res, next) => {
@@ -54,7 +40,7 @@ const createTechnique = async (req, res, next) => {
     }
 
     const { name, description, videoUrl, iconUrl } = parsed.data;
-    const slug = generateSlug(name);
+    const slug = slugify(name);
 
     // Vérifier l'unicité du nom et du slug
     const existing = await prisma.technique.findFirst({

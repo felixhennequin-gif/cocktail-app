@@ -5,15 +5,16 @@ const path = require('path');
 const fs = require('fs');
 const prisma = require('../prisma');
 const { getCache, setCache } = require('../cache');
+const { parseIdOrSlug } = require('../helpers/parse-id');
 
 const router = Router();
 const SITE_URL = process.env.SITE_URL || 'https://cocktail-app.fr';
 const uploadsDir = path.join(__dirname, '..', '..', 'uploads');
 
 // Charger la recette complète avec toutes les relations
-async function loadRecipe(id) {
+async function loadRecipe(where) {
   return prisma.recipe.findUnique({
-    where: { id },
+    where,
     include: {
       category: true,
       author: true,
@@ -28,17 +29,18 @@ async function loadRecipe(id) {
 // GET /recipes/:id/pdf — Export PDF d'une recette
 router.get('/:id/pdf', async (req, res) => {
   try {
-    const id = parseInt(req.params.id);
-    if (isNaN(id)) return res.status(400).json({ error: 'id invalide' });
+    const parsed = parseIdOrSlug(req.params.id);
+    if (!parsed) return res.status(400).json({ error: 'id invalide' });
+    const where = parsed.id ? { id: parsed.id } : { slug: parsed.slug };
 
-    const recipe = await loadRecipe(id);
+    const recipe = await loadRecipe(where);
     if (!recipe || recipe.status !== 'PUBLISHED') {
       return res.status(404).json({ error: 'Recette introuvable' });
     }
 
     // Note moyenne
     const agg = await prisma.rating.aggregate({
-      where: { recipeId: id },
+      where: { recipeId: recipe.id },
       _avg: { score: true },
       _count: { score: true },
     });
@@ -106,7 +108,7 @@ router.get('/:id/pdf', async (req, res) => {
     doc.moveTo(50, doc.y).lineTo(545, doc.y).strokeColor('#E5E5E5').stroke();
     doc.moveDown(0.5);
     doc.fontSize(9).fillColor('#999999').text(
-      `${SITE_URL}/recipes/${recipe.id}  •  Écume`,
+      `${SITE_URL}/recipes/${recipe.slug}  •  Écume`,
       { align: 'center' }
     );
 
@@ -120,11 +122,17 @@ router.get('/:id/pdf', async (req, res) => {
 // GET /recipes/:id/og-image — Image OG dynamique 1200x630
 router.get('/:id/og-image', async (req, res) => {
   try {
-    const id = parseInt(req.params.id);
-    if (isNaN(id)) return res.status(400).json({ error: 'id invalide' });
+    const parsed = parseIdOrSlug(req.params.id);
+    if (!parsed) return res.status(400).json({ error: 'id invalide' });
+    const where = parsed.id ? { id: parsed.id } : { slug: parsed.slug };
 
-    // Cache Redis (24h)
-    const cacheKey = `og-image:${id}`;
+    const recipe = await loadRecipe(where);
+    if (!recipe || recipe.status !== 'PUBLISHED') {
+      return res.status(404).json({ error: 'Recette introuvable' });
+    }
+
+    // Cache Redis (24h) — clé basée sur l'id canonique
+    const cacheKey = `og-image:${recipe.id}`;
     const cached = await getCache(cacheKey);
     if (cached) {
       res.setHeader('Content-Type', 'image/png');
@@ -132,13 +140,8 @@ router.get('/:id/og-image', async (req, res) => {
       return res.send(Buffer.from(cached, 'base64'));
     }
 
-    const recipe = await loadRecipe(id);
-    if (!recipe || recipe.status !== 'PUBLISHED') {
-      return res.status(404).json({ error: 'Recette introuvable' });
-    }
-
     const agg = await prisma.rating.aggregate({
-      where: { recipeId: id },
+      where: { recipeId: recipe.id },
       _avg: { score: true },
       _count: { score: true },
     });

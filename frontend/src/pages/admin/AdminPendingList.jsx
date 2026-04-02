@@ -105,7 +105,7 @@ export default function AdminPendingList() {
 
               <div className="flex gap-2 shrink-0">
                 <Link
-                  to={`/recipes/${recipe.id}`}
+                  to={`/recipes/${recipe.slug || recipe.id}`}
                   className="px-3 py-1.5 text-xs border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 rounded-lg hover:border-gray-300 dark:hover:border-gray-500 transition-colors"
                 >
                   {t('admin.view')}

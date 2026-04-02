@@ -176,7 +176,7 @@ export default function AdventCalendar() {
                   )}
                 </div>
                 <Link
-                  to={`/recipes/${selectedRecipe.id}`}
+                  to={`/recipes/${selectedRecipe.slug || selectedRecipe.id}`}
                   className="inline-block px-5 py-2 bg-gold-400 text-ink-900 rounded-lg font-semibold hover:bg-gold-300 transition-colors"
                 >
                   {t('advent.viewRecipe')}
