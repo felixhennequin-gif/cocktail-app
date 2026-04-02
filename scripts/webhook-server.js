@@ -52,15 +52,15 @@ const server = http.createServer((req, res) => {
       return
     }
 
-    // Ignorer tout ce qui n'est pas un push sur main
-    if (payload.ref !== 'refs/heads/main') {
+    // Ignorer tout ce qui n'est pas un push sur dev
+    if (payload.ref !== 'refs/heads/dev') {
       console.log(`[${new Date().toISOString()}] Push ignoré (${payload.ref})`)
       res.writeHead(200)
       res.end('Branche ignorée')
       return
     }
 
-    console.log(`[${new Date().toISOString()}] Push sur main — lancement déploiement`)
+    console.log(`[${new Date().toISOString()}] Push sur dev — lancement déploiement`)
 
     // Répondre à GitHub immédiatement (délai max 10s côté GitHub)
     res.writeHead(200)
