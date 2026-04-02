@@ -84,8 +84,8 @@ export default function CursorGlow() {
       ctx.clearRect(0, 0, w, h)
 
       // Lerp du centre vers la souris
-      pos.current.x += (mouse.current.x - pos.current.x) * 0.08
-      pos.current.y += (mouse.current.y - pos.current.y) * 0.08
+      pos.current.x += (mouse.current.x - pos.current.x) * 0.25
+      pos.current.y += (mouse.current.y - pos.current.y) * 0.25
 
       const cx = pos.current.x
       const cy = pos.current.y
@@ -96,7 +96,7 @@ export default function CursorGlow() {
         const dy = cy - b.y
         const dist = Math.sqrt(dx * dx + dy * dy)
         if (dist > 0.1) {
-          const force = 0.06
+          const force = 0.15
           b.vx += (dx / dist) * force
           b.vy += (dy / dist) * force
         }
@@ -168,8 +168,8 @@ export default function CursorGlow() {
         }
 
         // Step 4: Damping + mise à jour position
-        b.vx *= 0.88
-        b.vy *= 0.88
+        b.vx *= 0.82
+        b.vy *= 0.82
         b.x += b.vx
         b.y += b.vy
 
