@@ -1,11 +1,11 @@
 const prisma = require('../prisma');
-const { badRequest } = require('../helpers');
+const { badRequest, sendError } = require('../helpers');
 
 // GET /push/vapid-key — retourne la clé publique VAPID (pas d'auth requise)
 const getVapidKey = (req, res) => {
   const key = process.env.VAPID_PUBLIC_KEY;
   if (!key) {
-    return res.status(503).json({ error: 'Push notifications non configurées sur ce serveur' });
+    return sendError(res, 503, 'Push notifications non configurées sur ce serveur', 'SERVICE_UNAVAILABLE');
   }
   res.json({ publicKey: key });
 };

@@ -14,7 +14,7 @@ const logger = require('../logger');
 const { createNotification, notifyFollowers } = require('../services/notification-service');
 const { bustRecipeCache } = require('../services/recipe-cache-service');
 const { resolveTagNames } = require('./tag-controller');
-const { parseId, parseIdOrSlug, badRequest, notFound, forbidden } = require('../helpers');
+const { parseId, parseIdOrSlug, badRequest, notFound, forbidden, validationError } = require('../helpers');
 const { generateRecipeSlug, uniqueSlug } = require('../utils/slugify');
 const { includeDetail, includeList, enrichRecipes, flattenRecipe, handlePrismaError } = require('../helpers/recipe-helpers');
 const { createRecipeSchema, updateRecipeSchema, formatZodError } = require('../schemas');
@@ -27,7 +27,7 @@ const getAllRecipes = async (req, res, next) => {
   try {
     const parsed = recipeListSchema.safeParse(req.query);
     if (!parsed.success) {
-      return res.status(400).json({ error: parsed.error.flatten().fieldErrors, code: 'VALIDATION_ERROR' });
+      return validationError(res, parsed.error);
     }
 
     const result = await search({ ...parsed.data, user: req.user });
