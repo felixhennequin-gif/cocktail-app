@@ -277,6 +277,7 @@ export default function RecipeList() {
       <div className="flex flex-wrap gap-2 mb-4 overflow-x-auto pb-1">
         <button
           onClick={() => setParam('categoryId', null)}
+          data-bubble-collider
           className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
             categoryId === null
               ? 'bg-gold-400 text-ink-900'
@@ -289,6 +290,7 @@ export default function RecipeList() {
           <button
             key={cat.id}
             onClick={() => setParam('categoryId', cat.id)}
+            data-bubble-collider
             className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
               categoryId === cat.id
                 ? 'bg-gold-400 text-ink-900'
