@@ -126,6 +126,13 @@ export default function PartyMode() {
     setCurrentStep((s) => Math.max(s - 1, -1))
   }, [])
 
+  const handleExit = useCallback(() => {
+    try {
+      if (document.fullscreenElement) document.exitFullscreen().catch(() => {})
+    } catch {}
+    navigate(`/recipes/${id}`)
+  }, [navigate, id])
+
   // Navigation clavier
   useEffect(() => {
     const handler = (e) => {
@@ -135,7 +142,7 @@ export default function PartyMode() {
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [goNext, goPrev])
+  }, [goNext, goPrev, handleExit])
 
   const { handleTouchStart, handleTouchEnd } = useSwipe(goNext, goPrev)
 
@@ -146,13 +153,6 @@ export default function PartyMode() {
       else next.add(idx)
       return next
     })
-  }
-
-  const handleExit = () => {
-    try {
-      if (document.fullscreenElement) document.exitFullscreen().catch(() => {})
-    } catch {}
-    navigate(`/recipes/${id}`)
   }
 
   // Écran de chargement

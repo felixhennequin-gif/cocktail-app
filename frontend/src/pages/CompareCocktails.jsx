@@ -35,8 +35,8 @@ function classifyIngredients(ingredientsA, ingredientsB) {
 }
 
 function RecipeColumn({ recipe, side }) {
-  if (!recipe) return null
   const { t } = useTranslation()
+  if (!recipe) return null
 
   return (
     <div className="flex-1 min-w-0">
