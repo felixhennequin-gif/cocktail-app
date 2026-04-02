@@ -38,8 +38,8 @@ export default function CursorGlow() {
 
     let w, h
     const resize = () => {
-      w = canvas.width = window.innerWidth
-      h = canvas.height = window.innerHeight
+      w = canvas.width = document.documentElement.clientWidth
+      h = canvas.height = document.documentElement.clientHeight
     }
     resize()
     window.addEventListener('resize', resize, { passive: true })
@@ -172,52 +172,66 @@ export default function CursorGlow() {
       for (const b of bubbles) {
         let colliding = false
 
-        const resolveCollision = (bx, by, rect) => {
-          if (bx + b.radius < rect.left || bx - b.radius > rect.right ||
-              by + b.radius < rect.top  || by - b.radius > rect.bottom) {
-            return false
+        // Resolve collision for page-space rects
+        for (const rect of pageRects) {
+          if (b.x + b.radius < rect.left || b.x - b.radius > rect.right ||
+              b.y + b.radius < rect.top  || b.y - b.radius > rect.bottom) {
+            continue
           }
 
+          colliding = true
+
           const penetrations = [
-            { depth: (bx + b.radius) - rect.left,   px: -1, py: 0  },
-            { depth: rect.right - (bx - b.radius),  px: 1,  py: 0  },
-            { depth: (by + b.radius) - rect.top,    px: 0,  py: -1 },
-            { depth: rect.bottom - (by - b.radius), px: 0,  py: 1  },
+            { depth: (b.x + b.radius) - rect.left,   px: -1, py: 0  },
+            { depth: rect.right - (b.x - b.radius),  px: 1,  py: 0  },
+            { depth: (b.y + b.radius) - rect.top,    px: 0,  py: -1 },
+            { depth: rect.bottom - (b.y - b.radius),  px: 0,  py: 1  },
           ]
 
           const valid = penetrations.filter(p => p.depth > 0)
-          if (valid.length === 0) return false
-
+          if (valid.length === 0) continue
           valid.sort((a, c) => a.depth - c.depth)
           const escape = valid[0]
 
           b.x += escape.px * escape.depth
           b.y += escape.py * escape.depth
 
-          if (escape.px !== 0) {
-            b.vx *= -0.1
-            b.scaleX = 0.6
-            b.scaleY = 1.35
-          }
-          if (escape.py !== 0) {
-            b.vy *= -0.1
-            b.scaleY = 0.6
-            b.scaleX = 1.35
-          }
-
-          return true
+          if (escape.px !== 0) { b.vx *= -0.1; b.scaleX = 0.6; b.scaleY = 1.35 }
+          if (escape.py !== 0) { b.vy *= -0.1; b.scaleY = 0.6; b.scaleX = 1.35 }
         }
 
-        // Normal elements: page-space collision
-        for (const rect of pageRects) {
-          if (resolveCollision(b.x, b.y, rect)) colliding = true
-        }
-
-        // Fixed/sticky elements: viewport-space collision
+        // Resolve collision for fixed/sticky rects (viewport-space)
         const viewX = b.x - sx
         const viewY = b.y - sy
+
         for (const rect of fixedRects) {
-          if (resolveCollision(viewX, viewY, rect)) colliding = true
+          if (viewX + b.radius < rect.left || viewX - b.radius > rect.right ||
+              viewY + b.radius < rect.top  || viewY - b.radius > rect.bottom) {
+            continue
+          }
+
+          colliding = true
+
+          const penetrations = [
+            { depth: (viewX + b.radius) - rect.left,   px: -1, py: 0  },
+            { depth: rect.right - (viewX - b.radius),  px: 1,  py: 0  },
+            { depth: (viewY + b.radius) - rect.top,    px: 0,  py: -1 },
+            { depth: rect.bottom - (viewY - b.radius),  px: 0,  py: 1  },
+          ]
+
+          const valid = penetrations.filter(p => p.depth > 0)
+          if (valid.length === 0) continue
+          valid.sort((a, c) => a.depth - c.depth)
+          const escape = valid[0]
+
+          // For fixed rects, compute target viewport position then convert to page-space
+          const targetViewX = viewX + escape.px * escape.depth
+          const targetViewY = viewY + escape.py * escape.depth
+          b.x = targetViewX + sx
+          b.y = targetViewY + sy
+
+          if (escape.px !== 0) { b.vx *= -0.1; b.scaleX = 0.6; b.scaleY = 1.35 }
+          if (escape.py !== 0) { b.vy *= -0.1; b.scaleY = 0.6; b.scaleX = 1.35 }
         }
 
         // Recovery toward round shape
