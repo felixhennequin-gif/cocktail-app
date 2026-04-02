@@ -105,7 +105,7 @@ export default function CursorGlow() {
       // This catches CSS transitions that shift layout
       recalcUntil = Math.max(recalcUntil, performance.now() + 500)
     })
-    observer.observe(document.body, { childList: true, subtree: true })
+    observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] })
 
     // Scroll and resize
     const onScroll = () => {
@@ -308,43 +308,6 @@ export default function CursorGlow() {
         ctx.fillStyle = `rgba(245, 158, 11, ${b.opacity})`
         ctx.fill()
         ctx.restore()
-      }
-
-      // DEBUG: Draw collision rects
-      ctx.strokeStyle = 'rgba(255, 0, 0, 0.4)'
-      ctx.lineWidth = 1
-      for (const rect of rects) {
-        const rx = rect.left - sx
-        const ry = rect.top - sy
-        const rw = rect.right - rect.left
-        const rh = rect.bottom - rect.top
-        const br = rect.radius || 0
-
-        if (br > 0) {
-          ctx.beginPath()
-          ctx.moveTo(rx + br, ry)
-          ctx.lineTo(rx + rw - br, ry)
-          ctx.quadraticCurveTo(rx + rw, ry, rx + rw, ry + br)
-          ctx.lineTo(rx + rw, ry + rh - br)
-          ctx.quadraticCurveTo(rx + rw, ry + rh, rx + rw - br, ry + rh)
-          ctx.lineTo(rx + br, ry + rh)
-          ctx.quadraticCurveTo(rx, ry + rh, rx, ry + rh - br)
-          ctx.lineTo(rx, ry + br)
-          ctx.quadraticCurveTo(rx, ry, rx + br, ry)
-          ctx.closePath()
-          ctx.stroke()
-        } else {
-          ctx.strokeRect(rx, ry, rw, rh)
-        }
-      }
-
-      // DEBUG: Header clamp line
-      if (headerHeight > 0) {
-        ctx.strokeStyle = 'rgba(0, 255, 0, 0.4)'
-        ctx.beginPath()
-        ctx.moveTo(0, headerHeight)
-        ctx.lineTo(w, headerHeight)
-        ctx.stroke()
       }
 
       rafId = requestAnimationFrame(draw)

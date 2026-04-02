@@ -367,7 +367,7 @@ export default function RecipeList() {
           showFilters ? 'max-h-[500px] opacity-100 mb-6' : 'max-h-0 opacity-0'
         }`}
       >
-        <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/30 p-4 space-y-4">
+        <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/30 p-4 space-y-4" data-bubble-collider>
           {/* Tags */}
           {tags.length > 0 && (() => {
             const sorted = [...tags].sort((a, b) => (b.recipesCount || 0) - (a.recipesCount || 0))
