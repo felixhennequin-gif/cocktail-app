@@ -52,7 +52,7 @@ cocktail-app/
 │   │   └── migrations/          # Migrations Prisma auto-générées (27 migrations)
 │   ├── scripts/
 │   │   └── import-cocktaildb.js # Import depuis TheCocktailDB API
-│   ├── tests/                   # Tests Jest + Supertest (21 fichiers)
+│   ├── tests/                   # Tests Jest + Supertest (32 fichiers)
 │   └── src/
 │       ├── index.js             # Entrée Express — monte toutes les routes
 │       ├── prisma.js            # Singleton PrismaClient (adapter pg)
@@ -437,7 +437,7 @@ GET    /api-docs                       page documentation interactive
 - [x] Validation Zod centralisée (schemas.js)
 - [x] Logging structuré (logger.js)
 - [x] Erreurs standardisées (helpers/errors.js)
-- [ ] Couverture tests à compléter
+- [x] Couverture tests P3 (validation Zod, error helpers)
 
 ### P3bis — UX & Frontend
 - [x] Dark mode avec persistence localStorage
@@ -498,7 +498,7 @@ GET    /api-docs                       page documentation interactive
 - [x] Historique et versioning des recettes (RecipeRevision)
 - [x] Collections curées par des experts
 - [x] Newsletter hebdomadaire automatique (NewsletterSubscription)
-- [ ] Couverture tests à compléter
+- [x] Couverture tests P6 (tastings, glossary, newsletter, streak, shopping-list, leaderboard, substitutions, revisions, curated, advent)
 
 ### P7 — Planifié
 - [ ] Vision API pour identifier cocktails depuis une photo

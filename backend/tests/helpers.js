@@ -5,6 +5,26 @@ const JWT_SECRET = process.env.JWT_SECRET;
 
 // Vide toutes les tables dans l'ordre correct (FK)
 const cleanDb = async () => {
+  // P6 tables
+  await prisma.tastingLog.deleteMany();
+  await prisma.ingredientSubstitution.deleteMany();
+  await prisma.userStreak.deleteMany();
+  await prisma.recipeRevision.deleteMany();
+  await prisma.newsletterSubscription.deleteMany();
+  await prisma.glossaryEntry.deleteMany();
+  await prisma.challengeEntry.deleteMany();
+  await prisma.challenge.deleteMany();
+  await prisma.userBadge.deleteMany();
+  await prisma.badge.deleteMany();
+  await prisma.articleTag.deleteMany();
+  await prisma.article.deleteMany();
+  await prisma.userPreference.deleteMany();
+  await prisma.userIngredient.deleteMany();
+  await prisma.pushSubscription.deleteMany();
+  await prisma.refreshToken.deleteMany();
+  await prisma.apiKey.deleteMany();
+  await prisma.technique.deleteMany();
+  // Original tables
   await prisma.collectionRecipe.deleteMany();
   await prisma.collection.deleteMany();
   await prisma.follow.deleteMany();
