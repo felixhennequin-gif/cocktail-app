@@ -8,7 +8,7 @@ const PAGE_SIZE = 9
 export default function BlogList() {
   const { t, i18n } = useTranslation()
   const [articles, setArticles]   = useState([])
-  const [total, setTotal]         = useState(0)
+  const [, setTotal]              = useState(0)
   const [page, setPage]           = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [loading, setLoading]     = useState(true)

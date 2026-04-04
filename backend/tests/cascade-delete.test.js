@@ -5,16 +5,16 @@ const { cleanDb, createTestUser, createTestCategory, getAuthHeader } = require('
 
 let category;
 let _alice, aliceToken;
-let bob,   bobToken;
-let admin, adminToken;
+let _bob,   bobToken;
+let _admin, adminToken;
 let recipeId;
 
 beforeEach(async () => {
   await cleanDb();
   category = await createTestCategory();
   ({ user: _alice, token: aliceToken } = await createTestUser({ pseudo: 'alice', email: 'alice@test.com' }));
-  ({ user: bob,   token: bobToken   } = await createTestUser({ pseudo: 'bob',   email: 'bob@test.com'   }));
-  ({ user: admin, token: adminToken } = await createTestUser({ pseudo: 'admin', email: 'admin@test.com', role: 'ADMIN' }));
+  ({ user: _bob,   token: bobToken   } = await createTestUser({ pseudo: 'bob',   email: 'bob@test.com'   }));
+  ({ user: _admin, token: adminToken } = await createTestUser({ pseudo: 'admin', email: 'admin@test.com', role: 'ADMIN' }));
 
   // Crée une recette complète avec toutes les dépendances
   const res = await request(app)
@@ -127,7 +127,7 @@ describe('DELETE /api/recipes/:id — suppression en cascade', () => {
   it('l\'auteur peut supprimer sa propre recette', async () => {
     // Créer une recette par Alice
     const category2 = await prisma.category.create({ data: { name: 'TestCatDel', slug: 'testcatdel' } });
-    const adminRecipe = await request(app)
+    await request(app)
       .post('/api/recipes')
       .set(getAuthHeader(adminToken))
       .send({ name: 'Recette Alice', difficulty: 'EASY', prepTime: 5, categoryId: category2.id, ingredients: [], steps: [] });

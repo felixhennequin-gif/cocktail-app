@@ -5,8 +5,8 @@ const { cleanDb, createTestUser, createTestCategory, createTestRecipe, getAuthHe
 let category;
 let alice, aliceToken;   // commentateur
 let bob,   bobToken;     // auteur de la recette
-let carol, carolToken;   // autre user
-let admin, adminToken;
+let _carol, carolToken;   // autre user
+let _admin, adminToken;
 let recipe;
 
 beforeEach(async () => {
@@ -14,8 +14,8 @@ beforeEach(async () => {
   category = await createTestCategory();
   ({ user: alice, token: aliceToken } = await createTestUser({ pseudo: 'alice', email: 'alice@test.com' }));
   ({ user: bob,   token: bobToken   } = await createTestUser({ pseudo: 'bob',   email: 'bob@test.com'   }));
-  ({ user: carol, token: carolToken } = await createTestUser({ pseudo: 'carol', email: 'carol@test.com' }));
-  ({ user: admin, token: adminToken } = await createTestUser({ pseudo: 'admin', email: 'admin@test.com', role: 'ADMIN' }));
+  ({ user: _carol, token: carolToken } = await createTestUser({ pseudo: 'carol', email: 'carol@test.com' }));
+  ({ user: _admin, token: adminToken } = await createTestUser({ pseudo: 'admin', email: 'admin@test.com', role: 'ADMIN' }));
   // Recette créée par Bob
   recipe = await createTestRecipe({ authorId: bob.id, categoryId: category.id });
 });

@@ -1,6 +1,5 @@
 const request = require('supertest');
 const app     = require('../src/index');
-const prisma  = require('../src/prisma');
 const { cleanDb, createTestCategory } = require('./helpers');
 
 beforeEach(cleanDb);

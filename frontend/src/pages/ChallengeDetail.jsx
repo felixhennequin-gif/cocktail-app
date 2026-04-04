@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { useTranslation } from 'react-i18next'
 import RecipeCardGrid from '../components/RecipeCardGrid'
@@ -13,7 +13,6 @@ export default function ChallengeDetail() {
   const { user, authFetch } = useAuth()
   const { t } = useTranslation()
   const { addToast } = useToast()
-  const navigate = useNavigate()
   const { favoriteIds, toggleFavorite } = useFavorites()
 
   const [challenge, setChallenge] = useState(null)
