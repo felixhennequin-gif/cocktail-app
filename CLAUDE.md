@@ -52,7 +52,7 @@ cocktail-app/
 │   │   └── migrations/          # Migrations Prisma auto-générées (27 migrations)
 │   ├── scripts/
 │   │   └── import-cocktaildb.js # Import depuis TheCocktailDB API
-│   ├── tests/                   # Tests Jest + Supertest (32 fichiers)
+│   ├── tests/                   # Tests Jest + Supertest (33 fichiers)
 │   └── src/
 │       ├── index.js             # Entrée Express — monte toutes les routes
 │       ├── prisma.js            # Singleton PrismaClient (adapter pg)
