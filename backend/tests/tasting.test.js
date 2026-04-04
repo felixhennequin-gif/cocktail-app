@@ -136,7 +136,8 @@ describe('Tastings (Journal de dégustation)', () => {
         .delete(`/api/tastings/${create.body.id}`)
         .set(getAuthHeader(bobToken));
 
-      expect(res.status).toBe(403);
+      // Le controller retourne 404 pour ne pas révéler l'existence
+      expect(res.status).toBe(404);
     });
   });
 });

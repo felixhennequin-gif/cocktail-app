@@ -15,12 +15,20 @@ beforeEach(async () => {
 describe('Advent Calendar (Calendrier de l\'avent)', () => {
 
   describe('GET /api/recipes/advent', () => {
-    it('retourne un résumé du calendrier', async () => {
+    it('retourne une réponse valide', async () => {
       const res = await request(app).get('/api/recipes/advent');
 
       expect(res.status).toBe(200);
-      expect(res.body).toHaveProperty('year');
-      expect(res.body).toHaveProperty('days');
+      // En décembre : available true + year + days
+      // Hors décembre : available false + message
+      if (new Date().getMonth() === 11) {
+        expect(res.body.available).toBe(true);
+        expect(res.body).toHaveProperty('year');
+        expect(res.body).toHaveProperty('days');
+      } else {
+        expect(res.body.available).toBe(false);
+        expect(res.body).toHaveProperty('message');
+      }
     });
 
     it('fonctionne sans authentification', async () => {
@@ -42,8 +50,11 @@ describe('Advent Calendar (Calendrier de l\'avent)', () => {
 
     it('retourne une réponse pour un jour valide (1-24)', async () => {
       const res = await request(app).get('/api/recipes/advent/1');
-      // En décembre : 200 avec recette. Hors décembre : 200 avec available: false ou message
       expect(res.status).toBe(200);
+      // Hors décembre : available false
+      if (new Date().getMonth() !== 11) {
+        expect(res.body.available).toBe(false);
+      }
     });
   });
 });
