@@ -49,10 +49,10 @@ cocktail-app/
 │   │   ├── seed-substitutions.js # Substitutions d'ingrédients
 │   │   ├── seed-glossary.js     # Entrées du glossaire
 │   │   ├── cleanup-tags.js      # Nettoyage tags dupliqués
-│   │   └── migrations/          # Migrations Prisma auto-générées (25 migrations)
+│   │   └── migrations/          # Migrations Prisma auto-générées (27 migrations)
 │   ├── scripts/
 │   │   └── import-cocktaildb.js # Import depuis TheCocktailDB API
-│   ├── tests/                   # Tests Jest + Supertest (23 fichiers)
+│   ├── tests/                   # Tests Jest + Supertest (21 fichiers)
 │   └── src/
 │       ├── index.js             # Entrée Express — monte toutes les routes
 │       ├── prisma.js            # Singleton PrismaClient (adapter pg)
@@ -70,6 +70,8 @@ cocktail-app/
 │       │   └── prerender.js     # SSR meta tags (OG, Twitter, Schema.org)
 │       ├── routes/              # 31 fichiers — un par domaine
 │       ├── controllers/         # 34 fichiers — logique métier par domaine
+│       ├── utils/
+│       │   └── slugify.js           # Utilitaire de génération de slugs
 │       ├── services/
 │       │   ├── notification-service.js
 │       │   ├── recipe-cache-service.js
@@ -96,13 +98,12 @@ cocktail-app/
 │       │   ├── useFavorites.js
 │       │   ├── usePushNotifications.js
 │       │   ├── useOfflineCache.js
-│       │   ├── useRecipeFilters.js
-│       │   ├── useRecipeList.js
 │       │   ├── useCompare.js        # Comparaison de cocktails (panier max 2)
-│       │   └── useShoppingCart.js   # Panier liste de courses
+│       │   ├── useShoppingCart.js   # Panier liste de courses
+│       │   └── useScrollReveal.js   # Animation reveal au scroll
 │       ├── utils/
 │       │   └── image.js             # Utilitaires image
-│       ├── components/              # 23 composants racine + 7 sous-composants recipe/
+│       ├── components/              # 23 composants racine + 6 sous-composants recipe/ + 2 ui/
 │       │   ├── RecipeCard.jsx, RecipeCardGrid.jsx  # Cards recettes (memoized)
 │       │   ├── SearchBar.jsx        # Recherche avec navigation clavier + ARIA
 │       │   ├── FilterPanel.jsx      # Filtres avancés recettes
@@ -119,6 +120,9 @@ cocktail-app/
 │       │   ├── TastingModal.jsx     # Modale "j'ai fait ce cocktail"
 │       │   ├── ShoppingCartBar.jsx  # Barre flottante liste de courses
 │       │   ├── ChangePasswordForm.jsx
+│       │   ├── ui/                  # Composants UI décoratifs
+│       │   │   ├── BubblesBackground.jsx  # Animation bulles physiques (landing)
+│       │   │   └── CursorGlow.jsx         # Effet glow curseur
 │       │   └── recipe/              # Sous-composants fiche recette
 │       │       ├── CommentSection.jsx, RatingStars.jsx
 │       │       ├── RecipeIngredients.jsx, RecipeMeta.jsx
@@ -160,6 +164,9 @@ cocktail-app/
 │           ├── GlossaryEntry.jsx    # Entrée du glossaire
 │           ├── NotFound.jsx         # Page 404
 │           └── admin/               # AdminRecipeList, AdminRecipeForm, AdminPendingList
+├── brand/
+│   ├── ecume-logo-dark.svg      # Logo Écume (dark mode)
+│   └── ecume-logo-light.svg     # Logo Écume (light mode)
 ├── scripts/
 │   ├── deploy.sh                # Script déploiement auto (pm2)
 │   └── webhook-server.js        # Webhook GitHub → déploiement continu
@@ -168,6 +175,7 @@ cocktail-app/
 │   ├── architecture.md          # Schéma des couches
 │   └── decisions/               # ADRs
 ├── ecosystem.config.js          # Configuration pm2
+├── ideation-issues.md           # Idéation et features planifiées
 └── dev.sh                       # Lance backend + frontend en concurrent
 ```
 
@@ -178,7 +186,7 @@ cocktail-app/
 | Modèle | Champs clés |
 |--------|-------------|
 | User | id, email (unique), pseudo (unique), passwordHash, role (USER/ADMIN), plan (FREE/PREMIUM), avatar?, bio? |
-| Recipe | id, name, difficulty, prepTime, servings?, status (PUBLISHED/PENDING/DRAFT), categoryId, authorId?, parentRecipeId?, season?, isSponsored, sponsorName?, sponsorLogo?, searchVector |
+| Recipe | id, name, slug (unique), difficulty, prepTime, servings?, status (PUBLISHED/PENDING/DRAFT), categoryId, authorId?, parentRecipeId?, season?, isSponsored, sponsorName?, sponsorLogo?, searchVector |
 | Category | id, name (unique) |
 | Ingredient | id, name (unique), affiliateUrl? |
 | RecipeIngredient | quantity, unit, recipeId, ingredientId |
