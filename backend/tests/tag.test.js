@@ -37,10 +37,12 @@ describe('GET /api/tags', () => {
   });
 
   it('recipesCount reflète le nombre de recettes associées', async () => {
-    // Créer un tag et une recette liée via l'API
+    // Créer un admin pour que la recette soit PUBLISHED automatiquement
+    const { token: adminToken } = await createTestUser({ pseudo: 'admin', email: 'admin@test.com', role: 'ADMIN' });
+
     const recipeRes = await request(app)
       .post('/api/recipes')
-      .set(getAuthHeader(aliceToken))
+      .set(getAuthHeader(adminToken))
       .send({
         name: 'Mojito Estival',
         difficulty: 'EASY',
