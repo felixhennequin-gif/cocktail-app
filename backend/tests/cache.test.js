@@ -13,10 +13,17 @@ const KEY_A  = 'test:cache:pattern:a';
 const KEY_B  = 'test:cache:pattern:b';
 const KEY_C  = 'test:cache:pattern:c';
 
-// Connexion Redis explicite avant les tests (lazyConnect + enableOfflineQueue:false)
+// Attendre que Redis soit prêt (connect() est déjà appelé dans cache.js)
 beforeAll(async () => {
-  if (redis && redis.status !== 'ready') {
-    await redis.connect();
+  if (!redis) return;
+  if (redis.status === 'ready') return;
+  // Le module cache.js appelle déjà connect(), on attend juste qu'il soit prêt
+  if (redis.status === 'connecting' || redis.status === 'connect') {
+    await new Promise((resolve, reject) => {
+      redis.once('ready', resolve);
+      redis.once('error', reject);
+      setTimeout(() => resolve(), 3000); // timeout si Redis ne répond pas
+    });
   }
 });
 
@@ -30,7 +37,9 @@ beforeEach(async () => {
 
 afterAll(async () => {
   // Fermer la connexion Redis proprement pour éviter que Jest reste ouvert
-  if (redis) await redis.quit();
+  if (redis && redis.status === 'ready') {
+    await redis.quit();
+  }
 });
 
 describe('setCache / getCache', () => {
