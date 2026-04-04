@@ -3,16 +3,16 @@ const app     = require('../src/index');
 const { cleanDb, createTestUser, createTestCategory, createTestRecipe, getAuthHeader } = require('./helpers');
 
 let category;
-let alice, aliceToken;
-let bob,   bobToken;
-let carol, carolToken;
+let _alice, aliceToken;
+let bob,   _bobToken;
+let carol, _carolToken;
 
 beforeEach(async () => {
   await cleanDb();
   category = await createTestCategory();
-  ({ user: alice, token: aliceToken } = await createTestUser({ pseudo: 'alice', email: 'alice@test.com' }));
-  ({ user: bob,   token: bobToken   } = await createTestUser({ pseudo: 'bob',   email: 'bob@test.com'   }));
-  ({ user: carol, token: carolToken } = await createTestUser({ pseudo: 'carol', email: 'carol@test.com' }));
+  ({ user: _alice, token: aliceToken } = await createTestUser({ pseudo: 'alice', email: 'alice@test.com' }));
+  ({ user: bob,   token: _bobToken   } = await createTestUser({ pseudo: 'bob',   email: 'bob@test.com'   }));
+  ({ user: carol, token: _carolToken } = await createTestUser({ pseudo: 'carol', email: 'carol@test.com' }));
 });
 
 describe('GET /api/feed', () => {

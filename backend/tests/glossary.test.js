@@ -2,12 +2,12 @@ const request = require('supertest');
 const app = require('../src/index');
 const { cleanDb, createTestUser, getAuthHeader } = require('./helpers');
 
-let admin, adminToken, user, userToken;
+let _admin, adminToken, _user, userToken;
 
 beforeEach(async () => {
   await cleanDb();
-  ({ user: admin, token: adminToken } = await createTestUser({ pseudo: 'admin', email: 'admin@test.com', role: 'ADMIN' }));
-  ({ user, token: userToken } = await createTestUser({ pseudo: 'alice', email: 'alice@test.com' }));
+  ({ user: _admin, token: adminToken } = await createTestUser({ pseudo: 'admin', email: 'admin@test.com', role: 'ADMIN' }));
+  ({ user: _user, token: userToken } = await createTestUser({ pseudo: 'alice', email: 'alice@test.com' }));
 });
 
 describe('Glossary (Glossaire)', () => {

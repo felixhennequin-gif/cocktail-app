@@ -7,7 +7,6 @@ import { useToast } from '../contexts/ToastContext'
 import { useFavorites } from '../contexts/FavoritesContext'
 import RecipeCard from '../components/RecipeCard'
 import ConfirmModal from '../components/ConfirmModal'
-import { getImageUrl } from '../utils/image'
 
 export default function CollectionDetail() {
   const { id }              = useParams()

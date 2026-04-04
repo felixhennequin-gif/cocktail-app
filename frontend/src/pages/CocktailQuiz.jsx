@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react'
-import { useNavigate, useSearchParams, Link } from 'react-router-dom'
+import { useState, useCallback } from 'react'
+import { useSearchParams, Link } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { useTranslation } from 'react-i18next'
 
@@ -169,7 +169,6 @@ function computeResult(answers) {
 // ---------------------------------------------------------------------------
 export default function CocktailQuiz() {
   const { t, i18n } = useTranslation()
-  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
 
   // Si un paramètre ?result= est présent dans l'URL, afficher directement le résultat
@@ -250,7 +249,6 @@ export default function CocktailQuiz() {
   }, [result])
 
   const progressPercent = total > 0 ? ((currentQ) / total) * 100 : 0
-  const lang = i18n.language
 
   // ---------------------------------------------------------------------------
   // Rendu — Écran d'introduction

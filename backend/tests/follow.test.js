@@ -3,12 +3,12 @@ const app     = require('../src/index');
 const { cleanDb, createTestUser, createTestCategory, createTestRecipe, getAuthHeader } = require('./helpers');
 
 let alice, aliceToken;
-let bob, bobToken;
+let bob, _bobToken;
 
 beforeEach(async () => {
   await cleanDb();
   ({ user: alice, token: aliceToken } = await createTestUser({ pseudo: 'alice', email: 'alice@test.com' }));
-  ({ user: bob,   token: bobToken   } = await createTestUser({ pseudo: 'bob',   email: 'bob@test.com'   }));
+  ({ user: bob,   token: _bobToken  } = await createTestUser({ pseudo: 'bob',   email: 'bob@test.com'   }));
 });
 
 describe('POST /api/users/:id/follow', () => {

@@ -4,13 +4,13 @@ const { cleanDb, createTestUser, createTestCategory, createTestRecipe, getAuthHe
 
 let category;
 let user,  userToken;
-let admin, adminToken;
+let _admin, adminToken;
 
 beforeEach(async () => {
   await cleanDb();
   category = await createTestCategory();
   ({ user,  token: userToken  } = await createTestUser({ pseudo: 'user',  email: 'user@test.com'  }));
-  ({ user: admin, token: adminToken } = await createTestUser({ pseudo: 'admin', email: 'admin@test.com', role: 'ADMIN' }));
+  ({ user: _admin, token: adminToken } = await createTestUser({ pseudo: 'admin', email: 'admin@test.com', role: 'ADMIN' }));
 });
 
 describe('Workflow de statut des recettes', () => {

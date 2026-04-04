@@ -3,13 +3,13 @@ const app     = require('../src/index');
 const { cleanDb, createTestUser, createTestCategory, createTestRecipe, getAuthHeader } = require('./helpers');
 
 let category;
-let alice, aliceToken;
+let _alice, aliceToken;
 let bob, bobToken;
 
 beforeEach(async () => {
   await cleanDb();
   category = await createTestCategory();
-  ({ user: alice, token: aliceToken } = await createTestUser({ pseudo: 'alice', email: 'alice@test.com' }));
+  ({ user: _alice, token: aliceToken } = await createTestUser({ pseudo: 'alice', email: 'alice@test.com' }));
   ({ user: bob,   token: bobToken   } = await createTestUser({ pseudo: 'bob',   email: 'bob@test.com'   }));
 });
 

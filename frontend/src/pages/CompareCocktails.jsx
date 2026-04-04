@@ -34,7 +34,7 @@ function classifyIngredients(ingredientsA, ingredientsB) {
   return { common, onlyA, onlyB }
 }
 
-function RecipeColumn({ recipe, side }) {
+function RecipeColumn({ recipe }) {
   const { t } = useTranslation()
   if (!recipe) return null
 

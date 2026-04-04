@@ -1,12 +1,12 @@
 const request = require('supertest');
 const app = require('../src/index');
-const { cleanDb, createTestUser, createTestCategory, createTestRecipe, getAuthHeader } = require('./helpers');
+const { cleanDb, createTestUser, createTestCategory, createTestRecipe } = require('./helpers');
 
-let alice, aliceToken;
+let alice;
 
 beforeEach(async () => {
   await cleanDb();
-  ({ user: alice, token: aliceToken } = await createTestUser({ pseudo: 'alice', email: 'alice@test.com' }));
+  ({ user: alice } = await createTestUser({ pseudo: 'alice', email: 'alice@test.com' }));
   // Créer une recette pour que alice ait des stats
   const category = await createTestCategory();
   await createTestRecipe({ authorId: alice.id, categoryId: category.id });
