@@ -12,15 +12,15 @@ beforeEach(async () => {
 describe('Streak (Streaks d\'activité)', () => {
 
   describe('GET /api/streak', () => {
-    it('retourne le streak du user', async () => {
+    it('retourne le streak du user (par défaut sans record)', async () => {
       const res = await request(app)
         .get('/api/streak')
         .set(getAuthHeader(aliceToken));
 
       expect(res.status).toBe(200);
-      expect(res.body).toHaveProperty('currentStreak');
-      expect(res.body).toHaveProperty('longestStreak');
-      expect(res.body).toHaveProperty('streakFreezeAvailable');
+      expect(res.body).toHaveProperty('currentStreak', 0);
+      expect(res.body).toHaveProperty('longestStreak', 0);
+      expect(res.body.lastActiveDate).toBeNull();
     });
 
     it('refuse sans authentification', async () => {
