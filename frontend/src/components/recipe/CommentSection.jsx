@@ -6,7 +6,7 @@ import { useToast } from '../../contexts/ToastContext'
 import ConfirmModal from '../ConfirmModal'
 import RatingStars from './RatingStars'
 
-export default function CommentSection({ recipeId, isOwnRecipe, comments, setComments, myComment, setMyComment, commentScore, setCommentScore, avgRating, setAvgRating, ratingsCount, setRatingsCount }) {
+export default function CommentSection({ recipeId, isOwnRecipe, comments, setComments, myComment, setMyComment, commentScore, setCommentScore, avgRating: _avgRating, setAvgRating, ratingsCount: _ratingsCount, setRatingsCount }) {
   const { user, authFetch } = useAuth()
   const { showToast }       = useToast()
   const { t, i18n }         = useTranslation()

@@ -70,7 +70,7 @@ async function main() {
 
   // Générer le HTML de la newsletter
   for (const sub of subscribers) {
-    const html = generateHtml({
+    const _html = generateHtml({
       pseudo: sub.user.pseudo,
       dailyRecipe,
       newRecipes,

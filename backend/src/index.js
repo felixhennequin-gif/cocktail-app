@@ -8,7 +8,7 @@ const helmet = require('helmet');
 const multer = require('multer');
 const fs = require('fs');
 const FileType = require('file-type');
-const { generalLimiter, authLimiter } = require('./rateLimiter');
+const { generalLimiter } = require('./rateLimiter');
 const { requireAuth } = require('./middleware/auth');
 const prisma = require('./prisma');
 

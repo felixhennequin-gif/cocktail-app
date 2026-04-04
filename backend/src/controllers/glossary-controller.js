@@ -1,5 +1,5 @@
 const prisma = require('../prisma');
-const { parseId, badRequest, notFound } = require('../helpers');
+const { badRequest, notFound } = require('../helpers');
 const { createGlossaryEntrySchema, formatZodError } = require('../schemas');
 const { slugify } = require('../utils/slugify');
 

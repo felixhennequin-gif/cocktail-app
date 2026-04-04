@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const { updateMyProfile, getUserProfile, getUserRecipes, updateUserPlan, getUserStats } = require('../controllers/user-controller');
 const { getMyPreferences, upsertMyPreferences } = require('../controllers/preference-controller');
-const { getRecommendedRecipes } = require('../controllers/recommendation-controller');
 const { followUser, unfollowUser, getFollowers, getFollowing } = require('../controllers/follow-controller');
 const { requireAuth, requireAdmin, optionalAuth } = require('../middleware/auth');
 const { cacheMiddleware } = require('../cache');

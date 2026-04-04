@@ -37,6 +37,7 @@ export function AuthProvider({ children }) {
         setRefreshToken(null)
       })
       .finally(() => setLoading(false))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []) // run once on mount — vérifie le token stocké au démarrage uniquement
 
   const login = async (email, password) => {

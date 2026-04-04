@@ -75,7 +75,7 @@ export function FavoritesProvider({ children }) {
         return next
       })
     }
-  }, [user, authFetch])
+  }, [user, authFetch, showToast, cacheFavorite, uncacheFavorite])
 
   return (
     <FavoritesContext.Provider value={{ favoriteIds, isFavorited, toggleFavorite, isPending }}>

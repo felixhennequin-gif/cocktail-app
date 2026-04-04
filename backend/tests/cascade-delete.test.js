@@ -1,10 +1,10 @@
 const request = require('supertest');
 const app     = require('../src/index');
 const prisma  = require('../src/prisma');
-const { cleanDb, createTestUser, createTestCategory, createTestRecipe, getAuthHeader } = require('./helpers');
+const { cleanDb, createTestUser, createTestCategory, getAuthHeader } = require('./helpers');
 
 let category;
-let alice, aliceToken;
+let _alice, aliceToken;
 let bob,   bobToken;
 let admin, adminToken;
 let recipeId;
@@ -12,7 +12,7 @@ let recipeId;
 beforeEach(async () => {
   await cleanDb();
   category = await createTestCategory();
-  ({ user: alice, token: aliceToken } = await createTestUser({ pseudo: 'alice', email: 'alice@test.com' }));
+  ({ user: _alice, token: aliceToken } = await createTestUser({ pseudo: 'alice', email: 'alice@test.com' }));
   ({ user: bob,   token: bobToken   } = await createTestUser({ pseudo: 'bob',   email: 'bob@test.com'   }));
   ({ user: admin, token: adminToken } = await createTestUser({ pseudo: 'admin', email: 'admin@test.com', role: 'ADMIN' }));
 

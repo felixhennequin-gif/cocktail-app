@@ -52,7 +52,7 @@ const getAdventRecipe = async (req, res, next) => {
         _count: { score: true },
       });
 
-      const { tags: recipeTags, ratings, ...recipeRest } = recipe;
+      const { tags: recipeTags, ratings: _ratings, ...recipeRest } = recipe;
       const flatTags = recipeTags ? recipeTags.map((rt) => rt.tag) : [];
       const avgRating = ratingAgg._avg.score !== null
         ? Math.round(ratingAgg._avg.score * 10) / 10
