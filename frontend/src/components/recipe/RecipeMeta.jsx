@@ -8,14 +8,17 @@ export default function RecipeMeta({ recipe, avgRating, ratingsCount, isFavorite
   const { t } = useTranslation()
   const [showEmbed, setShowEmbed] = useState(false)
   const [embedCopied, setEmbedCopied] = useState(false)
+  const [showMoreMenu, setShowMoreMenu] = useState(false)
   const embedCode = `<iframe src="${window.location.origin}/embed/recipes/${recipe.id}" width="400" height="600" frameborder="0" style="border-radius:12px;max-width:100%"></iframe>`
 
   return (
     <div>
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-3">
         <h1 className="text-2xl sm:text-3xl font-serif font-medium text-gray-900 dark:text-gray-100">{recipe.name}</h1>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 shrink-0 relative">
           <DifficultyBadge difficulty={recipe.difficulty} size="md" />
+
+          {/* ACTION PRIMAIRE — Favori */}
           {user && (
             <button
               onClick={onToggleFavorite}
@@ -26,15 +29,8 @@ export default function RecipeMeta({ recipe, avgRating, ratingsCount, isFavorite
               ♥
             </button>
           )}
-          {user && (
-            <button
-              onClick={onAddToCollection}
-              className="text-xl leading-none text-gray-300 dark:text-gray-600 hover:text-gold-400 transition-colors"
-              title={t('collections.addRecipe')}
-            >
-              +
-            </button>
-          )}
+
+          {/* ACTION PRIMAIRE — J'ai fait ça */}
           {user && onLogTasting && (
             <button
               onClick={onLogTasting}
@@ -44,49 +40,74 @@ export default function RecipeMeta({ recipe, avgRating, ratingsCount, isFavorite
               {t('tastings.iMadeThis')}
             </button>
           )}
-          {user && onAddToShoppingList && (
+
+          {/* MENU SECONDAIRE — bouton "..." */}
+          <div className="relative">
             <button
-              onClick={onAddToShoppingList}
-              className={`text-xs px-2.5 py-1 rounded-full border font-medium transition-colors ${
-                isInShoppingCart
-                  ? 'border-gold-400 dark:border-gold-600 text-gold-600 dark:text-gold-400 bg-gold-50 dark:bg-gold-900/20'
-                  : 'border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-gold-400 hover:text-gold-500'
-              }`}
-              title={t('shoppingList.addToList')}
+              onClick={() => setShowMoreMenu((prev) => !prev)}
+              className="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              aria-label="Plus d'options"
+              title="Plus d'options"
             >
-              {isInShoppingCart ? t('shoppingList.inCart') : t('shoppingList.addToList')}
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <circle cx="5" cy="12" r="2" />
+                <circle cx="12" cy="12" r="2" />
+                <circle cx="19" cy="12" r="2" />
+              </svg>
             </button>
-          )}
-          <a
-            href={`/api/recipes/${recipe.id}/pdf`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xl leading-none text-gray-300 dark:text-gray-600 hover:text-gold-400 transition-colors"
-            title={t('recipes.exportPdf')}
-            aria-label={t('recipes.exportPdf')}
-          >
-            <svg aria-hidden="true" className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-          </a>
-          <button
-            onClick={() => setShowEmbed(true)}
-            className="text-xl leading-none text-gray-300 dark:text-gray-600 hover:text-gold-400 transition-colors"
-            title={t('embed.title')}
-          >
-            <svg aria-hidden="true" className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-            </svg>
-          </button>
-          {user && (recipe.author?.id === user?.id || user?.role === 'ADMIN') && (
-            <Link
-              to={`/recipes/${recipe.slug || recipe.id}/edit`}
-              className="text-xl leading-none text-gray-300 dark:text-gray-600 hover:text-gold-400 transition-colors"
-              title={t('common.edit')}
-            >
-              ✎
-            </Link>
-          )}
+
+            {showMoreMenu && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowMoreMenu(false)} />
+                <div className="absolute right-0 top-full mt-1 z-50 w-48 bg-white dark:bg-ink-900 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg py-1 text-sm">
+                  {user && (
+                    <button
+                      onClick={() => { onAddToCollection(); setShowMoreMenu(false) }}
+                      className="w-full text-left px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-ink-800 transition-colors"
+                    >
+                      {t('collections.addRecipe')}
+                    </button>
+                  )}
+                  {user && onAddToShoppingList && (
+                    <button
+                      onClick={() => { onAddToShoppingList(); setShowMoreMenu(false) }}
+                      className={`w-full text-left px-4 py-2 transition-colors ${
+                        isInShoppingCart
+                          ? 'text-gold-600 dark:text-gold-400'
+                          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-ink-800'
+                      }`}
+                    >
+                      {isInShoppingCart ? t('shoppingList.inCart') : t('shoppingList.addToList')}
+                    </button>
+                  )}
+                  <a
+                    href={`/api/recipes/${recipe.id}/pdf`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setShowMoreMenu(false)}
+                    className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-ink-800 transition-colors"
+                  >
+                    {t('recipes.exportPdf')}
+                  </a>
+                  <button
+                    onClick={() => { setShowEmbed(true); setShowMoreMenu(false) }}
+                    className="w-full text-left px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-ink-800 transition-colors"
+                  >
+                    {t('embed.title')}
+                  </button>
+                  {user && (recipe.author?.id === user?.id || user?.role === 'ADMIN') && (
+                    <Link
+                      to={`/recipes/${recipe.slug || recipe.id}/edit`}
+                      onClick={() => setShowMoreMenu(false)}
+                      className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-ink-800 transition-colors"
+                    >
+                      {t('common.edit')}
+                    </Link>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
       <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 mb-2">

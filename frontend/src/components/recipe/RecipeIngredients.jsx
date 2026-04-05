@@ -75,6 +75,7 @@ function SubstitutePopover({ ingredientId, onClose }) {
 export default function RecipeIngredients({ ingredients, servings, portionCount }) {
   const { t } = useTranslation()
   const [openSubId, setOpenSubId] = useState(null)
+  const [collapsed, setCollapsed] = useState(false)
 
   const toggleSub = useCallback((id) => {
     setOpenSubId((prev) => (prev === id ? null : id))
@@ -86,8 +87,34 @@ export default function RecipeIngredients({ ingredients, servings, portionCount 
 
   return (
     <section className="mb-8">
-      <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">{t('recipes.ingredients')}</h2>
-      <ul className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700">
+      <div className="h-px bg-gold-200 dark:bg-gold-800/40 mb-5" aria-hidden="true" />
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="section-title text-xl text-gray-900 dark:text-gray-100">
+          {t('recipes.ingredients')}
+        </h2>
+        {/* Bouton collapse — mobile uniquement */}
+        <button
+          onClick={() => setCollapsed((prev) => !prev)}
+          className="lg:hidden flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+          aria-expanded={!collapsed}
+          aria-controls="ingredients-list"
+        >
+          {collapsed ? t('common.show') : t('common.hide')}
+          <svg
+            className={`w-4 h-4 transition-transform ${collapsed ? '' : 'rotate-180'}`}
+            fill="none" stroke="currentColor" viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+      </div>
+
+      <ul
+        id="ingredients-list"
+        className={`bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700 overflow-hidden transition-all duration-300 ${
+          collapsed ? 'max-h-0 border-transparent' : 'max-h-[2000px]'
+        } lg:max-h-none lg:border-gray-200 lg:dark:border-gray-700`}
+      >
         {ingredients.map((ri) => {
           const displayQty = ri.quantity * (portionCount / baseServings)
           return (

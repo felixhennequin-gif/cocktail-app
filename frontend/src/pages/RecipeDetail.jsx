@@ -202,13 +202,23 @@ export default function RecipeDetail() {
         {/* Colonne gauche : image + ingrédients (sidebar) */}
         <div className="lg:w-2/5 lg:shrink-0">
           <div className="relative aspect-video rounded-xl overflow-hidden mb-6 bg-gray-100 dark:bg-gray-700">
-            <img
-              src={getImageUrl(recipe.imageUrl)}
-              alt={recipe.name}
-              fetchpriority="high"
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+            {recipe.imageUrl ? (
+              <>
+                <img
+                  src={getImageUrl(recipe.imageUrl)}
+                  alt={recipe.name}
+                  fetchpriority="high"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+              </>
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gold-50 to-gold-100 dark:from-ink-800 dark:to-ink-700">
+                <span className="font-serif text-2xl text-gold-400 dark:text-gold-500 text-center px-6 leading-snug">
+                  {recipe.name}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Titre + meta (mobile uniquement) */}
@@ -237,7 +247,8 @@ export default function RecipeDetail() {
           {/* Étapes */}
           {recipe.steps?.length > 0 && (
             <section className="mb-8">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">{t('recipes.preparation')}</h2>
+              <div className="h-px bg-gold-200 dark:bg-gold-800/40 mb-5" aria-hidden="true" />
+              <h2 className="section-title text-xl text-gray-900 dark:text-gray-100 mb-4">{t('recipes.preparation')}</h2>
               <ol className="space-y-4">
                 {recipe.steps.map((step) => {
                   const duration = extractDuration(step.description)
@@ -268,7 +279,8 @@ export default function RecipeDetail() {
           {/* Variantes */}
           {recipe.variants?.length > 0 && (
             <section className="mb-8">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">{t('recipes.variants')}</h2>
+              <div className="h-px bg-gold-200 dark:bg-gold-800/40 mb-5" aria-hidden="true" />
+              <h2 className="section-title text-xl text-gray-900 dark:text-gray-100 mb-4">{t('recipes.variants')}</h2>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {recipe.variants.map((v) => (
                   <Link
@@ -326,6 +338,7 @@ export default function RecipeDetail() {
       </div>
 
       {/* Commentaires */}
+      <div className="h-px bg-gold-200 dark:bg-gold-800/40 mb-5" aria-hidden="true" />
       <CommentSection
         recipeId={id}
         isOwnRecipe={isOwnRecipe}

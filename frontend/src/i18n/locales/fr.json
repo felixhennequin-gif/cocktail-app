@@ -435,7 +435,9 @@
     "starsRating": "{{rating}} sur {{max}} étoiles",
     "errorTitle": "Oops ! Une erreur est survenue",
     "errorMessage": "Quelque chose s'est mal passé…",
-    "edit": "Modifier"
+    "edit": "Modifier",
+    "show": "Afficher",
+    "hide": "Masquer"
   },
   "stats": {
     "recipes": "Recettes",

@@ -435,7 +435,9 @@
     "starsRating": "{{rating}} out of {{max}} stars",
     "errorTitle": "Oops! Something went wrong",
     "errorMessage": "An unexpected error occurred…",
-    "edit": "Edit"
+    "edit": "Edit",
+    "show": "Show",
+    "hide": "Hide"
   },
   "stats": {
     "recipes": "Recipes",
