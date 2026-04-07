@@ -230,6 +230,10 @@ const badgeRoutes = require('./routes/badge-routes');
 apiRouter.use('/bar',    barRoutes);
 apiRouter.use('/badges', badgeRoutes);
 
+// Routes admin (protégées par x-admin-secret)
+const adminRoutes = require('./routes/admin-routes');
+apiRouter.use('/admin', adminRoutes);
+
 // Widget embeddable (hors /api — HTML direct)
 const embedRoutes = require('./routes/embed-routes');
 app.use('/embed', embedRoutes);
