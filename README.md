@@ -5,8 +5,9 @@
 <h1 align="center">Écume</h1>
 
 <p align="center">
-  <strong>The community cocktail app</strong><br>
-  Discover, create and share cocktail recipes.
+  <strong>The community cocktail app</strong> · <strong>L'app cocktail communautaire</strong><br>
+  Discover, create and share cocktail recipes.<br>
+  Découvrez, créez et partagez vos recettes de cocktails.
 </p>
 
 <p align="center">
@@ -19,62 +20,63 @@
 
 ---
 
-## Features
+## Features · Fonctionnalités
 
-- **Recipe catalogue** — 500+ recipes with full-text search, filters and sorting ([cocktail-app.fr/recipes](https://cocktail-app.fr/recipes))
-- **User accounts** — sign up, JWT + refresh token rotation, email verification
-- **Favorites, ratings & comments** — rate and review every recipe
+- **Recipe catalogue · Catalogue** — 500+ recipes with full-text search, filters and sorting ([cocktail-app.fr/recipes](https://cocktail-app.fr/recipes))
+- **User accounts · Comptes** — sign up, JWT + refresh token rotation, email verification
+- **Favorites, ratings & comments · Favoris, notes & commentaires** — rate and review every recipe
 - **Collections** — organize your favorites, expert-curated collections
-- **Virtual bar** — add your bottles, see which cocktails you can make ([cocktail-app.fr/bar](https://cocktail-app.fr/bar))
-- **Taste profile** — interactive quiz + personalized recommendations
+- **Virtual bar · Bar virtuel** — add your bottles, see which cocktails you can make ([cocktail-app.fr/bar](https://cocktail-app.fr/bar))
+- **Taste profile · Profil de goût** — interactive quiz + personalized recommendations
 - **Social** — follow users, activity feed, community leaderboard
-- **Tasting journal** — keep track of the cocktails you've made
-- **Shopping list** — consolidated from multiple recipes
-- **Community challenges** — join themed cocktail challenges
-- **Party mode** — simplified UI for making cocktails in a group
+- **Tasting journal · Journal de dégustation** — keep track of the cocktails you've made
+- **Shopping list · Liste de courses** — consolidated from multiple recipes
+- **Community challenges · Défis** — join themed cocktail challenges
+- **Party mode · Mode soirée** — simplified UI for making cocktails in a group
 - **Blog** — mixology articles ([cocktail-app.fr/blog](https://cocktail-app.fr/blog))
-- **Glossary** — cocktail encyclopedia ([cocktail-app.fr/glossary](https://cocktail-app.fr/glossary))
-- **Advent calendar** — 24 cocktails to discover every December
+- **Glossary · Glossaire** — cocktail encyclopedia ([cocktail-app.fr/glossary](https://cocktail-app.fr/glossary))
+- **Advent calendar · Calendrier de l'avent** — 24 cocktails to discover every December
 - **PDF export** — download and print your recipes
-- **Public API** — integrate Écume into your projects ([cocktail-app.fr/api-docs](https://cocktail-app.fr/api-docs))
-- **PWA** — installable, works offline
-- **i18n** — French & English
+- **Public API · API publique** — integrate Écume into your projects ([cocktail-app.fr/api-docs](https://cocktail-app.fr/api-docs))
+- **PWA** — installable, works offline · installable, fonctionne hors-ligne
+- **i18n** — French & English · Français & Anglais
 
-## Tech stack
+## Tech stack · Stack technique
 
-| Layer | Technology |
-|-------|------------|
+| Layer · Couche | Technology · Technologie |
+|----------------|--------------------------|
 | Frontend | React 19 · Vite 7 · React Router 7 · Tailwind v4 |
 | Backend | Node.js · Express 5 |
 | ORM | Prisma 7 (`@prisma/adapter-pg`) |
-| Database | PostgreSQL |
+| Database · BDD | PostgreSQL |
 | Cache | Redis (ioredis) |
 | Auth | JWT + refresh token rotation + email verification |
 | Tests | Jest · Supertest (33 suites) |
 | CI | GitHub Actions (PostgreSQL 16 + Redis 7, Node 22) |
 | Deploy | PM2 · Nginx · Cloudflare Tunnel |
 
-## Getting started
+## Getting started · Lancement rapide
 
 ```bash
-# Clone the repository
+# Clone the repository · Cloner le dépôt
 git clone https://github.com/felixhennequin-gif/cocktail-app.git
 cd cocktail-app
 
-# Set up environment
+# Set up environment · Configurer l'environnement
 cp backend/.env.example backend/.env
-# Fill in values in backend/.env (DATABASE_URL, JWT_SECRET, etc.)
+# Fill in values · Remplir les valeurs (DATABASE_URL, JWT_SECRET, etc.)
 
-# Install dependencies
+# Install dependencies · Installer les dépendances
 cd backend && npm install && cd ..
 cd frontend && npm install && cd ..
 
-# Run migrations and start
+# Run migrations and start · Appliquer les migrations et lancer
 cd backend && npx prisma migrate deploy && npx prisma generate && cd ..
-./dev.sh   # Starts backend (port 3000) + frontend (port 5173)
+./dev.sh   # backend (port 3000) + frontend (port 5173)
 ```
 
 The app is available at [localhost:5173](http://localhost:5173).
+L'application est accessible sur [localhost:5173](http://localhost:5173).
 
 ## Tests
 
@@ -83,8 +85,9 @@ cd backend && npm test   # 33 suites, ~290 tests (Jest + Supertest)
 ```
 
 Integration tests require PostgreSQL and Redis. CI provides them automatically.
+Les tests d'intégration nécessitent PostgreSQL et Redis. La CI les fournit automatiquement.
 
-## Project structure
+## Project structure · Structure du projet
 
 ```
 cocktail-app/
@@ -92,15 +95,15 @@ cocktail-app/
 │   ├── prisma/          # Schema (33 models) + migrations + seeds
 │   ├── src/
 │   │   ├── controllers/ # 34 controllers
-│   │   ├── routes/      # 32 route files
+│   │   ├── routes/      # 32 route files · fichiers de routes
 │   │   ├── middleware/   # Auth, rate-limit, cache, admin
 │   │   ├── services/    # Badges, notifications, email, push, streaks
-│   │   └── helpers/     # Standardized errors, parsing
-│   └── tests/           # 33 test files
+│   │   └── helpers/     # Standardized errors · Erreurs standardisées
+│   └── tests/           # 33 test files · fichiers de tests
 ├── frontend/
 │   └── src/
 │       ├── pages/       # 39 pages
-│       ├── components/  # 25 components + recipe/ + ui/
+│       ├── components/  # 25 components · composants + recipe/ + ui/
 │       ├── contexts/    # Auth, Favorites, Toast
 │       ├── hooks/       # 6 custom hooks
 │       └── i18n/        # fr.json, en.json
@@ -108,26 +111,26 @@ cocktail-app/
 └── scripts/             # Deploy, webhook, dev server
 ```
 
-## Public API
+## Public API · API publique
 
-Écume exposes a public REST API, documented at [cocktail-app.fr/api-docs](https://cocktail-app.fr/api-docs).
+Écume exposes a public REST API · Écume expose une API REST publique : [cocktail-app.fr/api-docs](https://cocktail-app.fr/api-docs)
 
 ```bash
-# List recipes
+# List recipes · Lister les recettes
 curl https://cocktail-app.fr/api/v1/recipes
 
-# With an API key (500 req/min instead of 100)
+# With an API key (500 req/min instead of 100) · Avec une clé API
 curl -H "x-api-key: YOUR_KEY" https://cocktail-app.fr/api/v1/recipes
 ```
 
-## Links
+## Links · Liens
 
-- **Production**: [cocktail-app.fr](https://cocktail-app.fr)
-- **Recipes**: [cocktail-app.fr/recipes](https://cocktail-app.fr/recipes)
-- **API Docs**: [cocktail-app.fr/api-docs](https://cocktail-app.fr/api-docs)
-- **Blog**: [cocktail-app.fr/blog](https://cocktail-app.fr/blog)
-- **Glossary**: [cocktail-app.fr/glossary](https://cocktail-app.fr/glossary)
+- **Production** : [cocktail-app.fr](https://cocktail-app.fr)
+- **Recipes · Catalogue** : [cocktail-app.fr/recipes](https://cocktail-app.fr/recipes)
+- **API Docs** : [cocktail-app.fr/api-docs](https://cocktail-app.fr/api-docs)
+- **Blog** : [cocktail-app.fr/blog](https://cocktail-app.fr/blog)
+- **Glossary · Glossaire** : [cocktail-app.fr/glossary](https://cocktail-app.fr/glossary)
 
-## License
+## License · Licence
 
-Private project — all rights reserved.
+Private project — all rights reserved. · Projet privé — tous droits réservés.
