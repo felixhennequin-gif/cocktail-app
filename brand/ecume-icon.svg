@@ -1,6 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50" fill="none">
+  <text
+    x="4" y="38"
+    style="font-family: 'Cormorant Garamond', Georgia, serif; font-size: 40px; font-weight: 500; fill: #1a1f2e; letter-spacing: 1px;"
+  >É</text>
   <!-- Primary star -->
-  <path d="M16,6 L18.4,14 L26,16 L18.4,18 L16,26 L13.6,18 L6,16 L13.6,14 Z" fill="#C49A3C" opacity="0.88"/>
+  <path d="M38,14 L39.4,7 L40.8,14 L46,16 L40.8,18 L39.4,25 L38,18 L32.8,16 Z" fill="#C49A3C" opacity="0.88"/>
   <!-- Accent star -->
-  <path d="M25,3 L26,0 L27,3 L30,4 L27,5 L26,8 L25,5 L22,4 Z" fill="#C49A3C" opacity="0.42"/>
+  <path d="M44,4 L44.8,1 L45.6,4 L48.5,5 L45.6,6 L44.8,9 L44,6 L41,5 Z" fill="#C49A3C" opacity="0.42"/>
 </svg>
