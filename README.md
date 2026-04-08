@@ -1,18 +1,14 @@
-🇬🇧 **English** | [🇫🇷 Français](README.fr.md)
+> 🇬🇧 **English** | [🇫🇷 Français](README.fr.md)
 
 <p align="center">
   <img src="brand/ecume-icon.svg" alt="Écume" width="48" />
 </p>
 
-<h1 align="center">Écume</h1>
+<h1 align="center">Écume API</h1>
 
 <p align="center">
-  <strong>The community cocktail app</strong><br>
-  Discover, create and share cocktail recipes.
-</p>
-
-<p align="center">
-  <a href="https://cocktail-app.fr">cocktail-app.fr</a> · <a href="https://cocktail-app.fr/recipes">Recipes</a> · <a href="https://cocktail-app.fr/api-docs">API Docs</a>
+  Public REST API for cocktail recipes.<br>
+  <a href="https://cocktail-app.fr">cocktail-app.fr</a> · <a href="https://cocktail-app.fr/api-docs">Interactive docs</a>
 </p>
 
 <p align="center">
@@ -21,114 +17,214 @@
 
 ---
 
-## Features
+## Base URL
 
-- **Recipe catalogue** — 500+ recipes with full-text search, filters and sorting ([cocktail-app.fr/recipes](https://cocktail-app.fr/recipes))
-- **User accounts** — sign up, JWT + refresh token rotation, email verification
-- **Favorites, ratings & comments** — rate and review every recipe
-- **Collections** — organize your favorites, expert-curated collections
-- **Virtual bar** — add your bottles, see which cocktails you can make ([cocktail-app.fr/bar](https://cocktail-app.fr/bar))
-- **Taste profile** — interactive quiz + personalized recommendations
-- **Social** — follow users, activity feed, community leaderboard
-- **Tasting journal** — keep track of the cocktails you've made
-- **Shopping list** — consolidated from multiple recipes
-- **Community challenges** — join themed cocktail challenges
-- **Party mode** — simplified UI for making cocktails in a group
-- **Blog** — mixology articles ([cocktail-app.fr/blog](https://cocktail-app.fr/blog))
-- **Glossary** — cocktail encyclopedia ([cocktail-app.fr/glossary](https://cocktail-app.fr/glossary))
-- **Advent calendar** — 24 cocktails to discover every December
-- **PDF export** — download and print your recipes
-- **Public API** — integrate Écume into your projects ([cocktail-app.fr/api-docs](https://cocktail-app.fr/api-docs))
-- **PWA** — installable, works offline
-- **i18n** — French & English
+```
+https://cocktail-app.fr/api/v1
+```
 
-## Tech stack
+## Authentication
 
-| Layer | Technology |
-|-------|------------|
-| Frontend | React 19 · Vite 7 · React Router 7 · Tailwind v4 |
-| Backend | Node.js · Express 5 |
-| ORM | Prisma 7 (`@prisma/adapter-pg`) |
-| Database | PostgreSQL |
-| Cache | Redis (ioredis) |
-| Auth | JWT + refresh token rotation + email verification |
-| Tests | Jest · Supertest (33 suites) |
-| CI | GitHub Actions (PostgreSQL 16 + Redis 7, Node 22) |
-| Deploy | PM2 · Nginx · Cloudflare Tunnel |
-
-## Getting started
+All public endpoints can be called **without authentication**. To get higher rate limits, pass an API key via the `X-API-Key` header.
 
 ```bash
-# Clone the repository
-git clone https://github.com/felixhennequin-gif/cocktail-app.git
-cd cocktail-app
-
-# Set up environment
-cp backend/.env.example backend/.env
-# Fill in values (DATABASE_URL, JWT_SECRET, etc.)
-
-# Install dependencies
-cd backend && npm install && cd ..
-cd frontend && npm install && cd ..
-
-# Run migrations and start
-cd backend && npx prisma migrate deploy && npx prisma generate && cd ..
-./dev.sh   # backend (port 3000) + frontend (port 5173)
+curl https://cocktail-app.fr/api/v1/recipes \
+  -H "X-API-Key: YOUR_API_KEY"
 ```
 
-The app is available at [localhost:5173](http://localhost:5173).
+Create and manage your keys on [cocktail-app.fr/api-docs](https://cocktail-app.fr/api-docs) (login required).
 
-## Tests
+## Rate limits
+
+| Client | Limit | Window |
+|--------|-------|--------|
+| Anonymous (by IP) | 100 requests | 1 hour |
+| With API key | 1,000 requests | 1 hour |
+
+Rate limit headers are included in every response: `RateLimit-Limit`, `RateLimit-Remaining`, `RateLimit-Reset`.
+
+## Endpoints
+
+### Recipes
+
+#### `GET /api/v1/recipes`
+
+Returns a paginated list of published recipes.
+
+| Parameter | Description |
+|-----------|-------------|
+| `page` | Page number (default: 1) |
+| `limit` | Items per page, 1–100 (default: 20) |
+| `q` | Full-text search query |
+| `categoryId` | Filter by category ID |
+| `tags` | Comma-separated tag names |
+| `minRating` | Minimum average rating (1–5) |
+| `maxTime` | Maximum preparation time in minutes |
+| `difficulty` | `EASY`, `MEDIUM` or `HARD` |
+| `sort` | `newest`, `oldest`, `topRated`, `timeAsc`, `timeDesc`, `popular` |
+
+#### `GET /api/v1/recipes/:id`
+
+Returns a single recipe with ingredients, steps, tags and rating.
+
+| Parameter | Description |
+|-----------|-------------|
+| `id` | Recipe ID (integer) |
+
+### Categories
+
+#### `GET /api/v1/categories`
+
+Returns all recipe categories, ordered alphabetically.
+
+### Tags
+
+#### `GET /api/v1/tags`
+
+Returns all tags, ordered by number of associated recipes (descending). Includes `recipesCount`.
+
+### Ingredients
+
+#### `GET /api/v1/ingredients`
+
+Returns up to 200 ingredients, ordered alphabetically.
+
+| Parameter | Description |
+|-----------|-------------|
+| `q` | Optional name filter (case-insensitive substring) |
+
+## API key management
+
+These endpoints require JWT authentication (login to [cocktail-app.fr](https://cocktail-app.fr) first).
+
+#### `GET /api/api-keys`
+
+List your API keys. The key value is never returned after creation.
+
+#### `POST /api/api-keys`
+
+Create a new API key. Maximum 5 keys per account.
+
+```json
+{ "name": "My Discord bot" }
+```
+
+The `key` value is returned **only once** in the response.
+
+#### `DELETE /api/api-keys/:id`
+
+Revoke an API key. Apps using it will stop working immediately.
+
+## Response format
+
+All responses are JSON.
+
+### Pagination
+
+```json
+{
+  "recipes": [{ "id": 1, "name": "Mojito", "difficulty": "EASY", "..." }],
+  "total": 42,
+  "page": 1,
+  "totalPages": 3
+}
+```
+
+### Recipe detail
+
+```json
+{
+  "id": 1,
+  "name": "Mojito",
+  "description": "...",
+  "imageUrl": "/uploads/mojito.jpg",
+  "difficulty": "EASY",
+  "prepTime": 5,
+  "servings": 1,
+  "status": "PUBLISHED",
+  "category": { "id": 2, "name": "Long drinks" },
+  "ingredients": [{ "quantity": 6, "unit": "cl", "ingredient": { "id": 1, "name": "White rum" } }],
+  "steps": [{ "order": 1, "description": "Muddle the mint..." }],
+  "tags": ["summer", "mojito"],
+  "avgRating": 4.3,
+  "ratingsCount": 17
+}
+```
+
+### Errors
+
+```json
+{ "error": "Human-readable error message" }
+```
+
+## Code examples
+
+### curl
 
 ```bash
-cd backend && npm test   # 33 suites, ~290 tests (Jest + Supertest)
+# Without authentication
+curl "https://cocktail-app.fr/api/v1/recipes?q=mojito&limit=5"
+
+# With API key
+curl "https://cocktail-app.fr/api/v1/recipes?sort=topRated" \
+  -H "X-API-Key: YOUR_KEY_HERE"
+
+# Single recipe
+curl "https://cocktail-app.fr/api/v1/recipes/1"
 ```
 
-Integration tests require PostgreSQL and Redis. CI provides them automatically.
+### JavaScript
 
-## Project structure
+```javascript
+const BASE = 'https://cocktail-app.fr/api/v1';
+const API_KEY = 'YOUR_KEY_HERE';
 
+async function getRecipes(query = '') {
+  const url = new URL(BASE + '/recipes');
+  if (query) url.searchParams.set('q', query);
+  const res = await fetch(url, {
+    headers: { 'X-API-Key': API_KEY }
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+async function getRecipe(id) {
+  const res = await fetch(`${BASE}/recipes/${id}`, {
+    headers: { 'X-API-Key': API_KEY }
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+// Usage
+getRecipes('mojito').then(data => console.log(data.recipes));
 ```
-cocktail-app/
-├── backend/
-│   ├── prisma/          # Schema (33 models) + migrations + seeds
-│   ├── src/
-│   │   ├── controllers/ # 34 controllers
-│   │   ├── routes/      # 32 route files
-│   │   ├── middleware/   # Auth, rate-limit, cache, admin
-│   │   ├── services/    # Badges, notifications, email, push, streaks
-│   │   └── helpers/     # Standardized errors, parsing
-│   └── tests/           # 33 test files
-├── frontend/
-│   └── src/
-│       ├── pages/       # 39 pages
-│       ├── components/  # 25 components + recipe/ + ui/
-│       ├── contexts/    # Auth, Favorites, Toast
-│       ├── hooks/       # 6 custom hooks
-│       └── i18n/        # fr.json, en.json
-├── brand/               # SVG logos
-└── scripts/             # Deploy, webhook, dev server
-```
 
-## Public API
+### Python
 
-Écume exposes a public REST API, documented at [cocktail-app.fr/api-docs](https://cocktail-app.fr/api-docs).
+```python
+import requests
 
-```bash
+BASE = 'https://cocktail-app.fr/api/v1'
+API_KEY = 'YOUR_KEY_HERE'
+headers = {'X-API-Key': API_KEY}
+
 # List recipes
-curl https://cocktail-app.fr/api/v1/recipes
+r = requests.get(f'{BASE}/recipes', params={'q': 'mojito'}, headers=headers)
+r.raise_for_status()
+recipes = r.json()['recipes']
 
-# With an API key (500 req/min instead of 100)
-curl -H "x-api-key: YOUR_KEY" https://cocktail-app.fr/api/v1/recipes
+# Single recipe
+r = requests.get(f'{BASE}/recipes/1', headers=headers)
+r.raise_for_status()
+recipe = r.json()
 ```
 
 ## Links
 
-- **Production**: [cocktail-app.fr](https://cocktail-app.fr)
-- **Recipes**: [cocktail-app.fr/recipes](https://cocktail-app.fr/recipes)
-- **API Docs**: [cocktail-app.fr/api-docs](https://cocktail-app.fr/api-docs)
-- **Blog**: [cocktail-app.fr/blog](https://cocktail-app.fr/blog)
-- **Glossary**: [cocktail-app.fr/glossary](https://cocktail-app.fr/glossary)
+- **Website**: [cocktail-app.fr](https://cocktail-app.fr)
+- **Interactive docs**: [cocktail-app.fr/api-docs](https://cocktail-app.fr/api-docs)
 
 ## License
 
